@@ -15,7 +15,7 @@
 <typeDefinition> ===> TK_RECORD TK_RUID <fieldDefinitions> TK_ENDRECORD | TK_UNION TK_RUID <fieldDefinitions> TK_ENDUNION
 <fieldDefinitions> ===> <fieldDefinition> <fieldDefinition> <moreFields>
 <fieldDefinition> ===> TK_TYPE <fieldType> TK_COLON TK_FIELDID TK_SEM
-<fieldtype> ===> <primitiveDatatype> | TK_RUID
+<fieldType> ===> <primitiveDatatype> | TK_RUID
 <moreFields> ===> <fieldDefinition> <moreFields> | ∈
 <declarations> ===> <declaration> <declarations> | ∈
 <declaration> ===> TK_TYPE <dataType> TK_COLON TK_ID <global_or_not> TK_SEM
@@ -23,8 +23,8 @@
 <otherStmts> ===> <stmt> <otherStmts> | ∈
 <stmt> ===> <assignmentStmt> | <iterativeStmt> | <conditionalStmt> | <ioStmt> | <funCallStmt>
 <assignmentStmt> ===> <SingleOrRecId> TK_ASSIGNOP <arithmeticExpression> TK_SEM
-<singleOrRecId> ===> TK_ID | <constructedVariable>
-<constructedVariable> ===> TK_ID <oneExpansion> <moreExpansions>
+<singleOrRecId> ===> TK_ID <option_single_constructed>
+<option_single_constructed> ===> <oneExpansion> <moreExpansions> | ∈
 <oneExpansion> ===> TK_DOT TK_FIELDID
 <moreExpansions> ===> <oneExpansion> <moreExpansions> | ∈
 <funCallStmt> ===> <outputParameters> TK_CALL TK_FUNID TK_WITH TK_PARAMETERS <inputParameters> TK_SEM
@@ -50,4 +50,4 @@
 <idList> ===> TK_ID <more_ids>
 <more_ids> ===> TK_COMMA <idList> | ∈
 <definetypestmt> ===> TK_DEFINETYPE <A> TK_RUID TK_AS TK_RUID
-<A> ==> TK_RECORD | TK_UNION
+<A> ===> TK_RECORD | TK_UNION
