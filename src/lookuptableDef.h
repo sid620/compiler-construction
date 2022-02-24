@@ -1,13 +1,13 @@
-#ifndef SYMBOLTABLE_DEF
-#define SYMBOLTABLE_DEF
-#include "lexerDef.h"
+#ifndef LOOKUPTABLE_DEF
+#define LOOKUPTABLE_DEF
+
 #include <stdbool.h>
-#define HASH_SIZE 71 
+#include "string.h"
+#define HASH_SIZE 101 
+#define PRIME 31
 typedef struct{
     char *lexeme;
-    token tkn;
     bool present;
-    int hashvalue;
 }element;
 
 typedef element lookupTable[HASH_SIZE];
