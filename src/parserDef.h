@@ -40,12 +40,14 @@ typedef struct rule{
     rhsSingular* RHS; 
     int numOrs; 
     int ruleNumber; 
+    int epsilon; // Flag, 1 if epsilon in RHS, else 0 
 } rule; 
 
 typedef struct FirstAndFollow{ 
-    int nonTerminal; 
-    varSymbol* first; 
-    varSymbol* follow; 
+    int numFirst; 
+    int numFollow; 
+    int* first; // Not using varSymbol* as they will be only terminals 
+    int* follow; // Not using varSymbol* as they will be only terminals 
 } FirstAndFollow; 
 
 typedef struct grammar{ 
