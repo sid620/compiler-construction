@@ -42,45 +42,51 @@ int hash(char *lexeme, int i){
     int x =h1(lexeme);
     return (x+i*h2(x))%HASH_SIZE;
 }
-int search(lookupTable s, char * lexeme){
+int search(char * lexeme){
     int i =0;
     int j = hash(lexeme, i);
-    while(s[j].present && i<HASH_SIZE){
+    while(lookup_table[j].present && i<HASH_SIZE){
         j=hash(lexeme,i);
-        if(s[j].present)return j;
+        if(lookup_table[j].present)return j;
         i++;
     }
     return -1;
 }
-int insert(lookupTable s, char *lexeme){
+int insert(char *lexeme){
     int i = 0;
     int j;
     while(i<HASH_SIZE){
         j = hash(lexeme, i);
-        if(!s[j].present){
-            s[j].lexeme = lexeme;
-            s[j].present = true;
+        if(!lookup_table[j].present){
+            lookup_table[j].lexeme = lexeme;
+            lookup_table[j].present = true;
             return j;
         }
     }
 }
-// void initialize(lookupTable s){
-//     FILE *fp = fopen("keyword_lexemes.txt","r");
-//     char *str="";
-//     printf("start\n");
-//     char c = fgetc(fp);
-//     printf("%c\n",c);
-//     while(c!=EOF){
-//         fscanf(fp,"%[^,],",str);
-//         printf("%s\n",str);
-//         c= fgetc(fp);
-//         c= fgetc(fp);
-//     }
-//     fclose(fp);
-// }
+void initialize(){
+    FILE *fp = fopen("keywords_lexemes.txt","r");
+    char str[20]="";
+    printf("start\n");
+    for(int i=0;i<HASH_SIZE;i++){
+        lookup_table[i].present=false;
+        lookup_table[i].lexeme=NULL;
+    }
+    // char c = fgetc(fp);
+    // char c='';
+    // printf("%c\n",c);
+    while(!feof(fp)){
+        fscanf(fp,"%20[^,^\n],",str);
+        if(search(str)==-1){
+            printf("%s",str);   
+            printf(" %d\n",insert(str));  // index for the lexeme
+        }
+        fgetc(fp);
+        // printf(" %ld\n",strlen(str));
+    }
+    fclose(fp);
+}
 // int main(){
-//     printf("%d\n", kmult(53,21));
-//     printf("%d\n",hash("siddharth",0));
 //     initialize(lookup_table);
 //     return 0;
 // }
