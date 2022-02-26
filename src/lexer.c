@@ -9,9 +9,33 @@ int range_match(char a, char start, char end) {
     return (a >= start && a <= end);
 }
 
+void initializeTwinBuffer(){
+    twin_buffer = (twinBuffer *)malloc(sizeof(twinBuffer));
+    twin_buffer->buffer=(char *)malloc(sizeof(char)*BUFFER_SIZE*2);
+    
+
+    // initialize ends with sentinels
+    (twin_buffer->buffer)[BUFFER_SIZE-1]=EOF;
+    (twin_buffer->buffer)[2*BUFFER_SIZE-1]=EOF;
+    
+
+}
 char next_char();
 
-FILE *getStream(FILE *fp);
+/*  bufferNumer=0 implies first buffer to be filled
+    bufferNumber=1 implies second buffer to be filled
+*/
+FILE *getStream(FILE *fp, int bufferNumber){
+    if(twin_buffer==NULL){
+        // printf("working\n");
+        initializeTwinBuffer();
+    }
+    else{
+        if(bufferNumber) fread(&twin_buffer[0],1,BUFFER_SIZE-1,fp);
+        else fread(&twin_buffer[BUFFER_SIZE],1,BUFFER_SIZE-1,fp);
+    }
+}
+
 
 tokenInfo getNextToken(twinBuffer B){
     char c = 1;
