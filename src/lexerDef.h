@@ -5,6 +5,8 @@
 #include<stdio.h>
 typedef struct twinBuffer twinBuffer;
 element lookup_table[HASH_SIZE];
+
+
 struct twinBuffer{
     char *buffer[2];
     char *forward;
@@ -27,7 +29,7 @@ typedef struct TOKEN{
         };
         char * str; // lexeme, identifiers
     };
-}token;
+}tokenInfo;
 
 #endif
 
