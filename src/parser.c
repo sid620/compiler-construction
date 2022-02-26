@@ -1,7 +1,4 @@
-#include <stdio.h> 
-#include <stdlib.h> 
-#include <string.h> 
-#include "parserDef.h" 
+#include "parser.h"
 
 // char* nonTerminals[] = { 
 //     "program", "mainFunction", "otherFunctions", "function", "input_par", "output_par", "parameter_list", "dataType", 
@@ -25,21 +22,6 @@ char* terminals[] = {
 
 int numTerminals = 57; 
 
-int findIndex(char** arr, int lim, char* str) { 
-    for (int i = 0; i < lim; i++) { 
-        if (strcmp(str, arr[i]) == 0) { 
-            return i; 
-        }
-    } 
-    return -1; 
-} 
-
-void printArr(char** arr, int lim) { 
-    for (int i = 0; i < lim; i++) { 
-        printf("%s \n", arr[i]); 
-    }
-}
-
 grammar readGrammar(char* file) { 
     
     grammar currGrammar; 
@@ -54,6 +36,7 @@ grammar readGrammar(char* file) {
 
     while (!feof(f)) { 
         char s[300]; 
+        // Read rule
         fgets(s, 300, f); 
         // printf("%d %s %d ", ruleID, s, strlen(s)); 
         for (int i = 0; s[i] != '\0'; i++) { 
@@ -84,7 +67,7 @@ grammar readGrammar(char* file) {
     currGrammar.nonTerminals = nonTerminals; 
     currGrammar.allRules = (rule*)malloc(sizeof(rule) * (ruleID)); 
     currGrammar.totalNumRules = ruleID; 
-    printf("%d %d %d \n*** \n", numNonTerminals, numTerminals, ruleID); 
+    printf("numNonTerminals %d, numTerminals %d, ruleID %d \n*** \n", numNonTerminals, numTerminals, ruleID); 
     currGrammar.numNonTerminals = numNonTerminals; 
     currGrammar.numTerminals = numTerminals; 
 
@@ -183,15 +166,6 @@ grammar readGrammar(char* file) {
     // printf("%d %d %d \n", currGrammar.allRules[0].LHS, currGrammar.allRules[0].numOrs, currGrammar.allRules[0].ruleNumber); 
     // printf("%d %d %d %d %d", currGrammar.allRules[0].RHS[0].numSyms, currGrammar.allRules[0].RHS[0].symbols[0].type, currGrammar.allRules[0].RHS[0].symbols[1].type, currGrammar.allRules[0].RHS[0].symbols[0].symbol, currGrammar.allRules[0].RHS[0].symbols[1].symbol); 
     return currGrammar; 
-} 
-
-int isInArr(int* arr, int num, int lim) { 
-    for (int i = 0; i < lim; i++) { 
-        if (num == arr[i]) { 
-            return 1; 
-        }
-    } 
-    return 0; 
 } 
 
 void IndividualFirst(grammar G, FirstAndFollow* ff, int ind) { 
@@ -483,6 +457,8 @@ void main() {
     
     // printf("'%s' %d %d \n", C.nonTerminals[23], C.allRules[23].numOrs, C.allRules[23].epsilon); 
     // printf("%d %d '%s' '%s' \n", C.allRules[23].RHS[0].symbols[0].symbol, C.allRules[23].RHS[1].symbols[0].symbol, C.nonTerminals[C.allRules[23].RHS[0].symbols[0].symbol], C.terminals[C.allRules[23].RHS[1].symbols[0].symbol]); 
+
+    prettyPrintGrammar(C);
     
     C.ff = ComputeFirstAndFollowSets(C); 
     printf("\n***** \n"); 
@@ -491,7 +467,6 @@ void main() {
     for (int i = 0; i < C.ff[n].numFollow; i++) { 
         printf("%d '%s' \n", C.ff[n].follow[i], C.terminals[C.ff[n].follow[i]]); 
     }
-    
     printf("%d %d %d \n", C.allRules[0].numOrs, C.allRules[0].RHS[0].numSyms, C.allRules[0].RHS[0].symbols[1].type); 
     // printf("%d %d %d %d %d %d '%s' '%s' '%s' '%s' \n", C.ff[23].numFirst, C.ff[23].numFollow, C.ff[23].follow[0], C.ff[23].follow[1], C.ff[23].follow[2], C.ff[23].follow[3], C.terminals[C.ff[23].follow[0]], C.terminals[C.ff[23].follow[1]], C.terminals[C.ff[23].follow[2]], C.terminals[C.ff[23].follow[3]]); 
 }

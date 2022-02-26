@@ -1,7 +1,9 @@
+#pragma once
 #include <stdio.h> 
 #include <stdlib.h> 
 #include <string.h> 
 #include "parserDef.h" 
+#include "utils.h"
 
 grammar readGrammar(char* file); 
 FirstAndFollow* ComputeFirstAndFollowSets (grammar G); 
