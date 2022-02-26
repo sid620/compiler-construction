@@ -11,7 +11,28 @@ int range_match(char a, char start, char end) {
 
 char next_char();
 
+char *copy_string(char *start, char *end){
+    int length = end - start + 1;
+    // length+1 for the null-terminator
+    char *temp = (char *)malloc(sizeof(char *)*(length + 1));
+    // Copy the sub-string
+    memcpy(temp, start, length);
+    // Terminate it
+    temp[length] = '\0';
+
+    return temp;
+}
+
 FILE *getStream(FILE *fp);
+
+void retract(int amt) {
+    while(amt > 0) {
+        --forward;
+        --amt;
+    }
+
+    nextCharacterReadAfterRetraction = 1;
+}
 
 tokenInfo getNextToken(twinBuffer B){
     char c = 1;
@@ -127,7 +148,7 @@ tokenInfo getNextToken(twinBuffer B){
                     
             case 46: {
                 
-                char* lex = copyString(lexemeBegin,forward);
+                char* lex = copy_string(lexemeBegin,forward);
                 populateToken(t,TK_PLUS,lex,lineCount,0,NULL);
                 accept();
                 return t;
@@ -135,7 +156,7 @@ tokenInfo getNextToken(twinBuffer B){
             }
         //     case 47: {
         //    c = nextChar();
-        //         char* lex = copyString(lexemeBegin,forward);
+        //         char* lex = copy_string(lexemeBegin,forward);
         //         if(c == '-') {
         //             dfa_state = 2;
         //         }
@@ -147,77 +168,77 @@ tokenInfo getNextToken(twinBuffer B){
         //         break;
         //     }
             case 49: {
-                char* lex = copyString(lexemeBegin,forward);
+                char* lex = copy_string(lexemeBegin,forward);
                 populateToken(t,TK_MUL,lex,lineCount,0,NULL);
                 accept();
                 return t;
                 break;
             }
             case 50: {
-                char* lex = copyString(lexemeBegin,forward);
+                char* lex = copy_string(lexemeBegin,forward);
                 populateToken(t,TK_DIV,lex,lineCount,0,NULL);
                 accept();
                 return t;
                 break;
             }
             case 53: {
-                char* lex = copyString(lexemeBegin,forward);
+                char* lex = copy_string(lexemeBegin,forward);
                 populateToken(t,TK_OP,lex,lineCount,0,NULL);
                 accept();
                 return t;
                 break;
             }
             case 52: {
-                char* lex = copyString(lexemeBegin,forward);
+                char* lex = copy_string(lexemeBegin,forward);
                 populateToken(t,TK_CL,lex,lineCount,0,NULL);
                 accept();
                 return t;
                 break;
             }
             case 55: {
-                char* lex = copyString(lexemeBegin,forward);
+                char* lex = copy_string(lexemeBegin,forward);
                 populateToken(t,TK_SQL,lex,lineCount,0,NULL);
                 accept();
                 return t;
                 break;
             }
             case 54: {
-                char* lex = copyString(lexemeBegin,forward);
+                char* lex = copy_string(lexemeBegin,forward);
                 populateToken(t,TK_SQR,lex,lineCount,0,NULL);
                 accept();
                 return t;
                 break;
             }
             case 56: {
-                char* lex = copyString(lexemeBegin,forward);
+                char* lex = copy_string(lexemeBegin,forward);
                 populateToken(t,TK_COMMA,lex,lineCount,0,NULL);
                 accept();
                 return t;
                 break;
             }
             case 42: {
-                char* lex = copyString(lexemeBegin,forward);
+                char* lex = copy_string(lexemeBegin,forward);
                 populateToken(t,TK_DOT,lex,lineCount,0,NULL);
                 accept();
                 return t;
                 break;
             }
             case 57: {
-                char* lex = copyString(lexemeBegin,forward);
+                char* lex = copy_string(lexemeBegin,forward);
                 populateToken(t,TK_COLON,lex,lineCount,0,NULL);
                 accept();
                 return t;
                 break;
             }
             case 51: {
-                char* lex = copyString(lexemeBegin,forward);
+                char* lex = copy_string(lexemeBegin,forward);
                 populateToken(t,TK_SEM,lex,lineCount,0,NULL);
                 accept();
                 return t;
                 break;
             }
             case 48: {
-                char* lex = copyString(lexemeBegin,forward);
+                char* lex = copy_string(lexemeBegin,forward);
                 populateToken(t,TK_NOT,lex,lineCount,0,NULL);
                 accept();
                 return t;
@@ -230,7 +251,7 @@ tokenInfo getNextToken(twinBuffer B){
                 }
                 else {
                     // Throw Lexical error
-                    char* pattern = copyString(lexemeBegin, forward-sizeof(char));
+                    char* pattern = copy_string(lexemeBegin, forward-sizeof(char));
                     printf("Line %d : Cannot recognize pattern %s, Were you tring for != ?\n" ,lineCount,pattern);
                     free(pattern);
                     errorType = 3;
@@ -242,7 +263,7 @@ tokenInfo getNextToken(twinBuffer B){
                 break;
             }
             case 15: {
-                char* lex = copyString(lexemeBegin,forward);
+                char* lex = copy_string(lexemeBegin,forward);
                 populateToken(t,TK_NE,lex,lineCount,0,NULL);
                 accept();
                 return t;
@@ -268,7 +289,7 @@ tokenInfo getNextToken(twinBuffer B){
                 }
                 else {
                     // Throw lexical error.
-                    char* pattern = copyString(lexemeBegin, forward-sizeof(char));
+                    char* pattern = copy_string(lexemeBegin, forward-sizeof(char));
                     printf("Line %d : Cannot recognize pattern %s, Were you tring for <--- ?\n" ,lineCount,pattern);
                     free(pattern);
                     errorType = 3;
@@ -286,7 +307,7 @@ tokenInfo getNextToken(twinBuffer B){
                 }
                 else {
                     // Throw lexical error
-                    char* pattern = copyString(lexemeBegin, forward-sizeof(char));
+                    char* pattern = copy_string(lexemeBegin, forward-sizeof(char));
                     printf("Line %d : Cannot recognize pattern %s, Were you tring for <--- ?\n" ,lineCount,pattern);
                     free(pattern);
                     errorType = 3;
@@ -298,14 +319,14 @@ tokenInfo getNextToken(twinBuffer B){
                 break;
             }
             case 4: {
-                char* lex = copyString(lexemeBegin,forward);
+                char* lex = copy_string(lexemeBegin,forward);
                 populateToken(t,TK_ASSIGNOP,lex,lineCount,0,NULL);
                 accept();
                 return t;
                 break;
             }   
             case 6: {
-                char* lex = copyString(lexemeBegin,forward);
+                char* lex = copy_string(lexemeBegin,forward);
                 populateToken(t,TK_LE,lex,lineCount,0,NULL);
                 accept();
                 return t;
@@ -313,7 +334,7 @@ tokenInfo getNextToken(twinBuffer B){
             }
             case 5: {
                 retract(1);
-                char* lex = copyString(lexemeBegin,forward);
+                char* lex = copy_string(lexemeBegin,forward);
 
                 if(c == '\n')
                     populateToken(t,TK_LT,lex,lineCount-1,0,NULL);
@@ -335,7 +356,7 @@ tokenInfo getNextToken(twinBuffer B){
                 break;
             }
             case 10: {
-                char* lex = copyString(lexemeBegin,forward);
+                char* lex = copy_string(lexemeBegin,forward);
                 populateToken(t,TK_GE,lex,lineCount,0,NULL);
                 accept();
                 return t;
@@ -343,7 +364,7 @@ tokenInfo getNextToken(twinBuffer B){
             }
             case 11: {
                 retract(1);
-                char* lex = copyString(lexemeBegin,forward);
+                char* lex = copy_string(lexemeBegin,forward);
                 if(c == '\n')
                     populateToken(t,TK_GT,lex,lineCount-1,0,NULL);
                 else
@@ -359,7 +380,7 @@ tokenInfo getNextToken(twinBuffer B){
                 }
                 else {
                     // Throw lexical error
-                    char* pattern = copyString(lexemeBegin, forward-sizeof(char));
+                    char* pattern = copy_string(lexemeBegin, forward-sizeof(char));
                     printf("Line %d : Cannot recognize pattern %s, Were you tring for == ?\n" ,lineCount,pattern);
                     free(pattern);
                     errorType = 3;
@@ -371,7 +392,7 @@ tokenInfo getNextToken(twinBuffer B){
                 break;
             }
             case 13: {
-                char* lex = copyString(lexemeBegin,forward);
+                char* lex = copy_string(lexemeBegin,forward);
                 populateToken(t,TK_EQ,lex,lineCount,0,NULL);
                 accept();
                 return t;
@@ -384,7 +405,7 @@ tokenInfo getNextToken(twinBuffer B){
                 }
                 else {
                     // Throw lexical error
-                    char* pattern = copyString(lexemeBegin, forward-sizeof(char));
+                    char* pattern = copy_string(lexemeBegin, forward-sizeof(char));
                     printf("Line %d : Cannot recognize pattern %s, Were you tring for @@@ ?\n" ,lineCount,pattern);
                     free(pattern);
                     errorType = 3;
@@ -402,7 +423,7 @@ tokenInfo getNextToken(twinBuffer B){
                 }
                 else {
                     // Throw lexical
-                    char* pattern = copyString(lexemeBegin,forward);
+                    char* pattern = copy_string(lexemeBegin,forward);
                     printf("Line %d : Cannot recognize pattern %s, Were you tring for @@@ ?\n" ,lineCount,pattern);
                     free(pattern);
                     errorType = 3;
@@ -414,7 +435,7 @@ tokenInfo getNextToken(twinBuffer B){
                 break;
             }
             case 45: {
-                char* lex = copyString(lexemeBegin,forward);
+                char* lex = copy_string(lexemeBegin,forward);
                 populateToken(t,TK_OR,lex,lineCount,0,NULL);
                 accept();
                 return t;
@@ -427,7 +448,7 @@ tokenInfo getNextToken(twinBuffer B){
                 }
                 else {
                     // Throw lexical error
-                    char* pattern = copyString(lexemeBegin, forward-sizeof(char));
+                    char* pattern = copy_string(lexemeBegin, forward-sizeof(char));
                     printf("Line %d : Cannot recognize pattern %s, Were you tring for &&& ?\n" ,lineCount,pattern);
                     free(pattern);
                     errorType = 3;
@@ -445,7 +466,7 @@ tokenInfo getNextToken(twinBuffer B){
                 }
                 else {
                     // Throw lexical error
-                    char* pattern = copyString(lexemeBegin, forward-sizeof(char));
+                    char* pattern = copy_string(lexemeBegin, forward-sizeof(char));
                     printf("Line %d : Cannot recognize pattern %s, Were you tring for &&& ?\n" ,lineCount,pattern);
                     free(pattern);
                     errorType = 3;
@@ -457,7 +478,7 @@ tokenInfo getNextToken(twinBuffer B){
                 break;
             }
             case 32: {
-                char* lex = copyString(lexemeBegin,forward);
+                char* lex = copy_string(lexemeBegin,forward);
                 populateToken(t,TK_AND,lex,lineCount,0,NULL);
                 accept();
                 return t;
@@ -472,7 +493,7 @@ tokenInfo getNextToken(twinBuffer B){
                 break;
             }
             case 34: {
-                char* lex = copyString(lexemeBegin,forward);
+                char* lex = copy_string(lexemeBegin,forward);
 
                 // Corner case =>  If the character which ended the comment is a \n, then the comment was one below the current lineCount
                 if(c == '\n')
@@ -539,7 +560,7 @@ tokenInfo getNextToken(twinBuffer B){
             //         dfa_state = 55;
             //     }
             //     else {
-            //         char* lex = copyString(lexemeBegin,forward);
+            //         char* lex = copy_string(lexemeBegin,forward);
             //         if(c == '\n')
             //             populateToken(t,TK_ID,lex,lineCount-1,0,NULL);
             //         else
@@ -551,7 +572,7 @@ tokenInfo getNextToken(twinBuffer B){
             // }
             case 19: {
                 retract(1);
-                char* lex = copyString(lexemeBegin,forward);
+                char* lex = copy_string(lexemeBegin,forward);
                 // Corner case => If c is newline character, then the token was one above the current linecount
                 if(c == '\n')
                     populateToken(t,TK_ID,lex,lineCount-1,0,NULL);
@@ -573,7 +594,7 @@ tokenInfo getNextToken(twinBuffer B){
             case 21: {
                 // Resolve keyword clash!
                 retract(1);
-                char* lex = copyString(lexemeBegin,forward);
+                char* lex = copy_string(lexemeBegin,forward);
                 Node* n = lookUp(kt,lex);
                 if(n == NULL) {
                     if(c == '\n')
@@ -606,7 +627,7 @@ tokenInfo getNextToken(twinBuffer B){
             }
             case 30: {
                 retract(1);
-                char* lex = copyString(lexemeBegin,forward);
+                char* lex = copy_string(lexemeBegin,forward);
                 Value* val = malloc(sizeof(Value));
                 val->INT_VALUE = stringToInteger(lex);
                 if(c == '\n')
@@ -624,7 +645,7 @@ tokenInfo getNextToken(twinBuffer B){
                 }
                 // else {
                 //     // Throw lexical error
-                //     char* pattern = copyString(lexemeBegin, forward-sizeof(char));
+                //     char* pattern = copy_string(lexemeBegin, forward-sizeof(char));
                 //     printf("Line %d : Cannot recognize pattern %s, Were you tring for a real number ?\n" ,lineCount,pattern);
                 //     free(pattern);
                 //     errorType = 3;
@@ -642,7 +663,7 @@ tokenInfo getNextToken(twinBuffer B){
                 }
                 // else {
                 //     // Throw lexical
-                //     char* pattern = copyString(lexemeBegin, forward-sizeof(char));
+                //     char* pattern = copy_string(lexemeBegin, forward-sizeof(char));
                 //     printf("Line %d : Cannot recognize pattern %s, Were you tring for a real number ?\n" ,lineCount,pattern);
                 //     free(pattern);
                 //     errorType = 3;
@@ -666,7 +687,7 @@ tokenInfo getNextToken(twinBuffer B){
             }
 
             case 34: {
-                char* lex = copyString(lexemeBegin,forward);
+                char* lex = copy_string(lexemeBegin,forward);
                 Value* val = (Value*)malloc(sizeof(Value));
                 val->FLOAT_VALUE = stringToFloat(lex);
                 populateToken(t,TK_RNUM,lex,lineCount,2,val);
@@ -699,7 +720,7 @@ tokenInfo getNextToken(twinBuffer B){
                 break;
             }
             case 38: {
-                char* lex = copyString(lexemeBegin,forward);
+                char* lex = copy_string(lexemeBegin,forward);
                 Value* val = (Value*)malloc(sizeof(Value));
                 val->FLOAT_VALUE = stringToFloat(lex);
                 populateToken(t,TK_RNUM,lex,lineCount,2,val);
@@ -714,7 +735,7 @@ tokenInfo getNextToken(twinBuffer B){
                 }
                 else {
                     // throw lexical error
-                    char* pattern = copyString(lexemeBegin, forward-sizeof(char));
+                    char* pattern = copy_string(lexemeBegin, forward-sizeof(char));
                     printf("Line %d : Cannot recognize pattern %s, Were you tring for a function ID ?\n" ,lineCount,pattern);
                     free(pattern);
                     errorType = 3;
@@ -756,7 +777,7 @@ tokenInfo getNextToken(twinBuffer B){
                     dfa_state = 55;
                 }
                 else {
-                    char* lex = copyString(lexemeBegin,forward);
+                    char* lex = copy_string(lexemeBegin,forward);
                     if(c == '\n')
                         populateToken(t,TK_FUNID,lex,lineCount,0,NULL);
                     else
@@ -769,7 +790,7 @@ tokenInfo getNextToken(twinBuffer B){
             // case 51: {
             //     // Resolve keyword clash here
             //     retract(1);
-            //     char* lex = copyString(lexemeBegin,forward);
+            //     char* lex = copy_string(lexemeBegin,forward);
             //     Node* n = lookUp(kt,lex);
             //     if(n == NULL) {
             //         if(c == '\n')
@@ -794,7 +815,7 @@ tokenInfo getNextToken(twinBuffer B){
                 }
                 else {
                     // Throw lexical error
-                    char* pattern = copyString(lexemeBegin, forward-sizeof(char));
+                    char* pattern = copy_string(lexemeBegin, forward-sizeof(char));
                     printf("Line %d : Cannot recognize pattern %s, Were you tring for a record ID ?\n" ,lineCount,pattern);
                     free(pattern);
                     errorType = 3;
@@ -815,7 +836,7 @@ tokenInfo getNextToken(twinBuffer B){
             }
             case 28: {
                 retract(1);
-                char* lex = copyString(lexemeBegin,forward);
+                char* lex = copy_string(lexemeBegin,forward);
                 if(c == '\n')
                     populateToken(t,TK_RECORDID,lex,lineCount-1,0,NULL);
                 else
@@ -837,7 +858,7 @@ tokenInfo getNextToken(twinBuffer B){
                 //     c = nextChar();
                 // }
 
-                char* lex = copyString(lexemeBegin,forward);
+                char* lex = copy_string(lexemeBegin,forward);
 
                 // A retraction only occurs if the errorType is 3, so check if the character read was a '\n'
                 if(errorType == 3 && c == '\n')
