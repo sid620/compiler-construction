@@ -1,5 +1,7 @@
 #include "lexer.h"
 #include "lexerDef.h"
+#include <fcntl.h>
+
 
 int char_match(char a, char b){
     return a == b;
@@ -20,7 +22,23 @@ void initializeTwinBuffer(){
     
 
 }
-char next_char();
+char next_char(){
+
+}
+
+
+
+char *copy_string(char *start, char *end){
+    int length = end - start + 1;
+    // length+1 for the null-terminator
+    char *temp = (char *)malloc(sizeof(char *)*(length + 1));
+    // Copy the sub-string
+    memcpy(temp, start, length);
+    // Terminate it
+    temp[length] = '\0';
+
+    return temp;
+}
 
 /*  bufferNumer=0 implies first buffer to be filled
     bufferNumber=1 implies second buffer to be filled
@@ -36,6 +54,14 @@ FILE *getStream(FILE *fp, int bufferNumber){
     }
 }
 
+
+void retract(int amt) {
+    while(amt > 0) {
+        --forward;
+        --amt;
+    }
+    next_characterReadAfterRetraction = 1;
+}
 
 tokenInfo getNextToken(twinBuffer B){
     char c = 1;
@@ -147,7 +173,7 @@ tokenInfo getNextToken(twinBuffer B){
 
             
             case 1: {
-                c = nextChar();
+                c = next_char();
                 if(c == '-') {
                     dfa_state = 2;
                 }
@@ -160,13 +186,13 @@ tokenInfo getNextToken(twinBuffer B){
                 break;
             }
             case 2: {
-                c = nextChar();
+                c = next_char();
                 if(c == '-') {
                     dfa_state = 3;
                 }
                 else {
                     // Throw lexical error.
-                    char* pattern = copyString(lexemeBegin, forward-sizeof(char));
+                    char* pattern = copy_string(lexemeBegin, forward-sizeof(char));
                     printf("Line %d : Cannot recognize pattern %s, Were you tring for <--- ?\n" ,lineCount,pattern);
                     free(pattern);
                     errorType = 3;
@@ -178,13 +204,13 @@ tokenInfo getNextToken(twinBuffer B){
                 break;
             }
             case 3: {
-                c = nextChar();
+                c = next_char();
                 if(c == '-') {
                     dfa_state = 4;
                 }
                 else {
                     // Throw lexical error
-                    char* pattern = copyString(lexemeBegin, forward-sizeof(char));
+                    char* pattern = copy_string(lexemeBegin, forward-sizeof(char));
                     printf("Line %d : Cannot recognize pattern %s, Were you tring for <--- ?\n" ,lineCount,pattern);
                     free(pattern);
                     errorType = 3;
@@ -196,7 +222,7 @@ tokenInfo getNextToken(twinBuffer B){
                 break;
             }
             case 4: {
-                char* lex = copyString(lexemeBegin,forward);
+                char* lex = copy_string(lexemeBegin,forward);
                 populateToken(t,TK_ASSIGNOP,lex,lineCount,0,NULL);
                 accept();
                 return t;
@@ -204,7 +230,7 @@ tokenInfo getNextToken(twinBuffer B){
             }   
             case 5: {
                 retract(1);
-                char* lex = copyString(lexemeBegin,forward);
+                char* lex = copy_string(lexemeBegin,forward);
 
                 if(c == '\n')
                     populateToken(t,TK_LT,lex,lineCount-1,0,NULL);
@@ -224,7 +250,7 @@ tokenInfo getNextToken(twinBuffer B){
             }
 
             case 7: {
-                c = nextChar();
+                c = next_char();
                 if(c == '\n'||c == '\v'||c == '\t'||c == '\f'||c == '\v') {
                     dfa_state = 7;
                 }
@@ -236,7 +262,7 @@ tokenInfo getNextToken(twinBuffer B){
             }
        
             case 9: {
-                c = nextChar();
+                c = next_char();
                 if(c == '=') {
                     dfa_state = 10;
                 }
@@ -246,7 +272,7 @@ tokenInfo getNextToken(twinBuffer B){
                 break;
             }
             case 10: {
-                char* lex = copyString(lexemeBegin,forward);
+                char* lex = copy_string(lexemeBegin,forward);
                 populateToken(t,TK_GE,lex,lineCount,0,NULL);
                 accept();
                 return t;
@@ -254,7 +280,7 @@ tokenInfo getNextToken(twinBuffer B){
             }
             case 11: {
                 retract(1);
-                char* lex = copyString(lexemeBegin,forward);
+                char* lex = copy_string(lexemeBegin,forward);
                 if(c == '\n')
                     populateToken(t,TK_GT,lex,lineCount-1,0,NULL);
                 else
@@ -264,13 +290,13 @@ tokenInfo getNextToken(twinBuffer B){
                 break;
             }
             case 12: {
-                c = nextChar();
+                c = next_char();
                 if(c == '=') {
                     dfa_state = 13;
                 }
                 else {
                     // Throw lexical error
-                    char* pattern = copyString(lexemeBegin, forward-sizeof(char));
+                    char* pattern = copy_string(lexemeBegin, forward-sizeof(char));
                     printf("Line %d : Cannot recognize pattern %s, Were you tring for == ?\n" ,lineCount,pattern);
                     free(pattern);
                     errorType = 3;
@@ -282,7 +308,7 @@ tokenInfo getNextToken(twinBuffer B){
                 break;
             }
             case 13: {
-                char* lex = copyString(lexemeBegin,forward);
+                char* lex = copy_string(lexemeBegin,forward);
                 populateToken(t,TK_EQ,lex,lineCount,0,NULL);
                 accept();
                 return t;
@@ -290,7 +316,7 @@ tokenInfo getNextToken(twinBuffer B){
             }
 
             case 14: {
-                c = nextChar();
+                c = next_char();
                 if(c == '=') {
                     dfa_state = 15;
                 }
@@ -316,7 +342,7 @@ tokenInfo getNextToken(twinBuffer B){
             }
 
              case 16: {
-                c = nextChar();
+                c = next_char();
                 if(range_match(c,'2','7')) {
                     dfa_state = 17;
                 }
@@ -329,9 +355,9 @@ tokenInfo getNextToken(twinBuffer B){
                 break;
             }
             case 17: {
-                c = nextChar();
+                c = next_char();
                 while(range_match(c,'b','d'))
-                    c = nextChar();
+                    c = next_char();
 
                 if(range_match(c,'2','7'))
                     dfa_state = 18;
@@ -341,9 +367,9 @@ tokenInfo getNextToken(twinBuffer B){
                 break;
             }
             case 18: {
-                c = nextChar();
+                c = next_char();
                 while(range_match(c,'2','7'))
-                    c = nextChar();
+                    c = next_char();
 
                 if(!range_match(c,'2','7') && !range_match(c,'b','d')) {
                     dfa_state = 19;
@@ -382,9 +408,9 @@ tokenInfo getNextToken(twinBuffer B){
             }
         
             case 20: {
-                c = nextChar();
+                c = next_char();
                 while(range_match(c,'a','z'))
-                    c = nextChar();
+                    c = next_char();
 
                 dfa_state = 21;
                 break;
@@ -392,7 +418,7 @@ tokenInfo getNextToken(twinBuffer B){
             case 21: {
                 // Resolve keyword clash!
                 retract(1);
-                char* lex = copyString(lexemeBegin,forward);
+                char* lex = copy_string(lexemeBegin,forward);
                 Node* n = lookUp(kt,lex);
                 if(n == NULL) {
                     if(c == '\n')
@@ -412,7 +438,7 @@ tokenInfo getNextToken(twinBuffer B){
             }
 
              case 22: {
-                c = nextChar();
+                c = next_char();
                 if(range_match(c,'a','z') || range_match(c,'A','Z')) {
                     dfa_state = 23;
                 }
@@ -430,9 +456,9 @@ tokenInfo getNextToken(twinBuffer B){
                 break;
             }
             case 23: {
-                c = nextChar();
+                c = next_char();
                 while(range_match(c,'a','z') || range_match(c,'A','Z'))
-                    c = nextChar();
+                    c = next_char();
 
                 if(range_match(c,'0','9')) {
                     dfa_state = 24;
@@ -443,9 +469,9 @@ tokenInfo getNextToken(twinBuffer B){
                 break;
             }
             case 24: {
-                c = nextChar();
+                c = next_char();
                 while(range_match(c,'0','9'))
-                    c = nextChar();
+                    c = next_char();
 
                 dfa_state = 25;
 
@@ -492,7 +518,7 @@ tokenInfo getNextToken(twinBuffer B){
             //     break;
             // }
             case 26: {
-                c = nextChar();
+                c = next_char();
                 if(range_match(c,'a','z')) {
                     dfa_state = 27;
                 }
@@ -510,9 +536,9 @@ tokenInfo getNextToken(twinBuffer B){
                 break;
             }
             case 27: {
-                c = nextChar();
+                c = next_char();
                 while(range_match(c,'a','z'))
-                    c = nextChar();
+                    c = next_char();
 
                 dfa_state = 28;
                 break;
@@ -530,9 +556,9 @@ tokenInfo getNextToken(twinBuffer B){
             }
             
              case 29: {
-                c = nextChar();
+                c = next_char();
                 while(range_match(c,'0','9'))
-                    c = nextChar();
+                    c = next_char();
 
                 if(c == '.') {
                     dfa_state = 31; // apna DFA galat he, there should be no state 30. 29 to 31, 29 to 32 transitions he
@@ -544,7 +570,7 @@ tokenInfo getNextToken(twinBuffer B){
             }
             case 30: {
                 retract(1);
-                char* lex = copyString(lexemeBegin,forward);
+                char* lex = copy_string(lexemeBegin,forward);
                 Value* val = malloc(sizeof(Value));
                 val->INT_VALUE = stringToInteger(lex);
                 if(c == '\n')
@@ -556,7 +582,7 @@ tokenInfo getNextToken(twinBuffer B){
                 break;
             }
             case 31: {
-                c = nextChar();
+                c = next_char();
                 if(range_match(c,'0','9')) {
                     dfa_state = 32;
                 }
@@ -574,7 +600,7 @@ tokenInfo getNextToken(twinBuffer B){
                 break;
             }
             case 32: {
-                c = nextChar();
+                c = next_char();
                 if(range_match(c,'0','9')) {
                     dfa_state = 34;
                 }
@@ -605,7 +631,7 @@ tokenInfo getNextToken(twinBuffer B){
 
             case 34: {
                 retract(1);
-                c = nextChar();
+                c = next_char();
                 if(char_match(c,'E')){
                     dfa_state = 35;
                 }
@@ -615,7 +641,7 @@ tokenInfo getNextToken(twinBuffer B){
                 break;
             }
             case 35: {
-                c = nextChar();
+                c = next_char();
                 if(char_match(c, '+') || char_match(c, '-')){
                     dfa_state = 36;
                 }
@@ -625,21 +651,21 @@ tokenInfo getNextToken(twinBuffer B){
                 break;
             }
             case 36: {
-                c = nextChar();
+                c = next_char();
                 if(range_match(c,'0','9')) {
                     dfa_state = 37;
                 }
                 break;
             }
             case 37: {
-                c = nextChar();
+                c = next_char();
                 if(range_match(c,'0','9')) {
                     dfa_state = 38;
                 }
                 break;
             }
             case 38: {
-                char* lex = copyString(lexemeBegin,forward);
+                char* lex = copy_string(lexemeBegin,forward);
                 Value* val = (Value*)malloc(sizeof(Value));
                 val->FLOAT_VALUE = stringToFloat(lex);
                 populateToken(t,TK_RNUM,lex,lineCount,2,val);
@@ -648,7 +674,7 @@ tokenInfo getNextToken(twinBuffer B){
                 break;
             }
             case 39: {
-                c = nextChar();
+                c = next_char();
                 if(c == '&') {
                     dfa_state = 40;
                 }
@@ -666,7 +692,7 @@ tokenInfo getNextToken(twinBuffer B){
                 break;
             }
             case 40: {
-                c = nextChar();
+                c = next_char();
                 if(c == '&') {
                     dfa_state = 41;
                 }
@@ -700,7 +726,7 @@ tokenInfo getNextToken(twinBuffer B){
             }
 
             case 43: {
-                c = nextChar();
+                c = next_char();
                 if(c == '@') {
                     dfa_state = 44;
                 }
@@ -718,7 +744,7 @@ tokenInfo getNextToken(twinBuffer B){
                 break;
             }
             case 44: {
-                c = nextChar();
+                c = next_char();
                 if(c == '@') {
                     dfa_state = 45;
                 }
@@ -769,7 +795,7 @@ tokenInfo getNextToken(twinBuffer B){
             }
             
         //     case 47: {
-        //    c = nextChar();
+        //    c = next_char();
         //         char* lex = copyString(lexemeBegin,forward);
         //         if(c == '-') {
         //             dfa_state = 2;
@@ -848,18 +874,18 @@ tokenInfo getNextToken(twinBuffer B){
             }     
           
             case 58: {
-                c = nextChar();
+                c = next_char();
                 while(c != '\n' && c != EOF) {
-                    c = nextChar();
+                    c = next_char();
                 }
                 dfa_state = 60;
                 break;
             }
 
             case 59: {
-                c = nextChar();
+                c = next_char();
                 while(c != '\n' && c != EOF) {
-                    c = nextChar();
+                    c = next_char();
                 }
                 dfa_state = 60;
                 break;
@@ -873,12 +899,12 @@ tokenInfo getNextToken(twinBuffer B){
                 // Chosen Rationale => Panic mode, Travel up till a delimiter
 
                 // Comment this, will bring it back to state 0
-                // c = nextChar();
+                // c = next_char();
                 // while(c != ';' && c !=  EOF && c != '\n') {
-                //     c = nextChar();
+                //     c = next_char();
                 // }
 
-                char* lex = copyString(lexemeBegin,forward);
+                char* lex = copy_string(lexemeBegin,forward);
 
                 // A retraction only occurs if the errorType is 3, so check if the character read was a '\n'
                 if(errorType == 3 && c == '\n')
@@ -897,455 +923,54 @@ tokenInfo getNextToken(twinBuffer B){
 
 }
 
-//             case 1:;
-//       c = get_char(fp);
-//       if (isalnum(c) || '_' == c) {
-//         state = 1;
-//       } else {
-//         state = 2;
-//       }
-//       break;
+void removeComments(char *testcaseFile, char *cleanFile){
+    int tcf = open(testcaseFile, O_RDONLY);
+    // Commenting this as printing is required in the console
+    // int cf = open(cleanFile,O_CREAT|O_WRONLY|O_TRUNC);
+    initializeBuffers(tcf);
+    // Check has 3 values
+    // 0 => Indicates it encountered a newline
+    // 2 => Indicates that the line has been confirmed to not be a comment
+    // 1 => Indicates that the line is confirmed to be a comment
+    int is_comment = 0;
+    char c;
+    while((c = next_char()) != EOF) {
 
-//     case 2:;
-//       retract(1);
-//       tkn = get_token();
-//       lexeme_begin = forward_ptr;
-//       state = 0;
-//       return tkn;
-//       break;
+        switch(is_comment) {
+            case 0: {
+                // if(c == ' ' || c == '\f' || c == '\r' || c == '\t' || c == '\v') {
+                    // write(1,&c,1);
+                    // is_comment = 0;
+                // }
+                if(c == '%') {
+                    is_comment = 1;
+                }
+                else if(c == '\n') {
+                    write(1,&c,1);
+                    is_comment = 0;
+                }
+                else {
+                    write(1,&c,1);
+                    is_comment = 2;
+                }
+                break;
+            }
+            case 1: {
+                if(c == '\n') {
+                    write(1,&c,1);
+                    is_comment = 0;
+                }
+                break;
+            }
+            case 2: {
+                write(1,&c,1);
+                if(c == '\n')
+                    is_comment = 0;
+                break;
+            }
+        }
 
-//     case 3:;
-//       c = get_char(fp);
-//       if (isdigit(c)) {
-//         state = 3;
-//       } else if ('.' == c) {
-//         state = 5;
-//       } else {
-//         state = 4;
-//       }
-//       break;
+    }
 
-//     case 4:;
-//       retract(1);
-//       tkn = get_token();
-//       lexeme_begin = forward_ptr;
-//       state = 0;
-//       return tkn;
-//       break;
-
-//     case 5:;
-//       c = get_char(fp);
-//       if ('.' == c) {
-//         state = 6;
-//       } else if (isdigit(c)) {
-//         state = 7;
-//       } else {
-//         retract(1);
-//         state = 48;
-//       }
-//       break;
-
-//     case 6:;
-//       retract(2);
-//       tkn = get_token();
-//       lexeme_begin = forward_ptr;
-//       state = 0;
-//       return tkn;
-//       break;
-
-//     case 7:;
-//       c = get_char(fp);
-//       if (isdigit(c)) {
-//         state = 7;
-//       } else if ('e' == c || 'E' == c) {
-//         state = 9;
-//       } else {
-//         state = 8;
-//       }
-//       break;
-
-//     case 8:;
-//       retract(1);
-//       tkn = get_token();
-//       lexeme_begin = forward_ptr;
-//       state = 0;
-//       return tkn;
-//       break;
-
-//     case 9:;
-//       c = get_char(fp);
-//       if ('+' == c || '-' == c) {
-//         state = 10;
-//       } else if (isdigit(c)) {
-//         state = 11;
-//       } else {
-//         retract(1);
-//         state = 48;
-//       }
-//       break;
-
-//     case 10:;
-//       c = get_char(fp);
-//       if (isdigit(c)) {
-//         state = 11;
-//       } else {
-//         retract(1);
-//         state = 48;
-//       }
-//       break;
-
-//     case 11:;
-//       c = get_char(fp);
-//       if (isdigit(c)) {
-//         state = 11;
-//       } else {
-//         state = 12;
-//       }
-//       break;
-
-//     case 12:;
-//       retract(1);
-//       tkn = get_token();
-//       lexeme_begin = forward_ptr;
-//       state = 0;
-//       return tkn;
-//       break;
-
-//     case 13:;
-//       c = get_char(fp);
-//       if (' ' == c || '\n' == c || '\t' == c) {
-//         if ('\n' == c)
-//           line_no++;
-//         state = 13;
-//       } else {
-//         state = 14;
-//       }
-//       break;
-
-//     case 14:;
-//       retract(1);
-//       tkn.name = DELIM;
-//       lexeme_begin = forward_ptr;
-//       state = 0;
-//       break;
-
-//     case 15:;
-//       tkn.name = PLUS;
-//       strncpy(tkn.id.str, "+", MAX_LEXEME_LEN);
-//       lexeme_begin = forward_ptr;
-//       state = 0;
-//       return tkn;
-//       break;
-
-//     case 16:;
-//       tkn.name = MINUS;
-//       strncpy(tkn.id.str, "-", MAX_LEXEME_LEN);
-//       lexeme_begin = forward_ptr;
-//       state = 0;
-//       return tkn;
-//       break;
-
-//     case 17:;
-//       c = get_char(fp);
-//       if ('*' == c) {
-//         state = 19;
-//       } else {
-//         state = 18;
-//       }
-//       break;
-
-//     case 18:;
-//       retract(1);
-//       tkn.name = MUL;
-//       strncpy(tkn.id.str, "*", MAX_LEXEME_LEN);
-//       lexeme_begin = forward_ptr;
-//       state = 0;
-//       return tkn;
-//       break;
-
-//     case 19:;
-//       lexeme_begin++;
-//       c = get_char(fp);
-//       if ('*' != c) {
-//         state = 19;
-//         if ('\n' == c)
-//           line_no++;
-//       } else {
-//         state = 20;
-//       }
-//       break;
-
-//     case 20:;
-//       lexeme_begin++;
-//       c = get_char(fp);
-//       if ('*' == c) {
-//         state = 21;
-//       } else {
-//         state = 19;
-//         if ('\n' == c)
-//           line_no++;
-//       }
-//       break;
-
-//     case 21:;
-//       state = 0;
-//       // get_char(fp);
-//       lexeme_begin = forward_ptr;
-//       break;
-
-//     case 22:;
-//       tkn.name = DIV;
-//       strncpy(tkn.id.str, "/", MAX_LEXEME_LEN);
-//       lexeme_begin = forward_ptr;
-//       state = 0;
-//       return tkn;
-//       break;
-
-//     case 23:;
-//       c = get_char(fp);
-//       if ('=' == c) {
-//         state = 25;
-//       } else if ('<' == c) {
-//         state = 26;
-//       } else {
-//         state = 24;
-//       }
-//       break;
-
-//     case 24:;
-//       retract(1);
-//       tkn.name = LT;
-//       strncpy(tkn.id.str, "<", MAX_LEXEME_LEN);
-//       lexeme_begin = forward_ptr;
-//       state = 0;
-//       return tkn;
-//       break;
-
-//     case 25:;
-//       tkn.name = LE;
-//       strncpy(tkn.id.str, "<=", MAX_LEXEME_LEN);
-//       lexeme_begin = forward_ptr;
-//       state = 0;
-//       return tkn;
-//       break;
-
-//     case 26:;
-//       c = get_char(fp);
-//       if ('<' == c) {
-//         state = 46;
-//       } else {
-//         retract(1);
-//         tkn.name = DEF;
-//         strncpy(tkn.id.str, "<<", MAX_LEXEME_LEN);
-//         lexeme_begin = forward_ptr;
-//         state = 0;
-//         return tkn;
-//       }
-//       break;
-
-//     case 27:;
-//       c = get_char(fp);
-//       if ('=' == c) {
-//         state = 29;
-//       } else if ('>' == c) {
-//         state = 30;
-//       } else {
-//         state = 28;
-//       }
-//       break;
-
-//     case 28:;
-//       retract(1);
-//       tkn.name = GT;
-//       strncpy(tkn.id.str, ">", MAX_LEXEME_LEN);
-//       lexeme_begin = forward_ptr;
-//       state = 0;
-//       return tkn;
-//       break;
-
-//     case 29:;
-//       tkn.name = GE;
-//       strncpy(tkn.id.str, ">=", MAX_LEXEME_LEN);
-//       lexeme_begin = forward_ptr;
-//       state = 0;
-//       return tkn;
-//       break;
-
-//     case 30:;
-//       c = get_char(fp);
-//       if ('>' == c) {
-//         state = 47;
-//       } else {
-//         retract(1);
-//         tkn.name = ENDDEF;
-//         strncpy(tkn.id.str, ">>", MAX_LEXEME_LEN);
-//         lexeme_begin = forward_ptr;
-//         state = 0;
-//         return tkn;
-//       }
-//       break;
-
-//     case 31:;
-//       c = get_char(fp);
-//       if ('=' == c) {
-//         state = 32;
-//       } else {
-//         retract(1);
-//         state = 48;
-//       }
-//       break;
-
-//     case 32:;
-//       tkn.name = EQ;
-//       strncpy(tkn.id.str, "==", MAX_LEXEME_LEN);
-//       lexeme_begin = forward_ptr;
-//       state = 0;
-//       return tkn;
-//       break;
-
-//     case 33:;
-//       c = get_char(fp);
-//       if ('=' == c) {
-//         state = 34;
-//       } else {
-//         retract(1);
-//         state = 48;
-//       }
-//       break;
-
-//     case 34:;
-//       tkn.name = NE;
-//       strncpy(tkn.id.str, "!=", MAX_LEXEME_LEN);
-//       lexeme_begin = forward_ptr;
-//       state = 0;
-//       return tkn;
-//       break;
-
-//     case 35:;
-//       c = get_char(fp);
-//       if ('=' == c) {
-//         state = 36;
-//       } else {
-//         state = 37;
-//       }
-//       break;
-
-//     case 36:;
-//       tkn.name = ASSIGNOP;
-//       strncpy(tkn.id.str, ":=", MAX_LEXEME_LEN);
-//       lexeme_begin = forward_ptr;
-//       state = 0;
-//       return tkn;
-//       break;
-
-//     case 37:;
-//       retract(1);
-//       tkn.name = COLON;
-//       strncpy(tkn.id.str, ":", MAX_LEXEME_LEN);
-//       lexeme_begin = forward_ptr;
-//       state = 0;
-//       return tkn;
-//       break;
-
-//     case 38:;
-//       c = get_char(fp);
-//       if ('.' == c) {
-//         state = 39;
-//       } else {
-//         retract(1);
-//         state = 48;
-//       }
-//       break;
-
-//     case 39:;
-//       tkn.name = RANGEOP;
-//       strncpy(tkn.id.str, "..", MAX_LEXEME_LEN);
-//       lexeme_begin = forward_ptr;
-//       state = 0;
-//       return tkn;
-//       break;
-
-//     case 40:;
-//       tkn.name = SEMICOL;
-//       strncpy(tkn.id.str, ";", MAX_LEXEME_LEN);
-//       lexeme_begin = forward_ptr;
-//       state = 0;
-//       return tkn;
-//       break;
-
-//     case 41:;
-//       tkn.name = COMMA;
-//       strncpy(tkn.id.str, ",", MAX_LEXEME_LEN);
-//       lexeme_begin = forward_ptr;
-//       state = 0;
-//       return tkn;
-//       break;
-
-//     case 42:;
-//       tkn.name = SQBO;
-//       strncpy(tkn.id.str, "[", MAX_LEXEME_LEN);
-//       lexeme_begin = forward_ptr;
-//       state = 0;
-//       return tkn;
-//       break;
-
-//     case 43:;
-//       tkn.name = SQBC;
-//       strncpy(tkn.id.str, "]", MAX_LEXEME_LEN);
-//       lexeme_begin = forward_ptr;
-//       state = 0;
-//       return tkn;
-//       break;
-
-//     case 44:;
-//       tkn.name = BO;
-//       strncpy(tkn.id.str, "(", MAX_LEXEME_LEN);
-//       lexeme_begin = forward_ptr;
-//       state = 0;
-//       return tkn;
-//       break;
-
-//     case 45:;
-//       tkn.name = BC;
-//       strncpy(tkn.id.str, ")", MAX_LEXEME_LEN);
-//       lexeme_begin = forward_ptr;
-//       state = 0;
-//       return tkn;
-//       break;
-//     case 46:;
-//       tkn.name = DRIVERDEF;
-//       strncpy(tkn.id.str, "<<<", MAX_LEXEME_LEN);
-//       lexeme_begin = forward_ptr;
-//       state = 0;
-//       return tkn;
-//       break;
-//     case 47:;
-//       tkn.name = DRIVERENDDEF;
-//       strncpy(tkn.id.str, ">>>", MAX_LEXEME_LEN);
-//       lexeme_begin = forward_ptr;
-//       state = 0;
-//       return tkn;
-//       break;
-//     case 48:
-//       tkn.name = LEX_ERROR;
-//       int lex_size = forward_ptr - lexeme_begin;
-//       if (lex_size < 0) {
-//         lex_size += num_of_rounds * BUFFER_SIZE;
-//         num_of_rounds = 0;
-//       }
-//       int last_index =
-//           (lex_size < MAX_LEXEME_LEN) ? lex_size : MAX_LEXEME_LEN - 1;
-//       lexeme[last_index] = '\0';
-//       strncpy(tkn.id.str, lexeme, MAX_LEXEME_LEN);
-//       lexeme_begin = forward_ptr;
-//       state = 0;
-//       return tkn;
-//     default:;
-//       break;
-//     }
-//   }
-//   return tkn;
-// }
-
-
-void removeComments(char *testcaseFile, char *cleanFile);
+    close(tcf);
+}
