@@ -3,14 +3,15 @@
 #define BUFFER_SIZE 4096
 #include "lookuptable.h"
 #include<stdio.h>
+#include<stdlib.h>
 typedef struct twinBuffer twinBuffer;
 element lookup_table[HASH_SIZE];
 
 
 struct twinBuffer{
-    char *buffer[2];
-    char *forward;
-    char *lexemeBegin;
+    char *buffer;
+    int forward;
+    int lexemeBegin;
 };
 
 typedef enum token_name{
@@ -30,7 +31,7 @@ typedef struct TOKEN{
         char * str; // lexeme, identifiers
     };
 }tokenInfo;
-
+twinBuffer *twin_buffer;
 #endif
 
 /*
