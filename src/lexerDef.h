@@ -3,6 +3,8 @@
 #define BUFFER_SIZE 4096
 
 typedef struct twinBuffer twinBuffer;
+typedef struct TOKEN tokenInfo;
+
 
 struct twinBuffer{
     char *buffer[2];
