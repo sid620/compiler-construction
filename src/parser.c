@@ -183,18 +183,18 @@ void IndividualFirst(grammar G, FirstAndFollow* ff, int ind) {
     // the required 'first' array 
 
 
-    int numOrs = G.allRules[ind].numOrs; // Number of rules on RHS 
+    int numOrs = G.allRules[ind].numOrs; // Number of rules in RHS 
     // printf("%d ", numOrs); 
     for (int i = 0; i < numOrs; i++) { // This block adds only all the terminals to the 'first' array
         if (G.allRules[ind].RHS[i].symbols[0].type == 1) { 
-            if (ff[ind].numFirst == 0) { 
-                ff[ind].first = (int*) malloc(sizeof(int) * 1); 
+            if (ff[ind].numFirst[i] == 0) { 
+                ff[ind].first[i] = (int*) malloc(sizeof(int) * 1); 
             } 
             else { 
-                ff[ind].first = (int*) realloc(ff[ind].first, sizeof(int) * (ff[ind].numFirst + 1)); 
+                ff[ind].first[i] = (int*) realloc(ff[ind].first[i], sizeof(int) * (ff[ind].numFirst[i] + 1)); 
             }
-            ff[ind].first[ff[ind].numFirst] = G.allRules[ind].RHS[i].symbols[0].symbol; 
-            ff[ind].numFirst += 1; 
+            ff[ind].first[i][ff[ind].numFirst[i]] = G.allRules[ind].RHS[i].symbols[0].symbol; 
+            ff[ind].numFirst[i] += 1; 
         } 
     } 
     // printf("%d ", ff[ind].numFirst); 
@@ -205,43 +205,54 @@ void IndividualFirst(grammar G, FirstAndFollow* ff, int ind) {
         if (G.allRules[ind].RHS[i].symbols[0].type == 0) { 
             int ind1 = G.allRules[ind].RHS[i].symbols[0].symbol; 
             // printf("%d ", ind1); 
-            if (ff[ind1].numFirst == 0) { // If 'first' has not already been computed 
+            if (ff[ind1].numFirst[0] == 0) { // If 'first' of this non-terminal has not already been computed 
                 IndividualFirst(G, ff, ind1); 
             } 
-            for (int j = 0; j < ff[ind1].numFirst; j++) { 
-                if (ff[ind1].first[j] != 0) { // Epsilon 
-                    if (isInArr(ff[ind].first, ff[ind1].first[j], ff[ind].numFirst) != 1) { // If the elements of 'first' of this non-terminal are not already in required array 
-                        ff[ind].first = (int*) realloc(ff[ind].first, sizeof(int) * (ff[ind].numFirst + 1)); 
-                        ff[ind].first[ff[ind].numFirst] = ff[ind1].first[j]; 
-                        ff[ind].numFirst += 1; 
+            for (int m = 0; m < G.allRules[ind1].numOrs; m++) { 
+                for (int j = 0; j < ff[ind1].numFirst[m]; j++) { 
+                    if (ff[ind1].first[m][j] != 0) { // Epsilon 
+                        if (isInArr(ff[ind].first[i], ff[ind1].first[m][j], ff[ind].numFirst[i]) != 1) { // If the elements of 'first' of this non-terminal are not already in required array 
+                            ff[ind].first[i] = (int*) realloc(ff[ind].first[i], sizeof(int) * (ff[ind].numFirst[i] + 1)); 
+                            ff[ind].first[i][ff[ind].numFirst[i]] = ff[ind1].first[m][j]; 
+                            ff[ind].numFirst[i] += 1; 
+                        }
                     }
-                }
-            } 
+                } 
+            }
+            
             if (G.allRules[ind1].epsilon == 1) { // If this non-terminal yields epsilon 
-                int k = 1; 
+                int k = 0; 
                 while (k < G.allRules[ind].RHS[i].numSyms) { 
                     int ind2 = G.allRules[ind].RHS[i].symbols[k].symbol; // Next symbol in current rule 
+                    if (ind2 == ind) { 
+                        k += 1; 
+                        continue; 
+                    }
                     if (G.allRules[ind].RHS[i].symbols[k].type == 1) { // Next symbol is a terminal 
-                        if (isInArr(ff[ind].first, ind2, ff[ind].numFirst) != 1) { 
-                            ff[ind].first = (int*) realloc(ff[ind].first, sizeof(int) * (ff[ind].numFirst + 1)); 
-                            ff[ind].first[ff[ind].numFirst] = ind2; 
-                            ff[ind].numFirst += 1; 
+                        if (isInArr(ff[ind].first[i], ind2, ff[ind].numFirst[i]) != 1) { 
+                            ff[ind].first[i] = (int*) realloc(ff[ind].first[i], sizeof(int) * (ff[ind].numFirst[i] + 1)); 
+                            ff[ind].first[i][ff[ind].numFirst[i]] = ind2; 
+                            ff[ind].numFirst[i] += 1; 
                         } 
                         break; 
                     } 
                     else { // Next symbol is a non-terminal 
-                        if (ff[ind2].numFirst == 0) { // If the next symbol's 'first' has not been computed 
+                        if (ff[ind2].numFirst[0] == 0) { // If the next symbol's 'first' has not been computed 
                             IndividualFirst(G, ff, ind2); 
                         } 
-                        for (int j = 0; j < ff[ind2].numFirst; j++) { 
-                            if (ff[ind2].first[j] != 0) { // Epsilon 
-                                if (isInArr(ff[ind].first, ff[ind2].first[j], ff[ind].numFirst) != 1) { // If the elements of 'first' of this non-terminal are not already in required array 
-                                    ff[ind].first = (int*) realloc(ff[ind].first, sizeof(int) * (ff[ind].numFirst + 1)); 
-                                    ff[ind].first[ff[ind].numFirst] = ff[ind2].first[j]; 
-                                    ff[ind].numFirst += 1; 
+                        for (int m = 0; m < G.allRules[ind2].numOrs; m++) { 
+                            for (int j = 0; j < ff[ind2].numFirst[m]; j++) { 
+                                if (ff[ind2].first[m][j] != 0) { // Epsilon 
+                                    if (isInArr(ff[ind].first[i], ff[ind2].first[m][j], ff[ind].numFirst[i]) != 1) { // If the elements of 'first' of this non-terminal are not already in required array 
+                                        ff[ind].first[i] = (int*) realloc(ff[ind].first[i], sizeof(int) * (ff[ind].numFirst[i] + 1)); 
+                                        ff[ind].first[i][ff[ind].numFirst[i]] = ff[ind2].first[m][j]; 
+                                        ff[ind].numFirst[i] += 1; 
+                                    }
                                 }
-                            }
-                        } 
+                            } 
+                        }
+                        
+
                         if (G.allRules[ind2].epsilon != 1) { // If this non-terminal does not yield epsilon, end the process 
                             break;                           
                         } 
@@ -348,26 +359,30 @@ void IndividualFollow(grammar G, FirstAndFollow* ff, int ind, int prev) {
                     else { 
                         int ind1 = G.allRules[i].RHS[j].symbols[k + 1].symbol; 
                         // printf("'%s' %d \n", G.nonTerminals[ind1], ff[ind1].numFirst); 
-                        if (ff[ind1].numFirst == 0) { 
+                        if (ff[ind1].numFirst[0] == 0) { 
                             IndividualFirst(G, ff, ind1); 
                         } 
-                        for (int j = 0; j < ff[ind1].numFirst; j++) { 
-                            // printf("%d \n", ff[ind1].first[j]); 
-                            if (ff[ind1].first[j] != 0) { // Epsilon 
-                                if (ff[ind].numFollow == 0) { 
-                                    ff[ind].follow = (int*) malloc(sizeof(int) * 1); 
-                                    ff[ind].follow[ff[ind].numFollow] = ff[ind1].first[j]; 
-                                    ff[ind].numFollow += 1; 
-                                } 
-                                else { 
-                                    if (isInArr(ff[ind].follow, ff[ind1].first[j], ff[ind].numFollow) != 1) { // If the elements of 'first' of this non-terminal are not already in required array 
-                                        ff[ind].follow = (int*) realloc(ff[ind].follow, sizeof(int) * (ff[ind].numFollow + 1)); 
-                                        ff[ind].follow[ff[ind].numFollow] = ff[ind1].first[j]; 
+                        for (int m = 0; m < G.allRules[ind1].numOrs; m++) { 
+                            for (int j = 0; j < ff[ind1].numFirst[m]; j++) { 
+                                // printf("%d \n", ff[ind1].first[j]); 
+                                if (ff[ind1].first[m][j] != 0) { // Epsilon 
+                                    if (ff[ind].numFollow == 0) { 
+                                        ff[ind].follow = (int*) malloc(sizeof(int) * 1); 
+                                        ff[ind].follow[ff[ind].numFollow] = ff[ind1].first[m][j]; 
                                         ff[ind].numFollow += 1; 
-                                    }
-                                } 
+                                    } 
+                                    else { 
+                                        if (isInArr(ff[ind].follow, ff[ind1].first[m][j], ff[ind].numFollow) != 1) { // If the elements of 'first' of this non-terminal are not already in required array 
+                                            ff[ind].follow = (int*) realloc(ff[ind].follow, sizeof(int) * (ff[ind].numFollow + 1)); 
+                                            ff[ind].follow[ff[ind].numFollow] = ff[ind1].first[m][j]; 
+                                            ff[ind].numFollow += 1; 
+                                        }
+                                    } 
+                                }
                             }
-                        } 
+                        }
+                        
+                         
                         // printf("%d %d %d \n", ff[ind].numFollow, G.allRules[ind1].epsilon, k + 2); 
                         if (G.allRules[ind1].epsilon != 1) { 
                             continue; 
@@ -387,18 +402,22 @@ void IndividualFollow(grammar G, FirstAndFollow* ff, int ind, int prev) {
                                     break; 
                                 } 
                                 else { // Next symbol is a non-terminal 
-                                    if (ff[ind2].numFirst == 0) { // If the next symbol's 'first' has not been computed 
+                                    if (ff[ind2].numFirst[0] == 0) { // If the next symbol's 'first' has not been computed 
                                         IndividualFirst(G, ff, ind2); 
                                     } 
-                                    for (int j = 0; j < ff[ind2].numFirst; j++) { 
-                                        if (ff[ind2].first[j] != 0) { // Epsilon 
-                                            if (isInArr(ff[ind].follow, ff[ind2].first[j], ff[ind].numFollow) != 1) { // If the elements of 'first' of this non-terminal are not already in required array 
-                                                ff[ind].follow = (int*) realloc(ff[ind].follow, sizeof(int) * (ff[ind].numFollow + 1)); 
-                                                ff[ind].follow[ff[ind].numFollow] = ff[ind2].first[j]; 
-                                                ff[ind].numFollow += 1; 
+                                    for (int m = 0; m < G.allRules[ind2].numOrs; m++) { 
+                                        for (int j = 0; j < ff[ind2].numFirst[m]; j++) { 
+                                            if (ff[ind2].first[m][j] != 0) { // Epsilon 
+                                                if (isInArr(ff[ind].follow, ff[ind2].first[m][j], ff[ind].numFollow) != 1) { // If the elements of 'first' of this non-terminal are not already in required array 
+                                                    ff[ind].follow = (int*) realloc(ff[ind].follow, sizeof(int) * (ff[ind].numFollow + 1)); 
+                                                    ff[ind].follow[ff[ind].numFollow] = ff[ind2].first[m][j]; 
+                                                    ff[ind].numFollow += 1; 
+                                                }
                                             }
-                                        }
-                                    } 
+                                        } 
+                                    }
+                                    
+                                    
                                     if (G.allRules[ind2].epsilon != 1) { // If this non-terminal does not yield epsilon, end the process 
                                         break;                           
                                     } 
@@ -431,11 +450,19 @@ FirstAndFollow* ComputeFirstAndFollowSets (grammar G) {
 
     FirstAndFollow* ff = (FirstAndFollow*) malloc(sizeof(FirstAndFollow) * G.numNonTerminals); 
     for (int i = 0; i < G.numNonTerminals; i++) { 
-        ff[i].numFirst = 0; 
+        int numOrs = G.allRules[i].numOrs; 
+        ff[i].numFirst = (int*) malloc(sizeof(int) * numOrs); 
+        for (int j = 0; j < numOrs; j++) { 
+            ff[i].numFirst[j] = 0; 
+        }
+        ff[i].first = (int**) malloc(sizeof(int*) * numOrs); 
         ff[i].numFollow = 0; 
     } 
+
+    // IndividualFollow(G, ff, 51, -1); 
+
     for (int i = G.numNonTerminals - 1; i >= 0; i--) { 
-        if (ff[i].numFirst == 0) { 
+        if (ff[i].numFirst[0] == 0) { 
             IndividualFirst(G, ff, i); 
         } 
         if (ff[i].numFollow == 0) { 
@@ -445,8 +472,6 @@ FirstAndFollow* ComputeFirstAndFollowSets (grammar G) {
 
     return ff; 
 } 
-
-
 
 void main() { 
     char* file; 
@@ -466,7 +491,24 @@ void main() {
     printf("%d %d \n", C.ff[n].numFirst, C.ff[n].numFollow); 
     for (int i = 0; i < C.ff[n].numFollow; i++) { 
         printf("%d '%s' \n", C.ff[n].follow[i], C.terminals[C.ff[n].follow[i]]); 
-    }
+    } 
+    
+    printf("\n***** \n"); 
+
+    int trial = 11; 
+    // printf("%d %d %d %d %d %d \n", C.allRules[23].numOrs, C.ff[24].numFirst[0], C.ff[24].numFirst[1], C.ff[24].numFirst[2], C.ff[24].numFirst[3], C.ff[24].numFirst[4]); 
+    printf("%d ", C.allRules[trial].numOrs); 
+    for (int i = 0; i < C.allRules[trial].numOrs; i++) { 
+        printf("%d ", C.ff[trial].numFirst[i]); 
+    } 
+    printf("\n"); 
+    for (int i = 0; i < C.allRules[trial].numOrs; i++) { 
+        for (int j = 0; j < C.ff[trial].numFirst[i]; j++) { 
+            printf("%d '%s' \n", C.ff[trial].first[i][j], C.terminals[C.ff[trial].first[i][j]]); 
+        }
+    } 
+    
+    
     printf("%d %d %d \n", C.allRules[0].numOrs, C.allRules[0].RHS[0].numSyms, C.allRules[0].RHS[0].symbols[1].type); 
     // printf("%d %d %d %d %d %d '%s' '%s' '%s' '%s' \n", C.ff[23].numFirst, C.ff[23].numFollow, C.ff[23].follow[0], C.ff[23].follow[1], C.ff[23].follow[2], C.ff[23].follow[3], C.terminals[C.ff[23].follow[0]], C.terminals[C.ff[23].follow[1]], C.terminals[C.ff[23].follow[2]], C.terminals[C.ff[23].follow[3]]); 
 }
