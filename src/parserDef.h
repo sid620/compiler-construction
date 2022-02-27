@@ -45,9 +45,9 @@ typedef struct rule{
 } rule; 
 
 typedef struct FirstAndFollow{ 
-    int numFirst; 
+    int* numFirst; 
     int numFollow; 
-    int* first; // Not using varSymbol* as they will be only terminals 
+    int** first; // Not using varSymbol* as they will be only terminals 
     int* follow; // Not using varSymbol* as they will be only terminals 
 } FirstAndFollow; 
 
