@@ -61,9 +61,16 @@ typedef struct grammar{
     FirstAndFollow* ff; 
 } grammar; 
 
-// typedef struct parseTable{ 
 
-// } parseTable; 
+typedef struct parseTableCell{ 
+    int ruleInd;
+    int rhsInd;        
+    int error;  // 1 if error state
+} parseTableCell; 
+
+typedef struct parseTable{ 
+    parseTableCell **cells;
+} parseTable; 
 
 // typedef struct parseTree{ 
 

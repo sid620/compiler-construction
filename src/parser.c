@@ -473,6 +473,82 @@ FirstAndFollow* ComputeFirstAndFollowSets (grammar G) {
     return ff; 
 } 
 
+// print the parse table cells which have error = 0
+void printParseTable(grammar G,parseTable* T){
+    int tot=0;
+    
+    printf("\nPRINTING PARSE TABLE: \n******************************************\n");
+    for(int i=0; i<G.numNonTerminals;i++){
+        for (int j = 0; j < G.numTerminals; j++){
+            if (T->cells[i][j].error==0){
+                printf("terminal: %s",G.terminals[j]);
+                tot++;
+                printRule(G, T->cells[i][j].ruleInd, T->cells[i][j].rhsInd);
+            }
+        }
+        printf("******************************************\n");
+    }
+    printf("total prod rules in parse table: %d\n",tot);
+}
+
+// Make a parse table, do proper initializations and return pointer to the table
+parseTable* intializeParseTable( int numNonTerminals, int numTerminals ){
+    
+    parseTableCell cells[numNonTerminals][numTerminals];
+
+    parseTable* T = (parseTable*)malloc((sizeof(parseTable)));
+
+    T->cells = (parseTableCell **)malloc(sizeof(parseTableCell *) * numNonTerminals);
+    
+    for (int i = 0; i < numNonTerminals; i++) {
+        T->cells[i] = (parseTableCell *)malloc(sizeof(parseTableCell) * numTerminals);
+    }
+
+    for( int i=0; i < numNonTerminals; i++ ){
+        for(int j = 0; j < numTerminals; j++){
+            T->cells[i][j].error = 1;
+            T->cells[i][j].ruleInd = -1;
+            T->cells[i][j].rhsInd = -1;
+        }
+    }
+
+    return T;
+}
+
+void createParseTable(grammar G, FirstAndFollow* ff, parseTable* T){
+    // For each production A -> alpha of the grammar
+    //      1. For each terminal a in FIRST(alpha), add A -> alpha to M [A][a]
+    //      2. If eps is in FIRST(alpha), then for each terminal b ( and "$" if applicable) in FOLLOW(A), add A -> alpha to M [A][b]. 
+    
+    int numNonTerminals = G.numNonTerminals, numTerminals = G.numTerminals;
+    int index;
+
+    // for each grammar rule
+    for( int i=0; i < G.totalNumRules; i++ ){
+        // for each indivisual production rule
+        for(int j = 0; j < G.allRules[i].numOrs; j++){
+            // for each terminal in first(alpha)
+            for( int terminal_num = 0; terminal_num < G.ff[i].numFirst[j]; terminal_num++ ){
+                // assign the production rule details
+                index = G.ff[i].first[j][terminal_num];
+                if ( index != 0 ){   
+                    T->cells[i][index].error = 0;
+                    T->cells[i][index].ruleInd = i;
+                    T->cells[i][index].rhsInd = j;
+                }else{
+                    // for each follow terminal, add the prod rule
+                    for( int follow_terminal_num = 0; follow_terminal_num < G.ff[i].numFollow; follow_terminal_num++ ){
+                        index = G.ff[i].follow[follow_terminal_num]; 
+                        T->cells[i][index].error = 0;
+                        T->cells[i][index].ruleInd = i;
+                        T->cells[i][index].rhsInd = j;
+                    }
+                }
+            }
+        }
+    }
+}
+
 void main() { 
     char* file; 
     file = "grammar.txt"; 
@@ -488,26 +564,25 @@ void main() {
     C.ff = ComputeFirstAndFollowSets(C); 
     printf("\n***** \n"); 
     int n = 48; 
-    printf("%d %d \n", C.ff[n].numFirst, C.ff[n].numFollow); 
+    printf("C.ff[n].numFirst %d  C.ff[n].numFollow %d \n", C.ff[n].numFirst[0], C.ff[n].numFollow); 
     for (int i = 0; i < C.ff[n].numFollow; i++) { 
         printf("%d '%s' \n", C.ff[n].follow[i], C.terminals[C.ff[n].follow[i]]); 
     } 
     
     printf("\n***** \n"); 
 
-    int trial = 11; 
+    int trial = 10; 
     // printf("%d %d %d %d %d %d \n", C.allRules[23].numOrs, C.ff[24].numFirst[0], C.ff[24].numFirst[1], C.ff[24].numFirst[2], C.ff[24].numFirst[3], C.ff[24].numFirst[4]); 
-    printf("%d ", C.allRules[trial].numOrs); 
+    printf("C.allRules[trial].numOrs %d ", C.allRules[trial].numOrs); 
     for (int i = 0; i < C.allRules[trial].numOrs; i++) { 
-        printf("%d ", C.ff[trial].numFirst[i]); 
+        printf("C.ff[trial].numFirst[i] %d ", C.ff[trial].numFirst[i]); 
     } 
-    printf("\n"); 
-    for (int i = 0; i < C.allRules[trial].numOrs; i++) { 
-        for (int j = 0; j < C.ff[trial].numFirst[i]; j++) { 
-            printf("%d '%s' \n", C.ff[trial].first[i][j], C.terminals[C.ff[trial].first[i][j]]); 
-        }
-    } 
+
+    printRule(C,trial,-1);
     
+    parseTable* T = intializeParseTable(C.numNonTerminals,C.numTerminals);
+    createParseTable(C,C.ff,T);
+    printParseTable(C,T);
     
     printf("%d %d %d \n", C.allRules[0].numOrs, C.allRules[0].RHS[0].numSyms, C.allRules[0].RHS[0].symbols[1].type); 
     // printf("%d %d %d %d %d %d '%s' '%s' '%s' '%s' \n", C.ff[23].numFirst, C.ff[23].numFollow, C.ff[23].follow[0], C.ff[23].follow[1], C.ff[23].follow[2], C.ff[23].follow[3], C.terminals[C.ff[23].follow[0]], C.terminals[C.ff[23].follow[1]], C.terminals[C.ff[23].follow[2]], C.terminals[C.ff[23].follow[3]]); 
