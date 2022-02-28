@@ -1,5 +1,6 @@
 #include "lookuptable.h"
 #include "lookuptableDef.h"
+// #include "lexerDef.h"
 int maxLen(int a){
     int count =0;
     while(a>0){
@@ -52,7 +53,7 @@ int search(char * lexeme){
     }
     return -1;
 }
-int insert(char *lexeme){
+int insert(char *lexeme, token_name tkn){
     int i = 0;
     int j;
     while(i<HASH_SIZE){
@@ -60,6 +61,7 @@ int insert(char *lexeme){
         if(!lookup_table[j].present){
             lookup_table[j].lexeme = lexeme;
             lookup_table[j].present = true;
+            lookup_table[j].tkn=tkn;
             return j;
         }
     }
@@ -67,6 +69,7 @@ int insert(char *lexeme){
 void initialize(){
     FILE *fp = fopen("keywords_lexemes.txt","r");
     char str[20]="";
+    int index;
     printf("start\n");
     for(int i=0;i<HASH_SIZE;i++){
         lookup_table[i].present=false;
@@ -76,10 +79,11 @@ void initialize(){
     // char c='';
     // printf("%c\n",c);
     while(!feof(fp)){
-        fscanf(fp,"%20[^,^\n],",str);
+        fscanf(fp,"%d %20[^,^\n],",&index,str);
+        // fscanf(fp,"%20[^,^\n],");
         if(search(str)==-1){
-            printf("%s",str);   
-            printf(" %d\n",insert(str));  // index for the lexeme
+            printf("lexeme: %s enum: %d ",str,mapIndexToEnum[index]);   
+            printf("hashvalue: %d\n",insert(str, mapIndexToEnum[index]));  // index for the lexeme
         }
         fgetc(fp);
         // printf(" %ld\n",strlen(str));
