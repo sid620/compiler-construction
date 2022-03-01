@@ -299,7 +299,7 @@ tokenInfo getNextToken(FILE *fp){
                     dfa_state = 7;
                 }
              
-                else if(char_match(c,EOF)) {    // Input stream ends
+                else if(char_match(c,EOF) || c==0) {    // Input stream ends
                     // Indicates end of input
                     // printf("end of input\n");
                     char *lex = accept(true);
@@ -1095,7 +1095,7 @@ tokenInfo getNextToken(FILE *fp){
 //     close(tcf);
 // }
 int main(){
-    FILE *f =fopen("./testcases_stage1/t3.txt","r");
+    FILE *f =fopen("./testcases_stage1/t2.txt","r");
     initialize();
     f = getStream(f,0);
     // printf("%c this",twin_buffer->buffer[0]);
