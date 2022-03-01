@@ -1,7 +1,7 @@
 #ifndef LEXER_DEF
 #define LEXER_DEF
 #define BUFFER_SIZE 4096
-#define MAX_LEXEME 30
+#define MAX_LEXEME 40
 // #include "lookuptable.h"
 #include<stdio.h>
 #include<stdlib.h>
@@ -82,7 +82,8 @@ typedef enum token_name{
     TK_GT,
     TK_GE,
     TK_NE,
-    ERROR   // special token when error is encountered
+    ERROR,   // special token when error is encountered
+    TK_EOF,
 }token_name;
 
 typedef struct TOKEN{
