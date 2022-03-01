@@ -11,11 +11,12 @@
 //     "idList", "more_ids", "definetypestmt", "A"}; 
 
 char* terminals[] = { 
-    "eps", "TK_MAIN", "TK_END", "TK_FUNID", "TK_SEM", "TK_INPUT", "TK_PARAMETER", "TK_LIST", "TK_SQL", "TK_SQR", "TK_OUTPUT", "TK_ID", 
+   "eps", "TK_MAIN", "TK_END", "TK_FUNID", "TK_SEM", "TK_INPUT", "TK_PARAMETER", "TK_LIST", "TK_SQL", "TK_SQR", "TK_OUTPUT", "TK_ID", 
     "TK_INT", "TK_REAL", "TK_RECORD", "TK_RUID", "TK_UNION", "TK_COMMA", "TK_ENDRECORD", "TK_ENDUNION", "TK_TYPE", "TK_COLON", 
     "TK_FIELDID", "TK_GLOBAL", "TK_ASSIGNOP", "TK_DOT", "TK_CALL", "TK_WITH", "TK_WHILE", "TK_OP", "TK_CL", "TK_ENDWHILE", 
-    "TK_IF", "TK_THEN", "TK_ENDIF", "TK_ELSE", "TK_READ", "TK_WRITE", "TK_MUL", "TK_DIV", "TK_PLUS", "TK_MINUS", "TK_OP", "TK_NUM", 
-    "TK_RNUM", "TK_AND", "TK_OR", "TK_LT", "TK_GT", "TK_LE", "TK_GE", "TK_NE", "TK_EQ", "TK_RETURN", "TK_DEFINETYPE", "TK_AS", "$"}; 
+    "TK_IF", "TK_THEN", "TK_ENDIF", "TK_ELSE", "TK_READ", "TK_WRITE", "TK_MUL", "TK_DIV", "TK_PLUS", "TK_MINUS", "TK_NUM", 
+    "TK_RNUM", "TK_AND", "TK_OR", "TK_LT", "TK_GT", "TK_LE", "TK_GE", "TK_NE", "TK_EQ", "TK_RETURN", "TK_DEFINETYPE", "TK_AS", "TK_EOF","TK_PARAMETERS",
+    "TK_NOT","ERROR"}; 
 
 // #define NUM_NON_TERMINALS 53 
 // #define NUM_TERMINALS 56 
