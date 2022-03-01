@@ -299,10 +299,11 @@ tokenInfo getNextToken(FILE *fp){
                     dfa_state = 7;
                 }
              
-                else if(char_match(c,EOF)) {    // Input stream ends
+                else if(char_match(c,EOF) || c==0) {    // Input stream ends
                     // Indicates end of input
                     // printf("end of input\n");
                     char *lex = accept(true);
+                    printf("%s eof\n",lex);
                     populateToken(TOK,TK_EOF,lex,lineNo);
                     free(lex);
                     return *TOK;
@@ -319,7 +320,7 @@ tokenInfo getNextToken(FILE *fp){
                     // Other new characters are reported as error
                     printf("Line No %d: Error: Unknown symbol <%c>\n" ,lineNo,c);
                     // Throw lexical error!
-
+                    // printf("y\n");
                     // This is the only case where accept(true) is used to report error since the lexeme only has one useful character
                     char *str = accept(true);
                     populateToken(TOK,ERROR,str,lineNo);
@@ -567,7 +568,7 @@ tokenInfo getNextToken(FILE *fp){
                 reset(1);
                 char* lex = accept(false);
                 if(strlen(lex) < 2) {
-                    printf("Line No %d: Error :Variable Identifier is smaller than the prescribed lentgh of two characters\n" , lineNo);
+                    printf("Line No %d: Error :Variable Identifier is smaller than the prescribed length of two characters\n" , lineNo);
                     lexError=3;
                     populateToken(TOK,ERROR,lex,lineNo);
                 }
