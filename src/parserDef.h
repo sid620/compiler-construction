@@ -45,9 +45,9 @@ typedef struct rule{
 } rule; 
 
 typedef struct FirstAndFollow{ 
-    int numFirst; 
+    int* numFirst; 
     int numFollow; 
-    int* first; // Not using varSymbol* as they will be only terminals 
+    int** first; // Not using varSymbol* as they will be only terminals 
     int* follow; // Not using varSymbol* as they will be only terminals 
 } FirstAndFollow; 
 
@@ -61,9 +61,16 @@ typedef struct grammar{
     FirstAndFollow* ff; 
 } grammar; 
 
-// typedef struct parseTable{ 
 
-// } parseTable; 
+typedef struct parseTableCell{ 
+    int ruleInd;
+    int rhsInd;        
+    int error;  // 1 if error state
+} parseTableCell; 
+
+typedef struct parseTable{ 
+    parseTableCell **cells;
+} parseTable; 
 
 // typedef struct parseTree{ 
 

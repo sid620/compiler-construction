@@ -27,6 +27,38 @@ int isInArr(int* arr, int num, int lim) {
 } 
 
 
+void printRule(grammar G, int ruleNum, int rhsInd){
+
+    // print entire rule
+    printf("\n\nprinting ruleNumber: %d\n",G.allRules[ruleNum].ruleNumber);
+    printf("LHS: %s\n",G.nonTerminals[G.allRules[ruleNum].LHS]);
+    printf("RHS: ");
+    if (rhsInd==-1){
+        for(int i=0; i<G.allRules[ruleNum].numOrs;i++){
+            for(int k=0; k<G.allRules[ruleNum].RHS[i].numSyms;k++){
+                if (G.allRules[ruleNum].RHS[i].symbols[k].type==0)
+                    printf("%s ",G.nonTerminals[G.allRules[ruleNum].RHS[i].symbols[k].symbol]);
+                else
+                    printf("%s ",G.terminals[G.allRules[ruleNum].RHS[i].symbols[k].symbol]);
+            }
+            if (i<G.allRules[ruleNum].numOrs-1)
+                printf("| ");
+        }
+        printf("\n\n\n");
+    }
+    // print specific RHS prod rule
+    else{
+        for(int k=0; k<G.allRules[ruleNum].RHS[rhsInd].numSyms;k++){
+            if (G.allRules[ruleNum].RHS[rhsInd].symbols[k].type==0)
+                printf("%s ",G.nonTerminals[G.allRules[ruleNum].RHS[rhsInd].symbols[k].symbol]);
+            else
+                printf("%s ",G.terminals[G.allRules[ruleNum].RHS[rhsInd].symbols[k].symbol]);
+        }
+        printf("\n\n\n");
+    }
+}
+
+
 void prettyPrintGrammar(grammar G){
     for (int i=0;i<G.totalNumRules;i++){
         printf("Rule Num: %d ",i);

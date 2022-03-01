@@ -7,3 +7,4 @@ void prettyPrintGrammar(grammar G);
 int findIndex(char** arr, int lim, char* str);
 void printArr(char** arr, int lim);
 int isInArr(int* arr, int num, int lim);
+void printRule(grammar G, int ruleNum, int rhsInd);
