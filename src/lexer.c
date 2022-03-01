@@ -1,61 +1,225 @@
 #include "lexer.h"
 #include "lexerDef.h"
 #include <fcntl.h>
+/*
+Tokens are present between lexemeBegin and forward (inclusive)
+*/
 
-
+/*
+    checks if two characters match
+*/
 int char_match(char a, char b){
     return a == b;
 }
 
+/*
+    Function which checks whether an identifier is a keyword
+*/
+token_name actualToken(token_name expected, char *lexeme){
+    int j = search(lexeme);
+    if(j==-1)return expected;
+    else{
+        // printf("%s %s\n",lookup_table[j].lexeme,lexeme);
+        return lookup_table[j].tkn;
+    }
+} 
+
+/*
+    Function checks whether a character lies in a range
+*/
 int range_match(char a, char start, char end) {
     return (a >= start && a <= end);
 }
 
-char next_char(){
-
-}
-
-
-
-char *copy_string(char *start, char *end){
-    int length = end - start + 1;
-    // length+1 for the null-terminator
-    char *temp = (char *)malloc(sizeof(char *)*(length + 1));
-    // Copy the sub-string
-    memcpy(temp, start, length);
-    // Terminate it
-    temp[length] = '\0';
-
-    return temp;
-}
-
-FILE *getStream(FILE *fp);
-
-void retract(int amt) {
-    while(amt > 0) {
-        --forward;
-        --amt;
+/*
+    This function is used when a token is valid.
+    The way forward, lexemeBegin, and the strings are returned depends on whether the last character of twin_buffer->lexeme is useful or not
+    In all of the cases accept(false) is preceded by reset(1)
+*/
+char* accept(bool isLastUseful){
+    char *str="";
+    if(isLastUseful){
+        twin_buffer->lexemeBegin=twin_buffer->forward+1;    // the begin pointer is updated for future use
+        twin_buffer->lexeme[twin_buffer->pos]='\0';         // '\0' is appended for string operations
+        str=twin_buffer->lexeme;                            // the value to be returned is stored
     }
-    next_characterReadAfterRetraction = 1;
+    else{
+        if(twin_buffer->pos!=0){
+            twin_buffer->lexeme[twin_buffer->pos-1]='\0';
+            str=twin_buffer->lexeme;
+            // printf("%s accepted \n",str);
+        }
+    }
+    // printf("%s \n",str);
+
+    // The below way of populating strings works, i.e. the values are not erased post memset.
+    char *ret =(char *)malloc(sizeof(char)*strlen(str));
+    for(int i=0;i<strlen(str);i++){
+        ret[i] = *(str + i);    
+    }
+    dfa_state=0;                                            // dfa_state is initialized to zero for future use
+    // printf("%s \n",str);    
+    twin_buffer->lexemeBegin=twin_buffer->forward+1;
+    // printf("%s\n",str) ;
+    memset(twin_buffer->lexeme,0,strlen(twin_buffer->lexeme));  // empty contents of lexeme string once it is used
+    // printf("%s\n",ret);
+    twin_buffer->pos=0;                                         // re-initialize the position to which a new character is added in twin_buffer->lexeme
+    return ret;
 }
 
-tokenInfo getNextToken(twinBuffer B){
-    char c = 1;
-    tokenInfo *TOK = (tokenInfo *)malloc(sizeof(tokenInfo));
-    int error;
 
+/*
+    This function is used to return erroneous lexemes. reset(1) is called before reject() to reset the forward 
+    pointer for tokenizing other tokens.
+*/
+
+char * reject(){                                                
+    char * str="";
+    // printf("%d \n",strlen(twin_buffer->lexeme));    
+    if(twin_buffer->pos!=0){
+        twin_buffer->lexeme[twin_buffer->pos-1]='\0';   // append '\0' for string operations
+        str = twin_buffer->lexeme;
+    }
+
+    // below way of populating strings is unaffected by memset
+    char *ret =(char *)malloc(sizeof(char)*strlen(str));
+    for(int i=0;i<strlen(str);i++){
+        ret[i] = *(str + i);    
+    }
+    
+    dfa_state=0;
+    twin_buffer->lexemeBegin=twin_buffer->forward+1;
+    
+
+    memset(twin_buffer->lexeme,0,strlen(twin_buffer->lexeme));  // empty contents of lexeme string once it is used
+    twin_buffer->pos=0;
+
+    return ret;
+}
+
+/*
+    This function populates tokens which are returned by getNextToken(FILE *fp)
+*/
+void populateToken(tokenInfo *TOK, token_name t, char * lexeme, int lineNo){
+    TOK->line=lineNo;
+    TOK->tkn_name=t;
+    if (t == TK_NUM){
+        TOK->value.num = atoi(lexeme);
+    }
+    else if (t == TK_RNUM){
+        TOK->value.rnum.v=atof(lexeme);
+        TOK->value.rnum.rep=(char *)malloc(sizeof(char)*strlen(lexeme));
+         for(int i=0;i<strlen(lexeme);i++)
+            TOK->value.rnum.rep[i] = *(lexeme +i);       
+    }
+    else{
+        TOK->value.str=(char *)malloc(sizeof(char)*strlen(lexeme));
+
+        for(int i=0;i<strlen(lexeme);i++)
+            TOK->value.str[i] = *(lexeme +i);
+    }
+    if(t!=ERROR && t!=TK_EOF)
+    printf("Line no. %d  Lexeme %s Token %s\n", lineNo, lexeme, enumToString[t]);
+}   
+
+/*
+    This function initializes the twin buffer. The EOF characters are added at index BUFFER_SIZE - 1 and 2*BUFFER_SIZE - 1, to work as sentinels 
+    for performing twin buffer operations
+*/
+void initializeTwinBuffer(){
+    twin_buffer = (twinBuffer *)malloc(sizeof(twinBuffer));
+    twin_buffer->buffer=(char *)malloc(sizeof(char)*BUFFER_SIZE*2);
+    twin_buffer->lexeme=(char *)malloc(sizeof(char)*MAX_LEXEME);
+    memset(twin_buffer->buffer,0,BUFFER_SIZE*2);
+    // twin_buffer->lexeme = "sss";
+    // printf("%s \n",twin_buffer->lexeme);
+    twin_buffer->lexemeBegin=0;
+    twin_buffer->forward=-1;
+    // initialize ends with sentinels
+    (twin_buffer->buffer)[BUFFER_SIZE-1]=EOF;
+    (twin_buffer->buffer)[2*BUFFER_SIZE-1]=EOF;
+    dfa_state=0;
+    twin_buffer->pos=0;
+    lineNo = 1;
+    // printf("done initTwinBuff\n");
+
+}
+
+/*
+    This function adds characters to twin_buffer->lexeme if it isn't a part of comment and if the length isnt exceeded. Here the working of twin_buffer is implemented.
+    twin_buffer->forward is always incremented first.
+    Also updates the position of pos to which new character is added.
+    Returns the character which is added to twin_buffer->lexeme
+*/
+char next_char(FILE *fp, bool isComment, bool isLengthExceeded){
+    twin_buffer->forward++;
+    // printf("%s lexeme\n",twin_buffer->lexeme);
+    if(twin_buffer->buffer[twin_buffer->forward]==EOF){
+        if(twin_buffer->forward==BUFFER_SIZE){
+            fp = getStream(fp,1);
+            twin_buffer->forward=BUFFER_SIZE;
+        }
+        else if(twin_buffer->forward==2*BUFFER_SIZE){
+            fp=getStream(fp,0);
+            twin_buffer->forward=0;
+        }
+        else{
+            // printf("End of input\n");
+        }
+    }
+    if(!isComment && !isLengthExceeded){
+        twin_buffer->lexeme[twin_buffer->pos]=twin_buffer->buffer[twin_buffer->forward]; // add character to twin_buffer->lexeme
+        twin_buffer->pos++;
+    }
+    return twin_buffer->buffer[twin_buffer->forward];
+}
+
+
+/*  bufferNumer=0 implies first buffer to be filled
+    bufferNumber=1 implies second buffer to be filled
+*/
+FILE *getStream(FILE *fp, int bufferNumber){
+    if(twin_buffer==NULL){
+        // printf("working\n");
+        initializeTwinBuffer();
+        if(!bufferNumber) fread(&twin_buffer->buffer[0],1,BUFFER_SIZE-1,fp);
+        // printf("done read\n");
+    }
+    else{
+        if(!bufferNumber) fread(&twin_buffer->buffer[0],1,BUFFER_SIZE-1,fp);
+        else fread(&twin_buffer[BUFFER_SIZE],1,BUFFER_SIZE-1,fp);
+    }
+    return fp;
+}
+
+/*
+    updates twin_buffer->forward pointer
+*/
+void reset(int amt) {
+    twin_buffer->forward-=amt;
+}
+
+
+/*
+    This function returns the next token (which can be ERROR)
+    that lies between twin_buffer->lexemeBegin and twin_buffer->forward
+*/
+tokenInfo getNextToken(FILE *fp){
+    char c;
+    lexError = 0; // initially there are no errors, I have just stored it here in case ERROR token needs to be differentiated further
+    tokenInfo *TOK = (tokenInfo *)malloc(sizeof(tokenInfo));    // Allocate memory to the token
     while(1){
-        if (c == EOF)   return NULL;
-
         switch(dfa_state){
             case 0: {
-                c = next_char();
+                c = next_char(fp,false,false);
+            
                 if(char_match(c,'<')){
                     dfa_state = 1;
                 }
-                // else if(char_match(c,'\n')||char_match(c,'\t')||char_match(c,'\f')||char_match(c,'\v')||char_match(c,'\r')){
-                //     dfa_state = 7;
-                // }
+                else if(char_match(c,'\n')||char_match(c,'\t')||char_match(c,'\f')||char_match(c,'\v')||char_match(c,'\r')){
+                    dfa_state = 7;
+                    if(char_match(c,'\n'))lineNo++;
+                }
                 else if(char_match(c,'>')){
                     dfa_state = 9;
                 }
@@ -130,26 +294,46 @@ tokenInfo getNextToken(twinBuffer B){
                 }
                 else if(char_match(c,'\n')|| char_match(c,' ') || char_match(c,'\f') || char_match(c,'\r') || char_match(c,'\t') || char_match(c,'\v')) {
                     // Advance lexemeBegin as the current lexeme should not include this character
-                    lexemeBegin++;
+                    // lexemeBegin++;
+                    // printf("whitespace \n");
                     dfa_state = 7;
                 }
              
-                else if(char_match(c,EOF)) {
+                else if(char_match(c,EOF)) {    // Input stream ends
                     // Indicates end of input
-                    return NULL;
+                    // printf("end of input\n");
+                    char *lex = accept(true);
+                    populateToken(TOK,TK_EOF,lex,lineNo);
+                    free(lex);
+                    return *TOK;
+                }
+                else if(range_match(c,'A','Z')){    
+                    /*
+                        This operation is only performed when the first character of twin_buffer->lexeme is uppercase.
+                        Since no other token is possible it only checks if the token is a keyword in state 59
+                    */
+                    dfa_state=59;   // check if it is a token
+
                 }
                 else {
-                    printf("Line %d : Cannot recognize character %c \n" ,lineCount,c);
+                    // Other new characters are reported as error
+                    printf("Line No %d: Error: Unknown symbol <%c>\n" ,lineNo,c);
                     // Throw lexical error!
-                    //  errorType = 6;     //**************check this 
-                    dfa_state = 60;     //new error state
+
+                    // This is the only case where accept(true) is used to report error since the lexeme only has one useful character
+                    char *str = accept(true);
+                    populateToken(TOK,ERROR,str,lineNo);
+                    lexError = 1;    
+                    dfa_state = 0;  
+                    return *TOK;   
                 }
                 break;
             }
 
             
             case 1: {
-                c = next_char();
+                // currently twin_buffer->lexeme has "<"
+                c = next_char(fp,false,false);
                 if(c == '-') {
                     dfa_state = 2;
                 }
@@ -162,83 +346,77 @@ tokenInfo getNextToken(twinBuffer B){
                 break;
             }
             case 2: {
-                c = next_char();
+                c = next_char(fp,false,false);
                 if(c == '-') {
                     dfa_state = 3;
                 }
                 else {
                     // Throw lexical error.
-                    char* pattern = copy_string(lexemeBegin, forward-sizeof(char));
-                    printf("Line %d : Cannot recognize pattern %s, Were you tring for <--- ?\n" ,lineCount,pattern);
+                    reset(1);
+                    char* pattern = reject();
+                    printf("Line no: %d : Error : Unknown pattern <%s>\n" ,lineNo,pattern);
                     free(pattern);
-                    errorType = 3;
-                    dfa_state = 60;
-
-                    // Retract because an unforseen character lead the lexer to this state, it can be a correct character which shouldl be included in the next token
-                    retract(1);
+                    lexError = 2;
                 }
                 break;
             }
             case 3: {
-                c = next_char();
+                c = next_char(fp,false,false);
                 if(c == '-') {
                     dfa_state = 4;
                 }
                 else {
                     // Throw lexical error
-                    char* pattern = copy_string(lexemeBegin, forward-sizeof(char));
-                    printf("Line %d : Cannot recognize pattern %s, Were you tring for <--- ?\n" ,lineCount,pattern);
+                    reset(1);
+                    char* pattern = reject();
+                    printf("Line no: %d : Error: Unknown pattern <%s>\n" ,lineNo,pattern);
                     free(pattern);
-                    errorType = 3;
-                    dfa_state = 60;
-
-                    // Retract because an unforseen character lead the lexer to this state, it can be a correct character which shouldl be included in the next token
-                    retract(1);
+                    lexError=2;
+                    dfa_state=0;
                 }
                 break;
             }
             case 4: {
-                char* lex = copy_string(lexemeBegin,forward);
-                populateToken(t,TK_ASSIGNOP,lex,lineCount,0,NULL);
-                accept();
-                return t;
+                char *str = accept(true);
+                populateToken(TOK,TK_ASSIGNOP,str,lineNo);
+                return *TOK;
                 break;
             }   
             case 5: {
-                retract(1);
-                char* lex = copy_string(lexemeBegin,forward);
-
-                if(c == '\n')
-                    populateToken(t,TK_LT,lex,lineCount-1,0,NULL);
-                else
-                    populateToken(t,TK_LT,lex,lineCount,0,NULL);
-
-                accept();
-                return t;
+                reset(1);
+                char *str = accept(false);
+                populateToken(TOK,TK_LT,str,lineNo);
+                return *TOK;
                 break;
             }    
             case 6: {
-                char* lex = copyString(lexemeBegin,forward);
-                populateToken(t,TK_LE,lex,lineCount,0,NULL);
-                accept();
-                return t;
+                char *str = accept(true);
+                populateToken(TOK,TK_LE,str,lineNo);
+                // accept(false);
+                return *TOK;
                 break;
             }
 
             case 7: {
-                c = next_char();
-                if(c == '\n'||c == '\v'||c == '\t'||c == '\f'||c == '\v') {
+                c = next_char(fp,false,false);
+                // printf("%c \n",c);
+                if(c == '\n'||c == '\r'||c == '\t'||c == '\f'||c == '\v') {
                     dfa_state = 7;
+                    if(char_match(c,'\n'))lineNo++;
                 }
-                else {
-                    dfa_state = 8;
-                    retract(1);
-                }
+                else dfa_state =8;
                 break;
             }
-       
+            case 8: {
+                reset(1); 
+                // printf("state 8 \n"); 
+                // twin_buffer->lexemeBegin=twin_buffer->forward+1;
+                accept(false);
+                // dfa_state=0;
+                break;
+            }
             case 9: {
-                c = next_char();
+                c = next_char(fp,false,false);
                 if(c == '=') {
                     dfa_state = 10;
                 }
@@ -248,77 +426,69 @@ tokenInfo getNextToken(twinBuffer B){
                 break;
             }
             case 10: {
-                char* lex = copy_string(lexemeBegin,forward);
-                populateToken(t,TK_GE,lex,lineCount,0,NULL);
-                accept();
-                return t;
+                char* lex = accept(true);
+                populateToken(TOK,TK_GE,lex,lineNo);
+                return *TOK;
                 break;
             }
             case 11: {
-                retract(1);
-                char* lex = copy_string(lexemeBegin,forward);
-                if(c == '\n')
-                    populateToken(t,TK_GT,lex,lineCount-1,0,NULL);
-                else
-                    populateToken(t,TK_GT,lex,lineCount,0,NULL);
-                accept();
-                return t;
+                reset(1);
+                char *lex=accept(false);
+                populateToken(TOK,TK_GT,lex,lineNo);
+                return *TOK;
                 break;
             }
             case 12: {
-                c = next_char();
+                c = next_char(fp,false,false);
                 if(c == '=') {
                     dfa_state = 13;
                 }
                 else {
-                    // Throw lexical error
-                    char* pattern = copy_string(lexemeBegin, forward-sizeof(char));
-                    printf("Line %d : Cannot recognize pattern %s, Were you tring for == ?\n" ,lineCount,pattern);
+                    reset(1);
+                    char *pattern = reject();
+                    printf("Line no: %d : Error :Unknown pattern <%s>\n" ,lineNo,pattern);
+                    populateToken(TOK,ERROR,pattern,lineNo);
                     free(pattern);
-                    errorType = 3;
-                    dfa_state = 60;
-
-                    // Retract because an unforseen character lead the lexer to this state, it can be a correct character which shouldl be included in the next token
-                    retract(1);
+                    lexError=2;
+                    dfa_state = 0;
+                    return *TOK;
                 }
                 break;
             }
             case 13: {
-                char* lex = copy_string(lexemeBegin,forward);
-                populateToken(t,TK_EQ,lex,lineCount,0,NULL);
-                accept();
-                return t;
+                char* lex = accept(true);
+                populateToken(TOK,TK_EQ,lex,lineNo);
+                return *TOK;
                 break;
             }
 
             case 14: {
-                c = next_char();
+                c = next_char(fp,false,false);
                 if(c == '=') {
                     dfa_state = 15;
                 }
                 else {
                     // Throw Lexical error
-                    char* pattern = copyString(lexemeBegin, forward-sizeof(char));
-                    printf("Line %d : Cannot recognize pattern %s, Were you tring for != ?\n" ,lineCount,pattern);
+                    reset(1);
+                    char* pattern = reject();
+                    printf("Line no: %d : Error : Unknown pattern <%s>\n" ,lineNo,pattern);
+                    populateToken(TOK,ERROR,pattern,lineNo);
                     free(pattern);
-                    errorType = 3;
-                    dfa_state = 60;
-
-                    // Retract because an unforseen character lead the lexer to this state, it can be a correct character which shouldl be included in the next token
-                    retract(1);
+                    lexError = 2;
+                    dfa_state = 0;
                 }
                 break;
             }
             case 15: {
-                char* lex = copyString(lexemeBegin,forward);
-                populateToken(t,TK_NE,lex,lineCount,0,NULL);
-                accept();
-                return t;
+                char* lex = accept(true);
+                populateToken(TOK,TK_NE,lex,lineNo);
+                return *TOK;
                 break;
             }
 
              case 16: {
-                c = next_char();
+                //  printf("%d \n",dfa_state);
+                c = next_char(fp,false,false);
                 if(range_match(c,'2','7')) {
                     dfa_state = 17;
                 }
@@ -330,112 +500,114 @@ tokenInfo getNextToken(twinBuffer B){
                 }
                 break;
             }
-            case 17: {
-                c = next_char();
-                while(range_match(c,'b','d'))
-                    c = next_char();
+            case 17: {  // TK_ID is the only possibility
+                c = next_char(fp,false,false);
+                while(range_match(c,'b','d')){
+                    if(strlen(twin_buffer->lexeme)<21)
+                        c = next_char(fp,false,false);
+                    else
+                        c = next_char(fp,false,true);
+                }
 
                 if(range_match(c,'2','7'))
                     dfa_state = 18;
                 else {
                     dfa_state = 19;
-                }
+                }   
                 break;
             }
             case 18: {
-                c = next_char();
-                while(range_match(c,'2','7'))
-                    c = next_char();
-
-                if(!range_match(c,'2','7') && !range_match(c,'b','d')) {
-                    dfa_state = 19;
+                c = next_char(fp,false,false);
+                while(range_match(c,'2','7')){
+                    if(strlen(twin_buffer->lexeme)<21)
+                        c = next_char(fp,false,false);
+                    else
+                        c = next_char(fp,false,true);
                 }
-                else {
-                    // Throw lexical error
-                    printf("Line %d : two identifers are not allowed back to back without a break ?\n" ,lineCount);
-                    errorType = 5;
-                    dfa_state = 60;
+
+                if(!range_match(c,'2','7') || strlen(twin_buffer->lexeme)>21) {
+                    dfa_state = 19;
                 }
                 break;
             }
-            case 19: {       //38 and 39 converge to 19 need to see implementation
-                retract(1);
-                int identifierLength = forward - lexemeBegin + 1;
-                if(identifierLength < 2) {
-                    printf("Line %d : Identifier length is less than 2\n" , lineCount);
-                    errorType = 4;
-                    dfa_state = 60;
+            case 19: {     
+                reset(1);
+                char * lex = accept(false);
+                // printf("State 19 %s\n",lex);
+                if(strlen(lex) < 2) {
+                    printf("Line No %d: Error :Variable Identifier is smaller than the prescribed length of 2 characters\n" , lineNo);
+                    lexError=3;
+                    populateToken(TOK,ERROR,lex,lineNo);
                 }
-                else if(identifierLength > 20) {
-                    printf("Line %d : Identifier length is more than 20\n" ,lineCount);
-                    errorType = 4;
-                    dfa_state = 60;
+                else if(strlen(lex) > 20) {
+                    printf("Line No %d: Error :Variable Identifier is longer than the prescribed length of 20 characters\n" ,lineNo);
+                    lexError = 3;
+                    populateToken(TOK,ERROR, lex, lineNo);
                 }
                 else {
-                    char* lex = copyString(lexemeBegin,forward);
-                    if(c == '\n')
-                        populateToken(t,TK_ID,lex,lineCount-1,0,NULL);
-                    else
-                        populateToken(t,TK_ID,lex,lineCount,0,NULL);
-                    accept();
-                    return t;
+                    // printf(" %s %d\n",lex,actualToken(TK_ID,lex));
+                    populateToken(TOK,actualToken(TK_ID, lex),lex,lineNo);
                 }
+                return *TOK;
                 break;
             }
         
-            case 20: {
-                c = next_char();
-                while(range_match(c,'a','z'))
-                    c = next_char();
-
+            case 20: {  // token for TK_FIELDID
+                c = next_char(fp,false,false);
+                while(range_match(c,'a','z')){
+                    if(strlen(twin_buffer->lexeme)<21)
+                        c = next_char(fp,false,false);
+                    else
+                        c = next_char(fp,false,true);
+                }
                 dfa_state = 21;
                 break;
             }
             case 21: {
-                // Resolve keyword clash!
-                retract(1);
-                char* lex = copy_string(lexemeBegin,forward);
-                Node* n = lookUp(kt,lex);
-                if(n == NULL) {
-                    if(c == '\n')
-                        populateToken(t,TK_FIELDID,lex,lineCount-1,0,NULL);
-                    else
-                        populateToken(t,TK_FIELDID,lex,lineCount,0,NULL);
+                reset(1);
+                char* lex = accept(false);
+                if(strlen(lex) < 2) {
+                    printf("Line No %d: Error :Variable Identifier is smaller than the prescribed lentgh of two characters\n" , lineNo);
+                    lexError=3;
+                    populateToken(TOK,ERROR,lex,lineNo);
+                }
+                else if(strlen(lex) > 20) {
+                    printf("Line No %d: Error :Variable Identifier is longer than the prescribed length of 20 characters\n" ,lineNo);
+                    lexError = 3;
+                    populateToken(TOK,ERROR, lex, lineNo);
                 }
                 else {
-                    if(c == '\n')
-                        populateToken(t,n->TOKEN_NAME,lex,lineCount-1,0,NULL);
-                    else
-                        populateToken(t,n->TOKEN_NAME,lex,lineCount,0,NULL);
+                    populateToken(TOK,actualToken(TK_FIELDID, lex),lex,lineNo);
                 }
-                accept();
-                return t;
+                dfa_state=0;
+                return *TOK;
                 break;
             }
 
              case 22: {
-                c = next_char();
+                c = next_char(fp,false,false);
                 if(range_match(c,'a','z') || range_match(c,'A','Z')) {
                     dfa_state = 23;
                 }
                 else {
-                    // throw lexical error
-                    char* pattern = copyString(lexemeBegin, forward-sizeof(char));
-                    printf("Line %d : Cannot recognize pattern %s, Were you tring for a function ID ?\n" ,lineCount,pattern);
-                    free(pattern);
-                    errorType = 3;
-                    dfa_state = 60;
-
-                    // Retract because an unforseen character lead the lexer to this state, it can be a correct character which shouldl be included in the next token
-                    retract(1);
+                    reset(1);
+                    char* lex = reject();
+                    printf("Line no: %d : Error : Unknown pattern <%s>\n" ,lineNo,lex);
+                    free(lex);
+                    lexError = 2;
+                    populateToken(TOK, ERROR, lex, lineNo);
+                    return *TOK;
                 }
                 break;
             }
             case 23: {
-                c = next_char();
-                while(range_match(c,'a','z') || range_match(c,'A','Z'))
-                    c = next_char();
-
+                c = next_char(fp,false,false);
+                while(range_match(c,'a','z') || range_match(c,'A','Z')){
+                    if (strlen(twin_buffer->lexeme)<31)
+                        c = next_char(fp,false,false);
+                    else
+                        c = next_char(fp,false,true);
+                }
                 if(range_match(c,'0','9')) {
                     dfa_state = 24;
                 }
@@ -445,99 +617,99 @@ tokenInfo getNextToken(twinBuffer B){
                 break;
             }
             case 24: {
-                c = next_char();
-                while(range_match(c,'0','9'))
-                    c = next_char();
-
+                c = next_char(fp,false,false);
+                while(range_match(c,'0','9')){
+                    if(strlen(twin_buffer->lexeme)<31)
+                        c = next_char(fp,false,false);
+                    else
+                        c = next_char(fp,false,true);
+                }
                 dfa_state = 25;
 
                 break;
             }
-            case 25: {              //50 and 51 corr to 25,need to see imp
-                retract(1);
-                int identifierLength = forward - lexemeBegin + 1;
-                if(identifierLength > 30) {
-                    printf("Line %d : Function identifier length exceeds 30 characters\n" ,lineCount);
-                    errorType = 4;
-                    dfa_state = 60;
+            case 25: {              
+                reset(1);
+                char *lex = accept(false);
+                if(strlen(lex) > 30) {
+                    printf("Line No %d: Error :Function Identifier is longer than the prescribed length of 30 characters\n" ,lineNo);
+                    lexError = 3;
+                    populateToken(TOK,ERROR,lex,lineNo);
                 }
                 else {
-                    char* lex = copyString(lexemeBegin,forward);
-                    if(c == '\n')
-                        populateToken(t,TK_FUNID,lex,lineCount,0,NULL);
-                    else
-                        populateToken(t,TK_FUNID,lex,lineCount-1,0,NULL);
-                    accept();
-                    return t;
+                    populateToken(TOK,actualToken(TK_FUNID,lex),lex,lineNo);
                 }
+                dfa_state=0;
+                return *TOK;
                 break;
             }
-            // case 51: {
-            //     // Resolve keyword clash here
-            //     retract(1);
-            //     char* lex = copyString(lexemeBegin,forward);
-            //     Node* n = lookUp(kt,lex);
-            //     if(n == NULL) {
-            //         if(c == '\n')
-            //             populateToken(t,TK_FUNID,lex,lineCount-1,0,NULL);
-            //         else
-            //             populateToken(t,TK_FUNID,lex,lineCount,0,NULL);
-            //     }
-            //     else {
-            //         if(c == '\n')
-            //             populateToken(t,n->TOKEN_NAME,lex,lineCount-1,0,NULL);
-            //         else
-            //             populateToken(t,n->TOKEN_NAME,lex,lineCount,0,NULL);
-            //     }
-            //     accept();
-            //     return t;
-            //     break;
-            // }
             case 26: {
-                c = next_char();
+                c = next_char(fp,false,false);
                 if(range_match(c,'a','z')) {
                     dfa_state = 27;
                 }
                 else {
                     // Throw lexical error
-                    char* pattern = copyString(lexemeBegin, forward-sizeof(char));
-                    printf("Line %d : Cannot recognize pattern %s, Were you tring for a record ID ?\n" ,lineCount,pattern);
+                    reset(1);
+                    char* pattern = reject();
+                    printf("Line no: %d : Error : Unknown pattern <%s>\n" ,lineNo,pattern);
                     free(pattern);
-                    errorType = 3;
-                    dfa_state = 60;
-
-                    // Retract because an unforseen character lead the lexer to this state, it can be a correct character which shouldl be included in the next token
-                    retract(1);
+                    lexError = 2;
+                    populateToken(TOK,ERROR,pattern,lineNo);
+                    dfa_state = 0;
+                    return *TOK;
                 }
                 break;
             }
             case 27: {
-                c = next_char();
-                while(range_match(c,'a','z'))
-                    c = next_char();
+                c = next_char(fp,false,false);
+                while(range_match(c,'a','z')){
+                    if(strlen(twin_buffer->lexeme)<21)
+                        c = next_char(fp,false,false);
+                    else
+                        c = next_char(fp,false,true);
+                }
 
                 dfa_state = 28;
                 break;
             }
             case 28: {
-                retract(1);
-                char* lex = copyString(lexemeBegin,forward);
-                if(c == '\n')
-                    populateToken(t,TK_RECORDID,lex,lineCount-1,0,NULL);
-                else
-                    populateToken(t,TK_RECORDID,lex,lineCount,0,NULL);
-                accept();
-                return t;
+                if(strlen(twin_buffer->lexeme)<=21){
+                    reset(1);
+                    char* lex = accept(false);
+                    populateToken(TOK, TK_RUID, lex,lineNo);
+                }
+                else{
+                    if(strlen(twin_buffer->lexeme)<2){
+                        reset(1);
+                        char *lex = reject();
+                        lexError = 3;
+                        printf("Line No %d: Error :Record Identifier is smaller than the prescribed length of 2 characters\n" ,lineNo);
+                        populateToken(TOK, ERROR, lex, lineNo);
+                    }
+                    else if(strlen(twin_buffer->lexeme)>21){
+                        reset(1);
+                        char *lex = reject();
+                        lexError = 3;
+                        printf("Line No %d: Error :Record Identifier is smaller than the prescribed length of 2 characters\n" ,lineNo);
+                        populateToken(TOK,ERROR,lex,lineNo);
+                    }
+                }
+                return *TOK;
+                dfa_state = 0;
                 break;
             }
             
              case 29: {
-                c = next_char();
-                while(range_match(c,'0','9'))
-                    c = next_char();
-
+                c = next_char(fp,false,false);
+                while(range_match(c,'0','9')){
+                    if(strlen(twin_buffer->lexeme)<10)
+                        c = next_char(fp,false,false);
+                    else
+                        c = next_char(fp,false,true);
+                }
                 if(c == '.') {
-                    dfa_state = 31; // apna DFA galat he, there should be no state 30. 29 to 31, 29 to 32 transitions he
+                    dfa_state = 31;
                 }
                 else {
                     dfa_state = 30;
@@ -545,69 +717,65 @@ tokenInfo getNextToken(twinBuffer B){
                 break;
             }
             case 30: {
-                retract(1);
-                char* lex = copy_string(lexemeBegin,forward);
-                Value* val = malloc(sizeof(Value));
-                val->INT_VALUE = stringToInteger(lex);
-                if(c == '\n')
-                    populateToken(t,TK_NUM,lex,lineCount-1,1,val);
-                else
-                    populateToken(t,TK_NUM,lex,lineCount,1,val);
-                accept();
-                return t;
+                if(strlen(twin_buffer->lexeme)>10){
+                    lexError = 3;
+                    reset(1);
+                    char *lex = reject();
+                    printf("Line No %d : Error : the integer %s is out of range\n" ,lineNo,lex);
+                    populateToken(TOK,ERROR,lex,lineNo);                  
+                }
+                else{
+                    reset(1);
+                    char * lex = accept(false);
+                    populateToken(TOK,TK_NUM,lex,lineNo);
+                }
+                return *TOK;
                 break;
             }
             case 31: {
-                c = next_char();
+                c = next_char(fp,false,false);
                 if(range_match(c,'0','9')) {
                     dfa_state = 32;
                 }
                 else {
-                    // Throw lexical error
-                    char* pattern = copyString(lexemeBegin, forward-sizeof(char));
-                    printf("Line %d : Cannot recognize pattern %s, Were you tring for a real number ?\n" ,lineCount,pattern);
-                    free(pattern);
-                    errorType = 3;
-                    dfa_state = 60;
-
-                    // Retract because an unforseen character lead the lexer to this state, it can be a correct character which shouldl be included in the next token
-                    retract(1);
+                    reset(1);
+                    char *lex = reject();
+                    printf("Line no: %d : Error : Unknown pattern <%s>\n" ,lineNo, lex);
+                    lexError = 3;
+                    populateToken(TOK,ERROR,lex,lineNo);
+                    free(lex);
+                    return *TOK;    
                 }
                 break;
             }
             case 32: {
-                c = next_char();
+                c = next_char(fp,false,false);
                 if(range_match(c,'0','9')) {
                     dfa_state = 34;
                 }
                 else {
                     // Throw lexical
-                    char* pattern = copyString(lexemeBegin, forward-sizeof(char));
-                    printf("Line %d : Cannot recognize pattern %s, Were you tring for a real number ?\n" ,lineCount,pattern);
-                    free(pattern);
-                    errorType = 3;
-                    dfa_state = 60;
-
-                    // Retract because an unforseen character lead the lexer to this state, it can be a correct character which shouldl be included in the next token
-                    retract(1);
+                    reset(1);
+                    char* lex = reject();
+                    printf("Line no: %d : Error : Unknown pattern <%s>\n" ,lineNo,lex);
+                    lexError = 3;
+                    populateToken(TOK,ERROR,lex,lineNo);
+                    free(lex);
+                    return *TOK;
                 }
                 break;
             }
             case 33: {
-                retract(1);
-                char* lex = copyString(lexemeBegin,forward);
-
-                Value* val = (Value*)malloc(sizeof(Value));
-                val->FLOAT_VALUE = stringToFloat(lex);
-                populateToken(t,TK_RNUM,lex,lineCount,2,val);
-                accept();
-                return t;
+                reset(1);
+                char* lex = accept(false);
+                populateToken(TOK,TK_RNUM,lex,lineNo);
+                free(lex);
+                return *TOK;
                 break;
             }
 
             case 34: {
-                retract(1);
-                c = next_char();
+                c = next_char(fp,false,false);
                 if(char_match(c,'E')){
                     dfa_state = 35;
                 }
@@ -617,336 +785,329 @@ tokenInfo getNextToken(twinBuffer B){
                 break;
             }
             case 35: {
-                c = next_char();
+                c = next_char(fp,false,false);
                 if(char_match(c, '+') || char_match(c, '-')){
                     dfa_state = 36;
                 }
                 else if (range_match(c,'0','9')){
                     dfa_state = 37;
                 }
+                else{
+                    reset(1);
+                    char *lex = reject();
+                    printf("Line no: %d : Error : Unknown pattern <%s>\n" ,lineNo,lex);
+                    populateToken(TOK,ERROR,lex,lineNo);
+                    free(lex);
+                    return *TOK;
+                }
                 break;
             }
             case 36: {
-                c = next_char();
+                c = next_char(fp,false,false);
                 if(range_match(c,'0','9')) {
                     dfa_state = 37;
+                }
+                else{
+                    reset(1);
+                    char *lex = reject();
+                    printf("Line no: %d : Error : Unknown pattern <%s>\n",lineNo,lex);
+                    populateToken(TOK,ERROR,lex,lineNo);
+                    lexError = 2;
+                    return *TOK;
+
                 }
                 break;
             }
             case 37: {
-                c = next_char();
+                c = next_char(fp,false,false);
                 if(range_match(c,'0','9')) {
                     dfa_state = 38;
+                }
+                else{
+                    reset(1);
+                    char *lex = reject();
+                    printf("Line no: %d : Error : Unknown pattern <%s>\n",lineNo,lex);
+                    populateToken(TOK,ERROR,lex,lineNo);
+                    lexError = 2;
+                    return *TOK;
                 }
                 break;
             }
             case 38: {
-                char* lex = copy_string(lexemeBegin,forward);
-                Value* val = (Value*)malloc(sizeof(Value));
-                val->FLOAT_VALUE = stringToFloat(lex);
-                populateToken(t,TK_RNUM,lex,lineCount,2,val);
-                accept();
-                return t;
+                char* lex = accept(true);
+                populateToken(TOK,TK_RNUM,lex,lineNo);
+                return *TOK;
                 break;
             }
             case 39: {
-                c = next_char();
+                c = next_char(fp,false,false);
                 if(c == '&') {
                     dfa_state = 40;
                 }
                 else {
-                    // Throw lexical error
-                    char* pattern = copyString(lexemeBegin, forward-sizeof(char));
-                    printf("Line %d : Cannot recognize pattern %s, Were you tring for &&& ?\n" ,lineCount,pattern);
-                    free(pattern);
-                    errorType = 3;
-                    dfa_state = 60;
-
-                    // Retract because an unforseen character lead the lexer to this state, it can be a correct character which shouldl be included in the next token
-                    retract(1);
+                    reset(1);
+                    char* lex = reject();
+                    printf("Line no: %d : Error : Unknown pattern <%s>\n" ,lineNo,lex);
+                    lexError= 3;
+                    dfa_state = 0;
+                    populateToken(TOK,ERROR,lex,lineNo);
+                    free(lex);
+                    return *TOK;
                 }
                 break;
             }
             case 40: {
-                c = next_char();
+                c = next_char(fp,false,false);
                 if(c == '&') {
                     dfa_state = 41;
                 }
                 else {
                     // Throw lexical error
-                    char* pattern = copyString(lexemeBegin, forward-sizeof(char));
-                    printf("Line %d : Cannot recognize pattern %s, Were you tring for &&& ?\n" ,lineCount,pattern);
-                    free(pattern);
-                    errorType = 3;
-                    dfa_state = 60;
-
-                    // Retract because an unforseen character lead the lexer to this state, it can be a correct character which shouldl be included in the next token
-                    retract(1);
+                    reset(1);
+                    char* lex = reject();
+                    printf("Line no: %d : Error : Unknown pattern <%s>\n" ,lineNo,lex);
+                    lexError = 3;
+                    dfa_state = 0;
+                    populateToken(TOK,ERROR,lex,lineNo);
+                    free(lex);
+                    return *TOK;
                 }
                 break;
             }
             case 41: {
-                char* lex = copyString(lexemeBegin,forward);
-                populateToken(t,TK_AND,lex,lineCount,0,NULL);
-                accept();
-                return t;
+                char* lex = accept(true);
+                populateToken(TOK,TK_AND,lex,lineNo);
+                free(lex);
+                return *TOK;
                 break;
             }
 
             case 42: {
-                char* lex = copyString(lexemeBegin,forward);
-                populateToken(t,TK_DOT,lex,lineCount,0,NULL);
-                accept();
-                return t;
+                char* lex = accept(true);
+                populateToken(TOK,TK_DOT,lex,lineNo);
+                free(lex);
+                return *TOK;
                 break;
             }
 
             case 43: {
-                c = next_char();
+                c = next_char(fp,false,false);
                 if(c == '@') {
                     dfa_state = 44;
                 }
                 else {
                     // Throw lexical error
-                    char* pattern = copyString(lexemeBegin, forward-sizeof(char));
-                    printf("Line %d : Cannot recognize pattern %s, Were you tring for @@@ ?\n" ,lineCount,pattern);
-                    free(pattern);
-                    errorType = 3;
-                    dfa_state = 60;
-
-                    // Retract because an unforseen character lead the lexer to this state, it can be a correct character which shouldl be included in the next token
-                    retract(1);
+                    reset(1);
+                    char* lex = reject();
+                    printf("Line no: %d : Error : Unknown pattern <%s>\n" ,lineNo,lex);
+                    lexError = 3;
+                    dfa_state = 0;
+                    populateToken(TOK,ERROR,lex,lineNo);
+                    free(lex);
+                    return *TOK;
                 }
                 break;
             }
             case 44: {
-                c = next_char();
+                c = next_char(fp,false,false);
                 if(c == '@') {
                     dfa_state = 45;
                 }
                 else {
                     // Throw lexical
-                    char* pattern = copyString(lexemeBegin,forward);
-                    printf("Line %d : Cannot recognize pattern %s, Were you tring for @@@ ?\n" ,lineCount,pattern);
-                    free(pattern);
-                    errorType = 3;
-                    dfa_state = 60;
-
-                    // Retract because an unforseen character lead the lexer to this state, it can be a correct character which shouldl be included in the next token
-                    retract(1);
+                    reset(1);
+                    char* lex = reject();
+                    printf("Line no: %d : Error : Unknown pattern <%s>\n" ,lineNo,lex);
+                    lexError = 3;
+                    dfa_state = 0;
+                    populateToken(TOK,ERROR,lex,lineNo);
+                    return *TOK;    
                 }
                 break;
             }
 
             case 45: {
-                char* lex = copyString(lexemeBegin,forward);
-                populateToken(t,TK_OR,lex,lineCount,0,NULL);
-                accept();
-                return t;
+                char* lex = accept(true);
+                populateToken(TOK,TK_OR,lex,lineNo);
+                free(lex);
+                return *TOK;
                 break;
             }
 
             case 46: {
-                char* lex = copyString(lexemeBegin,forward);
-                populateToken(t,TK_PLUS,lex,lineCount,0,NULL);
-                accept();
-                return t;
+                char* lex = accept(true);
+                populateToken(TOK,TK_PLUS,lex,lineNo);
+                return *TOK;
                 break;
             }
             
             case 47: {
-                char* lex = copyString(lexemeBegin,forward);
-                populateToken(t,TK_MINUS,lex,lineCount,0,NULL);
-                accept();
-                return t;
+                char* lex = accept(true);
+                populateToken(TOK,TK_MINUS,lex,lineNo);
+                return *TOK;
                 break;
             }
 
             case 48: {
-                char* lex = copyString(lexemeBegin,forward);
-                populateToken(t,TK_NOT,lex,lineCount,0,NULL);
-                accept();
-                return t;
+                char* lex = accept(true);
+                populateToken(TOK,TK_NOT,lex,lineNo);
+                return *TOK;
                 break;
             }
-            
-        //     case 47: {
-        //    c = next_char();
-        //         char* lex = copyString(lexemeBegin,forward);
-        //         if(c == '-') {
-        //             dfa_state = 2;
-        //         }
-        //         else {
-        //         populateToken(t,TK_LT,'<',lineCount,0,NULL);}
 
-        //         accept();
-        //         return t;
-        //         break;
-        //     }
             case 49: {
-                char* lex = copyString(lexemeBegin,forward);
-                populateToken(t,TK_MUL,lex,lineCount,0,NULL);
-                accept();
-                return t;
+                char* lex = accept(true);
+                populateToken(TOK,TK_MUL,lex,lineNo);
+                return *TOK;
                 break;
             }
             case 50: {
-                char* lex = copyString(lexemeBegin,forward);
-                populateToken(t,TK_DIV,lex,lineCount,0,NULL);
-                accept();
-                return t;
+                char* lex = accept(true);
+                populateToken(TOK,TK_DIV,lex,lineNo);
+                return *TOK;
                 break;
             }
             case 51: {
-                char* lex = copyString(lexemeBegin,forward);
-                populateToken(t,TK_SEM,lex,lineCount,0,NULL);
-                accept();
-                return t;
+                char* lex = accept(true);
+                populateToken(TOK,TK_SEM,lex,lineNo);
+                return *TOK;
                 break;
             }
             case 52: {
-                char* lex = copyString(lexemeBegin,forward);
-                populateToken(t,TK_CL,lex,lineCount,0,NULL);
-                accept();
-                return t;
+                char* lex = accept(true);
+                populateToken(TOK,TK_CL,lex,lineNo);
+                return *TOK;
                 break;
             }
             case 53: {
-                char* lex = copyString(lexemeBegin,forward);
-                populateToken(t,TK_OP,lex,lineCount,0,NULL);
-                accept();
-                return t;
+                char* lex = accept(true);
+                populateToken(TOK,TK_OP,lex,lineNo);
+                return *TOK;
                 break;
             }
             case 54: {
-                char* lex = copyString(lexemeBegin,forward);
-                populateToken(t,TK_SQR,lex,lineCount,0,NULL);
-                accept();
-                return t;
+                char* lex = accept(true);
+                populateToken(TOK,TK_SQR,lex,lineNo);
+                return *TOK;
                 break;
             }
             case 55: {
-                char* lex = copyString(lexemeBegin,forward);
-                populateToken(t,TK_SQL,lex,lineCount,0,NULL);
-                accept();
-                return t;
+                char* lex = accept(true);
+                populateToken(TOK,TK_SQL,lex,lineNo);
+                return *TOK;
                 break;
             }
            
             case 56: {
-                char* lex = copyString(lexemeBegin,forward);
-                populateToken(t,TK_COMMA,lex,lineCount,0,NULL);
-                accept();
-                return t;
+                char* lex = accept(true);
+                populateToken(TOK,TK_COMMA,lex,lineNo);
+                return *TOK;
                 break;
             }
             
             case 57: {
-                char* lex = copyString(lexemeBegin,forward);
-                populateToken(t,TK_COLON,lex,lineCount,0,NULL);
-                accept();
-                return t;
+                char* lex = accept(true);
+                populateToken(TOK,TK_COLON,lex,lineNo);
+                return *TOK;
                 break;
             }     
           
             case 58: {
-                c = next_char();
-                while(c != '\n' && c != EOF) {
-                    c = next_char();
+                c = next_char(fp,true,false);
+                while(c != '\n') {
+                    c = next_char(fp,true,false);
                 }
-                dfa_state = 60;
+                reset(1);
+                twin_buffer->lexemeBegin = twin_buffer->forward;
+                dfa_state = 0;
                 break;
             }
 
-            case 59: {
-                c = next_char();
-                while(c != '\n' && c != EOF) {
-                    c = next_char();
+            case 59: { 
+                c = next_char(fp,false,false);
+                while(range_match(c,'A','Z') || range_match(c,'a','z')) {
+                    c = next_char(fp,false,false);
                 }
-                dfa_state = 60;
+                reset(1);
+                char *lex=accept(false);
+                token_name t = actualToken(ERROR,lex);
+                if(t==ERROR){
+                    printf("Line no: %d : Error : Unknown pattern <%s>\n",lineNo,lex);
+                }
+                populateToken(TOK,t,lex,lineNo);
+                return *TOK;
                 break;
             }
-           
-            case 60: {
-                // Error State
-                // Rationale 1 => Set a flag that error has reached for this input program so do not tokenize any further
-                // Rationale 2 => Try to tokenize to the closest match and continue tokenizing further
-
-                // Chosen Rationale => Panic mode, Travel up till a delimiter
-
-                // Comment this, will bring it back to state 0
-                // c = next_char();
-                // while(c != ';' && c !=  EOF && c != '\n') {
-                //     c = next_char();
-                // }
-
-                char* lex = copy_string(lexemeBegin,forward);
-
-                // A retraction only occurs if the errorType is 3, so check if the character read was a '\n'
-                if(errorType == 3 && c == '\n')
-                    populateToken(t,TK_ERR,lex,lineCount-1,errorType,NULL);
-                else
-                    populateToken(t,TK_ERR,lex,lineCount,errorType,NULL);
-                accept();
-
-                // Move back to the start state after setting lexemeBegin if an unidentifiable character causes the error
-                return t;
-
-                break;
-            }
-        }
+        }   
     }
 
 }
 
-void removeComments(char *testcaseFile, char *cleanFile){
-    int tcf = open(testcaseFile, O_RDONLY);
-    // Commenting this as printing is required in the console
-    // int cf = open(cleanFile,O_CREAT|O_WRONLY|O_TRUNC);
-    initializeBuffers(tcf);
-    // Check has 3 values
-    // 0 => Indicates it encountered a newline
-    // 2 => Indicates that the line has been confirmed to not be a comment
-    // 1 => Indicates that the line is confirmed to be a comment
-    int is_comment = 0;
-    char c;
-    while((c = next_char()) != EOF) {
+// void removeComments(char *testcaseFile, char *cleanFile){
+//     int tcf = open(testcaseFile, O_RDONLY);
+//     // Commenting this as printing is required in the console
+//     // int cf = open(cleanFile,O_CREAT|O_WRONLY|O_TRUNC);
+//     initializeBuffers(tcf);
+//     // Check has 3 values
+//     // 0 => Indicates it encountered a newline
+//     // 2 => Indicates that the line has been confirmed to not be a comment
+//     // 1 => Indicates that the line is confirmed to be a comment
+//     int is_comment = 0;
+//     char c;
+//     while((c = next_char()) != EOF) {
 
-        switch(is_comment) {
-            case 0: {
-                // if(c == ' ' || c == '\f' || c == '\r' || c == '\t' || c == '\v') {
-                    // write(1,&c,1);
-                    // is_comment = 0;
-                // }
-                if(c == '%') {
-                    is_comment = 1;
-                }
-                else if(c == '\n') {
-                    write(1,&c,1);
-                    is_comment = 0;
-                }
-                else {
-                    write(1,&c,1);
-                    is_comment = 2;
-                }
-                break;
-            }
-            case 1: {
-                if(c == '\n') {
-                    write(1,&c,1);
-                    is_comment = 0;
-                }
-                break;
-            }
-            case 2: {
-                write(1,&c,1);
-                if(c == '\n')
-                    is_comment = 0;
-                break;
-            }
-        }
+//         switch(is_comment) {
+//             case 0: {
+//                 // if(c == ' ' || c == '\f' || c == '\r' || c == '\t' || c == '\v') {
+//                     // write(1,&c,1);
+//                     // is_comment = 0;
+//                 // }
+//                 if(c == '%') {
+//                     is_comment = 1;
+//                 }
+//                 else if(c == '\n') {
+//                     write(1,&c,1);
+//                     is_comment = 0;
+//                 }
+//                 else {
+//                     write(1,&c,1);
+//                     is_comment = 2;
+//                 }
+//                 break;
+//             }
+//             case 1: {
+//                 if(c == '\n') {
+//                     write(1,&c,1);
+//                     is_comment = 0;
+//                 }
+//                 break;
+//             }
+//             case 2: {
+//                 write(1,&c,1);
+//                 if(c == '\n')
+//                     is_comment = 0;
+//                 break;
+//             }
+//         }
 
+//     }
+
+//     close(tcf);
+// }
+int main(){
+    FILE *f =fopen("./testcases_stage1/t3.txt","r");
+    initialize();
+    f = getStream(f,0);
+    // printf("%c this",twin_buffer->buffer[0]);
+    tokenInfo t =getNextToken(f);
+    while(t.tkn_name!=TK_EOF){
+        // if(t.tkn_name==TK_NUM)
+        //     printf("line: %d, token_name: %d, value: %d\n",t.line,t.tkn_name,t.value.num);
+        // else if(t.tkn_name==TK_RNUM)
+        //     printf("line: %d, token_name: %d, value: %f representation: %s\n",t.line,t.tkn_name,t.value.rnum.v,t.value.rnum.rep);
+        // else
+        //     printf("line: %d, token_name: %d, value: %s\n",t.line,t.tkn_name,t.value.str);
+        t=getNextToken(f);
     }
-
-    close(tcf);
+    return 0;
 }

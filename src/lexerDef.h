@@ -1,18 +1,29 @@
 #ifndef LEXER_DEF
 #define LEXER_DEF
 #define BUFFER_SIZE 4096
-
+#define MAX_LEXEME 40
+// #include "lookuptable.h"
+#include<stdio.h>
+#include<stdlib.h>
 typedef struct twinBuffer twinBuffer;
-typedef struct TOKEN tokenInfo;
+
 
 
 struct twinBuffer{
-    char *buffer[2];
-    char *forward;
-    char *lexemeBegin;
+    char *buffer;
+    int forward;
+    int lexemeBegin;
+    int pos;    // position at which character should be added to lexeme
+    char *lexeme;
 };
-
-typedef enum {
+int lexError, lineNo;
+/*
+0- no error
+1- unknown symbol
+2- unknown pattern
+3- length exceeded  
+*/
+typedef enum token_name{
     // tokens list
     TK_ASSIGNOP,
     TK_COMMENT,
@@ -70,9 +81,15 @@ typedef enum {
     TK_EQ,
     TK_GT,
     TK_GE,
-    TK_NE
+    TK_NE,
+    ERROR,   // special token when error is encountered
+    TK_EOF,
 }token_name;
 
+static const char * enumToString[]={"TK_ASSIGNOP","TK_COMMENT","TK_FIELDID","TK_ID","TK_NUM","TK_RNUM","TK_FUNID","TK_RUID","TK_WITH","TK_PARAMETERS","TK_END",
+"TK_WHILE","TK_UNION","TK_ENDUNION","TK_DEFINETYPE","TK_AS","TK_TYPE","TK_MAIN","TK_GLOBAL","TK_PARAMETER","TK_LIST","TK_SQL","TK_SQR","TK_INPUT","TK_OUPUT","TK_INT","TK_REAL",
+"TK_COMMA","TK_SEM","TK_COLON","TK_DOT","TK_ENDWHILE","TK_OP","TK_CL","TK_IF","TK_THEN  ","TK_ENDIF","TK_READ","TK_WRITE","TK_RETURN","TK_PLUS","TK_MINUS","TK_MUL","TK_DIV",
+"TK_CALL","TK_RECORD","TK_ENDRECORD","TK_ELSE","TK_AND","TK_OR","TK_NOT","TK_LT","TK_LE","TK_EQ","TK_GT","TK_GE","TK_NE","ERROR","TK_EOF"};
 typedef struct TOKEN{
     int line;
     token_name tkn_name;
@@ -81,11 +98,11 @@ typedef struct TOKEN{
         struct rnum{
             char *rep;  // string form of reals
             float v;    // numeric value of int
-        };
+        }rnum;
         char * str; // lexeme, identifiers
-    };
-}token;
-
+    }value;
+}tokenInfo;
+twinBuffer *twin_buffer;    // buffer the lexer
 #endif
 
 /*
