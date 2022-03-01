@@ -1,4 +1,10 @@
 src/*.o
 src/*.exe
 src/*.out
+src/*keywords_lexemes.txt.swp
+src/*samplecode.txt.swn
+src/*samplecode.txt.swo
+src/*samplecode.txt.swp
+
+
 .vscode
