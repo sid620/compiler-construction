@@ -3,6 +3,7 @@
 #include "lexerDef.h"
 #include <string.h>
 #include <stdio.h>
+#include <stdbool.h>
 
 int dfa_state = 0;
 

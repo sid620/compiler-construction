@@ -1,4 +1,1 @@
-While(c2d3 <=d2c3)
-c2d3 = c2d3+1;
-Write (c2d3);
-endwhile
+123.4abc
