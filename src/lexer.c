@@ -1096,21 +1096,21 @@ tokenInfo getNextToken(FILE *fp){
 
 //     close(tcf);
 // }
-int main(){
+// int main(){
 
-    FILE *f =fopen("./testcases_stage1/t2.txt","r");
-    initialize();
-    f = getStream(f,0);
-    // printf("%c this",twin_buffer->buffer[0]);
-    tokenInfo t =getNextToken(f);
-    while(t.tkn_name!=TK_EOF){
-        // if(t.tkn_name==TK_NUM)
-        //     printf("line: %d, token_name: %d, value: %d\n",t.line,t.tkn_name,t.value.num);
-        // else if(t.tkn_name==TK_RNUM)
-        //     printf("line: %d, token_name: %d, value: %f representation: %s\n",t.line,t.tkn_name,t.value.rnum.v,t.value.rnum.rep);
-        // else
-        //     printf("line: %d, token_name: %d, value: %s\n",t.line,t.tkn_name,t.value.str);
-        t=getNextToken(f);
-    }
-    return 0;
-}
+//     FILE *f =fopen("./testcases_stage1/t2.txt","r");
+//     initialize();
+//     f = getStream(f,0);
+//     // printf("%c this",twin_buffer->buffer[0]);
+//     tokenInfo t =getNextToken(f);
+//     while(t.tkn_name!=TK_EOF){
+//         // if(t.tkn_name==TK_NUM)
+//         //     printf("line: %d, token_name: %d, value: %d\n",t.line,t.tkn_name,t.value.num);
+//         // else if(t.tkn_name==TK_RNUM)
+//         //     printf("line: %d, token_name: %d, value: %f representation: %s\n",t.line,t.tkn_name,t.value.rnum.v,t.value.rnum.rep);
+//         // else
+//         //     printf("line: %d, token_name: %d, value: %s\n",t.line,t.tkn_name,t.value.str);
+//         t=getNextToken(f);
+//     }
+//     return 0;
+// }
