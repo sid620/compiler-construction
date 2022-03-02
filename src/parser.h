@@ -4,6 +4,7 @@
 #include <string.h> 
 #include "parserDef.h" 
 #include "utils.h"
+#include "lexer.h"
 
 grammar readGrammar(char* file); 
 FirstAndFollow* ComputeFirstAndFollowSets (grammar G); 
