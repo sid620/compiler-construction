@@ -487,6 +487,8 @@ void printParseTable(grammar G,parseTable* T){
                 tot++;
                 printRule(G, T->cells[i][j].ruleInd, T->cells[i][j].rhsInd);
             }
+            if( T->cells[i][j].error==2 )
+            printf("synch: cells[%d][%d] %d\n",i,j,T->cells[i][j].error);
         }
         printf("******************************************\n");
     }
@@ -518,9 +520,9 @@ parseTable* intializeParseTable( int numNonTerminals, int numTerminals ){
 }
 
 void createParseTable(grammar G, FirstAndFollow* ff, parseTable* T){
-    // For each production A -> alpha of the grammar
-    //      1. For each terminal a in FIRST(alpha), add A -> alpha to M [A][a]
-    //      2. If eps is in FIRST(alpha), then for each terminal b ( and "$" if applicable) in FOLLOW(A), add A -> alpha to M [A][b]. 
+    // For each production A -> RHS of the grammar
+    //   1. For each terminal a in First(RHS), add A -> RHS to Table[A][a]
+    //   2. If eps is in First(RHS), then for each terminal b ( and "$" if applicable) in Follow(A), add A -> RHS to Table[A][b]. 
     
     int numNonTerminals = G.numNonTerminals, numTerminals = G.numTerminals;
     int index;
@@ -549,6 +551,20 @@ void createParseTable(grammar G, FirstAndFollow* ff, parseTable* T){
             }
         }
     }
+    // for each grammar rule
+    for( int i=0; i < G.totalNumRules; i++ ){
+        // for each indivisual production rule
+        for(int j = 0; j < G.allRules[i].numOrs; j++){
+            // for each terminal in first(alpha)
+            for( int follow_terminal_num = 0; follow_terminal_num < G.ff[i].numFollow; follow_terminal_num++ ){
+                // assign the production rule details
+                index = G.ff[i].follow[follow_terminal_num]; 
+                if ( T->cells[i][index].error == 1 ){   
+                    T->cells[i][index].error = 2;
+                }
+            }
+        }
+    }
 } 
 
 void parseInputSourceCode(char* testCaseFile, grammar G, parseTable* T) { 
@@ -564,7 +580,7 @@ void parseInputSourceCode(char* testCaseFile, grammar G, parseTable* T) {
     stack[1].type = 0; 
     stack[1].symbol = 0; // Start symbol 
 
-    printf("%d %d %d %d '%s' '%s' \n", stack[0].type, stack[1].type, stack[0].symbol, stack[1].symbol, G.terminals[stack[0].symbol], G.nonTerminals[stack[1].symbol]); 
+    printf("stack[0].type %d stack[1].type %d %d %d '%s' '%s' \n", stack[0].type, stack[1].type, stack[0].symbol, stack[1].symbol, G.terminals[stack[0].symbol], G.nonTerminals[stack[1].symbol]); 
     int stackLen = 2; 
     int stackPointer = 1; 
     // tokenInfo* currToken = NULL; 
@@ -581,7 +597,7 @@ void parseInputSourceCode(char* testCaseFile, grammar G, parseTable* T) {
     // }
     
     while(1) { 
-        printf("'%s' \n", enumToStringP[currToken.tkn_name]); 
+        printf("enumToStringP[currToken.tkn_name] '%s' \n", enumToStringP[currToken.tkn_name]); 
         if (currToken.tkn_name == ERROR) { 
             printf("Lexical ERROR \n"); 
             break; 
@@ -602,7 +618,7 @@ void parseInputSourceCode(char* testCaseFile, grammar G, parseTable* T) {
         int tokenID = findIndex(G.terminals, G.numTerminals, enumToStringP[currToken.tkn_name]); 
         if (stack[stackPointer].type == 1 && stack[stackPointer].symbol == tokenID) { 
             printf("Terminals match \n"); 
-            printf("%d '%s' '%s' \n", stackPointer, G.terminals[stack[stackPointer].symbol], G.terminals[tokenID]); 
+            printf("stackPointer %d G.terminals[stack[stackPointer].symbol]'%s' G.terminals[tokenID] '%s' \n", stackPointer, G.terminals[stack[stackPointer].symbol], G.terminals[tokenID]); 
             stackPointer -= 1; 
             currToken = getNextToken(fp); 
         } 
@@ -615,17 +631,17 @@ void parseInputSourceCode(char* testCaseFile, grammar G, parseTable* T) {
         } 
         else if(stack[stackPointer].type == 0 && T->cells[stack[stackPointer].symbol][tokenID].error == 1) { 
             printf("M[X, a] is blank ERROR \n"); 
-            printf("'%s' '%s' \n", G.nonTerminals[stack[stackPointer].symbol], G.terminals[tokenID]); 
+            printf("G.nonTerminals[stack[stackPointer].symbol]'%s' G.terminals[tokenID]'%s' \n", G.nonTerminals[stack[stackPointer].symbol], G.terminals[tokenID]); 
             break; 
             // M[X, a] is blank ERROR 
             // Add Panic Mode recovery code 
         } 
         else if (stack[stackPointer].type == 0 && T->cells[stack[stackPointer].symbol][tokenID].error != 1) { 
-            printf("'%s' '%s' \n", G.nonTerminals[stack[stackPointer].symbol], G.terminals[tokenID]); 
+            printf("G.nonTerminals[stack[stackPointer].symbol] '%s' G.terminals[tokenID]'%s' \n", G.nonTerminals[stack[stackPointer].symbol], G.terminals[tokenID]); 
             int ruleInd = T->cells[stack[stackPointer].symbol][tokenID].ruleInd; 
             int rhsInd = T->cells[stack[stackPointer].symbol][tokenID].rhsInd; 
             // stackPointer += 1; 
-            printf("%d %d %d %d \n", ruleInd, rhsInd, stackPointer, G.allRules[ruleInd].RHS[rhsInd].numSyms); 
+            printf("ruleInd %d rhsInd %d stackPointer %d G.allRules[ruleInd].RHS[rhsInd].numSyms %d \n", ruleInd, rhsInd, stackPointer, G.allRules[ruleInd].RHS[rhsInd].numSyms); 
             if (G.allRules[ruleInd].RHS[rhsInd].symbols[0].type == 1 && G.allRules[ruleInd].RHS[rhsInd].symbols[0].symbol == 0) { 
                 printf("Rule is epsilon, pop last non-terminal off the stack \n"); 
                 stackPointer -= 1; 
@@ -686,13 +702,13 @@ void main() {
     
     parseTable* T = intializeParseTable(C.numNonTerminals,C.numTerminals);
     createParseTable(C,C.ff,T);
-    // printParseTable(C,T);
+    printParseTable(C,T);
     
     printf("%d %d %d '%s' '%s' \n", C.allRules[2].numOrs, C.ff[2].numFirst[0], C.ff[2].numFirst[1], C.terminals[C.ff[2].first[0][0]], C.terminals[C.ff[2].first[1][0]]); 
     printf("%d %d %d \n", C.allRules[0].numOrs, C.allRules[0].RHS[0].numSyms, C.allRules[0].RHS[0].symbols[1].type); 
     // printf("%d %d %d %d %d %d '%s' '%s' '%s' '%s' \n", C.ff[23].numFirst, C.ff[23].numFollow, C.ff[23].follow[0], C.ff[23].follow[1], C.ff[23].follow[2], C.ff[23].follow[3], C.terminals[C.ff[23].follow[0]], C.terminals[C.ff[23].follow[1]], C.terminals[C.ff[23].follow[2]], C.terminals[C.ff[23].follow[3]]); 
 
-    char* testCaseFile = "./testcases_stage1/t3.txt"; 
+    char* testCaseFile = "./testcases_stage1/t2.txt"; 
     // FILE *fp = fopen("./testcases_stage1/t2.txt","r"); 
     // initialize();
     // fp = getStream(fp, 0);
