@@ -17,42 +17,37 @@ node createEl(int lineNo, int parentSymbolID, int symbolID, int isLeafNode) {
     return new; 
 }
 
-tree_n * add_node(node el)
+tree_n add_node(node el)
 {
-    tree_n *new_node = malloc(sizeof(tree_n ));
+    tree_n new_node;
 
-    if (new_node) {
-        new_node->next = NULL;
-        new_node->child = NULL; 
-        new_node->num_child=0;
-        new_node->visit=0;
-        new_node->sib_index=0; 
-        new_node->elem.curr = el.curr; 
-        new_node->elem.isLeaf = el.isLeaf; 
-        new_node->elem.lex = el.lex; 
-        new_node->elem.lineNo = el.lineNo; 
-        new_node->elem.parentNodeSymbolID = el.parentNodeSymbolID; 
-    }
+    new_node.next = NULL;
+    new_node.child = NULL; 
+    new_node.num_child=0;
+    new_node.visit=0;
+    new_node.sib_index=0; 
+    new_node.elem.curr = el.curr; 
+    new_node.elem.isLeaf = el.isLeaf; 
+    new_node.elem.lex = el.lex; 
+    new_node.elem.lineNo = el.lineNo; 
+    new_node.elem.parentNodeSymbolID = el.parentNodeSymbolID; 
 
-    printf("%d \n", new_node->elem.curr);
+    printf("%d \n", new_node.elem.curr);
     return new_node;
 }
 
-tree_n* add_child(tree_n* parent, node el)
-{
-    if (parent == NULL) { 
-        return NULL; 
-    } 
-
-    if (parent->child) { 
-        tree_n* sib = parent -> child; 
+tree_n add_child(tree_n* parent, node el)
+{ 
+    if (parent->child != NULL) { 
+        tree_n* sib = parent->child; 
         return add_sibling(sib, parent, el); 
     } 
     else
     {
         parent->num_child++;
-        parent->child = add_node(el); 
-        return parent->child;
+        tree_n new = add_node(el); 
+        parent->child = &new; 
+        return new;
     }
         
 }
@@ -67,16 +62,14 @@ tree_n* add_child(tree_n* parent, node el)
 
 // }
 
-tree_n* add_sibling(tree_n* sib, tree_n* parent, node el)
+tree_n add_sibling(tree_n* sib, tree_n* parent, node el)
 {
-    if ( sib == NULL )
-        return NULL;
-
     while (sib->next)
         sib = sib->next;
     parent->num_child++;
-    sib->next = add_node(el); 
-    return sib->next;
+    tree_n new = add_node(el); 
+    sib->next = &new; 
+    return new;
 }
 
 
