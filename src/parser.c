@@ -793,7 +793,119 @@ tree_n parseInputSourceCode(char* testCaseFile, grammar G, parseTable* T) {
     printf("after while %u %u %d %d \n", &root, pointers[0], rootNode.curr, root.elem.curr); 
     return root; 
 } 
+// void inorder(tree_n* n,grammar G)
+// {
+//     if (n == NULL)
+//         return;
 
+//     // printf("**1**\n");
+//     tree_n* curr=(tree_n*)malloc(sizeof(tree_n));
+//     // printf("**2**\n");
+//     curr=n->child;
+//     // printf("**3**\n");
+//     char str[4];
+//     while( curr && curr->next && curr->next->next){
+//         curr = curr -> next;
+//     }
+
+
+// }
+void inorder(tree_n* n,grammar G)
+{
+    // if (n == NULL)
+    //     return;
+
+    // printf("*1*\n");
+    // tree_n* curr1=(tree_n*)malloc(sizeof(tree_n));
+    // printf("*2*\n");
+    // curr1=n->child;
+    
+    // printf("*3*\n");
+    // char str[3]; 
+    // char* yes = "yes";
+    // char* no = "no";
+  
+    // while(curr1->next&&(curr1->next)->next){
+    //     printf("*5*\n");
+    //     inorder(curr1,G);
+    //     curr1=curr1->next;
+    //     printf("*6*\n");
+
+    // }
+    // printf("*7*\n");
+    // // Print the current node's data
+ 
+    // printf("%d \n",n->elem.isLeaf==1); 
+    // int ans = n->elem.isLeaf;
+
+    // if(ans==1){
+    //     strncpy(str,yes,3);
+    // }
+    // else{
+    //     strncpy(str,no,2);
+    // }    
+
+    // printf("%d \n",n->elem.lineNo);
+    // printf("%s \n",enumToStringP[n->elem.curr]);
+    // // printf("%d \n",curr1->elem.lex);
+    // printf("%s \n",G.nonTerminals[n->elem.parentNodeSymbolID]);
+    // printf("%s \n",str);
+    // printf("%s \n",G.nonTerminals[n->elem.curr]);
+
+    // // Last child
+    // if(curr1)
+    //     inorder(curr1->next,G);
+    // else 
+    //     return;
+    // printf("*9*\n");
+
+    if (n == NULL){
+            return ;
+    }
+    if (n -> child){
+        // printf("this %d\t",n->next->elem.curr);
+        // printf("%d\t",n->next->elem.lineNo);
+        // printf("%s\t",n->next->elem.lex.lexemeStr);
+        // printf("%f\t",n->next->elem.lex.numVal);
+        // printf("%f\t",n->next->elem.lex.rVal);
+        // printf("%s\n",n->next->elem.lex.lexemeStr);
+        //    printf("n");
+        tree_n *c = n -> child;
+        if(c->next){
+            while(c && c-> next && c->next->next){
+                inorder(c,G);
+                c = c-> next;
+            }
+            inorder(c,G);
+            printf("this %d\t",n->elem.curr);
+            printf("%d\t",n->elem.lineNo);
+            printf("%s\t",n->elem.lex.lexemeStr);
+            printf("%f\t",n->elem.lex.numVal);
+            printf("%f\t",n->elem.lex.rVal);
+            printf("%s\n",n->elem.lex.lexemeStr);
+            inorder(c->next,G);
+            return;
+        }
+        else{
+            inorder(c,G);
+            printf("%d \n",n->elem.curr);
+            return ;
+        }
+    }
+    else {
+        printf("%d\n",n->elem.curr);
+        return ;
+    }
+}
+void printParseTree(tree_n* rootNode, char *outfile,grammar G){
+    printf("Printing the parse tree inorder------\n");
+    if(rootNode==NULL){
+    printf("null root");
+    return;
+    }
+    inorder(rootNode,G);
+  
+}
 void main() { 
     char* file; 
     file = "grammar.txt"; 
@@ -844,6 +956,6 @@ void main() {
     // printf("%d '%s' \n", findIndex(C.terminals, C.numTerminals, enumToStringP[currToken.tkn_name]), enumToStringP[currToken.tkn_name]); 
     tree_n rootNode; 
     rootNode = parseInputSourceCode(testCaseFile, C, T); 
-
+    printParseTree(&rootNode,"op.txt",C);
     // printf("%d %d '%s' '%s' \n", C.ff[5].numFirst[0], C.ff[5].first[0][0], C.nonTerminals[5], C.terminals[C.ff[5].first[0][0]]); 
 } 
