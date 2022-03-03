@@ -12,10 +12,7 @@ typedef struct node {
 } node; 
 
 typedef struct treeNode {
-    struct treeNode *next;
-    struct treeNode *child;
+    struct treeNode** children;
     node elem; 
-    int num_child;
-    int sib_index;
-    int visit;
-}tree_n;
+    int numChild; 
+} treeN; 
