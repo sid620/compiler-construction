@@ -38,16 +38,22 @@ tree_n add_node(node el)
 
 tree_n add_child(tree_n* parent, node el)
 { 
-    if (parent->child != NULL) { 
-        tree_n* sib = parent->child; 
-        return add_sibling(sib, parent, el); 
-    } 
-    else
-    {
+    if (parent == NULL) return *parent;
+    if (parent -> child){
+        tree_n *temp= (tree_n *)malloc(sizeof(tree_n ));
+        temp=parent->child;
+        tree_n *sib= (tree_n *)malloc(sizeof(tree_n ));
+        *sib= add_node(el);
+        parent->child=sib; 
+        sib->next=temp;
         parent->num_child++;
-        tree_n new = add_node(el); 
-        parent->child = &new; 
-        return new;
+        return *sib;
+    }
+    else{
+        parent->num_child++;
+        parent->child = (tree_n *)malloc(sizeof(tree_n));
+        *(parent->child) = add_node(el);
+        return *(parent->child);
     }
         
 }
@@ -64,12 +70,13 @@ tree_n add_child(tree_n* parent, node el)
 
 tree_n add_sibling(tree_n* sib, tree_n* parent, node el)
 {
-    while (sib->next)
-        sib = sib->next;
+    if( sib == NULL) return *sib;
+    while(sib->next) sib = sib->next;
     parent->num_child++;
-    tree_n new = add_node(el); 
-    sib->next = &new; 
-    return new;
+    sib->next = (tree_n *)malloc(sizeof(tree_n));
+    *(sib->next) = add_node(el);
+    return *(sib->next);
+
 }
 
 
