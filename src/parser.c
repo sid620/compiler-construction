@@ -496,6 +496,8 @@ void printParseTable(grammar G,parseTable* T){
                 tot++;
                 printRule(G, T->cells[i][j].ruleInd, T->cells[i][j].rhsInd);
             }
+            if( T->cells[i][j].error==2 )
+                printf("synch: cells[%d][%d] %d\n",i,j,T->cells[i][j].error);
         }
         printf("******************************************\n");
     }
@@ -527,9 +529,9 @@ parseTable* intializeParseTable( int numNonTerminals, int numTerminals ){
 }
 
 void createParseTable(grammar G, FirstAndFollow* ff, parseTable* T){
-    // For each production A -> alpha of the grammar
-    //      1. For each terminal a in FIRST(alpha), add A -> alpha to M [A][a]
-    //      2. If eps is in FIRST(alpha), then for each terminal b ( and "$" if applicable) in FOLLOW(A), add A -> alpha to M [A][b]. 
+    // For each production A -> RHS of the grammar
+    //   1. For each terminal a in First(RHS), add A -> RHS to Table[A][a]
+    //   2. If eps is in First(RHS), then for each terminal b ( and "$" if applicable) in Follow(A), add A -> RHS to Table[A][b].
     
     int numNonTerminals = G.numNonTerminals, numTerminals = G.numTerminals;
     int index;
@@ -558,6 +560,20 @@ void createParseTable(grammar G, FirstAndFollow* ff, parseTable* T){
             }
         }
     }
+// for each grammar rule
+    for( int i=0; i < G.totalNumRules; i++ ){
+        // for each indivisual production rule
+        for(int j = 0; j < G.allRules[i].numOrs; j++){
+            // for each terminal in first(alpha)
+            for( int follow_terminal_num = 0; follow_terminal_num < G.ff[i].numFollow; follow_terminal_num++ ){
+                // assign the production rule details
+                index = G.ff[i].follow[follow_terminal_num]; 
+                if ( T->cells[i][index].error == 1 ){   
+                    T->cells[i][index].error = 2;
+                }
+            }
+        }
+    }
 } 
 
 
@@ -579,26 +595,29 @@ tree_n* parseInputSourceCode(char* testCaseFile, grammar G, parseTable* T) {
     node rootNode = createEl(-1, -1, 0, 0); 
     tree_n* root = add_node(rootNode); 
     pointers[1] = root; 
-    printf("root %u %u %u %d %d \n", root, pointers[1], pointers[0], rootNode.curr, pointers[1]->elem.curr); 
+    // printf("root %u %u %u %d %d \n", root, pointers[1], pointers[0], rootNode.curr, pointers[1]->elem.curr); 
 
-    printf("bruh %d %d %d %d '%s' '%s' \n", stack[0].type, stack[1].type, stack[0].symbol, stack[1].symbol, G.terminals[stack[0].symbol], G.nonTerminals[stack[1].symbol]); 
+    // printf("bruh %d %d %d %d '%s' '%s' \n", stack[0].type, stack[1].type, stack[0].symbol, stack[1].symbol, G.terminals[stack[0].symbol], G.nonTerminals[stack[1].symbol]); 
     int stackLen = 2; 
     int stackPointer = 1; 
     tokenInfo currToken = getNextToken(fp); 
-    printf("%s\n",currToken.value.str);
-    printf("before while %u %u %u %d %d \n", root, pointers[1], pointers[0], rootNode.curr, pointers[1]->elem.curr); 
+    // printf("%s\n",currToken.value.str);
+    // printf("before while %u %u %u %d %d \n", root, pointers[1], pointers[0], rootNode.curr, pointers[1]->elem.curr); 
 
 
     while(1) { 
         printf("'%s' \n", enumToStringP[currToken.tkn_name]); 
         if (currToken.tkn_name == ERROR) { 
             printf("Lexical ERROR \n"); 
-            break; 
+            currToken = getNextToken(fp);
+            stackPointer--;
+            // break; 
             // Lexical error
         } 
         if (currToken.tkn_name == TK_EOF) { 
             if (stackPointer == 0) { 
-                printf("Parsing completed successfully \n"); 
+                printf("Parsing completed successfully \n");
+                break; 
             } 
             else { 
                 int flag = 0; 
@@ -652,12 +671,12 @@ tree_n* parseInputSourceCode(char* testCaseFile, grammar G, parseTable* T) {
                                 } 
                             } 
                         } 
-                        if (stack[stackPointer].type == 0) { 
-                            printf("'%s' \n", G.nonTerminals[stack[stackPointer].symbol]); 
-                        } 
-                        else { 
-                            printf("'%s' \n", G.terminals[stack[stackPointer].symbol]); 
-                        }
+                        // if (stack[stackPointer].type == 0) { 
+                        //     printf("'%s' \n", G.nonTerminals[stack[stackPointer].symbol]); 
+                        // } 
+                        // else { 
+                        //     printf("'%s' \n", G.terminals[stack[stackPointer].symbol]); 
+                        // }
                     } 
                 } 
                 if (flag == 1) { 
@@ -698,23 +717,36 @@ tree_n* parseInputSourceCode(char* testCaseFile, grammar G, parseTable* T) {
         else if(stack[stackPointer].type == 1 && stack[stackPointer].symbol != tokenID) { 
             printf("Terminals do not match ERROR \n"); 
             printf("%d '%s' '%s' \n", stackPointer, G.terminals[stack[stackPointer].symbol], G.terminals[tokenID]); 
-            break; 
+
+            // Ignore the terminal at lookahead
+            currToken = getNextToken(fp);
+            // break; 
             // Terminals do not match ERROR 
             // Add Panic Mode recovery code 
         } 
-        else if(stack[stackPointer].type == 0 && T->cells[stack[stackPointer].symbol][tokenID].error == 1) { 
-            printf("M[X, a] is blank ERROR \n"); 
+        else if(stack[stackPointer].type == 0 && T->cells[stack[stackPointer].symbol][tokenID].error != 0) { 
+            printf("\nM[X, a] is blank ERROR \n"); 
             printf("'%s' '%s' \n", G.nonTerminals[stack[stackPointer].symbol], G.terminals[tokenID]); 
-            break; 
-            // M[X, a] is blank ERROR 
-            // Add Panic Mode recovery code 
+            
+
+            // move lookahead till 
+            if(!isInArr(G.ff[stack[stackPointer].symbol].follow,tokenID,G.ff[stack[stackPointer].symbol].numFollow)){
+                currToken=getNextToken(fp);
+                tokenID = currToken.tkn_name;
+            }
+            else{
+            stackPointer--;
+                
+            }
+            
+            
         } 
-        else if (stack[stackPointer].type == 0 && T->cells[stack[stackPointer].symbol][tokenID].error != 1) { 
+        else if (stack[stackPointer].type == 0 && T->cells[stack[stackPointer].symbol][tokenID].error ==0) { 
             printf("'%s' '%s' \n", G.nonTerminals[stack[stackPointer].symbol], G.terminals[tokenID]); 
             int ruleInd = T->cells[stack[stackPointer].symbol][tokenID].ruleInd; 
             int rhsInd = T->cells[stack[stackPointer].symbol][tokenID].rhsInd; 
             // stackPointer += 1; 
-            printf("%d %d %d %d \n", ruleInd, rhsInd, stackPointer, G.allRules[ruleInd].RHS[rhsInd].numSyms); 
+            // printf("%d %d %d %d \n", ruleInd, rhsInd, stackPointer, G.allRules[ruleInd].RHS[rhsInd].numSyms); 
             if (G.allRules[ruleInd].RHS[rhsInd].symbols[0].type == 1 && G.allRules[ruleInd].RHS[rhsInd].symbols[0].symbol == 0) { 
                 node currNode = createEl(-1, stack[stackPointer].symbol, 0, 1); 
                 tree_n* eps = add_child(pointers[stackPointer], currNode); 
@@ -747,12 +779,12 @@ tree_n* parseInputSourceCode(char* testCaseFile, grammar G, parseTable* T) {
                     } 
                 } 
             } 
-            if (stack[stackPointer].type == 0) { 
-                printf("'%s' \n", G.nonTerminals[stack[stackPointer].symbol]); 
-            } 
-            else { 
-                printf("'%s' \n", G.terminals[stack[stackPointer].symbol]); 
-            }
+            // if (stack[stackPointer].type == 0) { 
+            //     printf("'%s' \n", G.nonTerminals[stack[stackPointer].symbol]); 
+            // } 
+            // else { 
+            //     printf("'%s' \n", G.terminals[stack[stackPointer].symbol]); 
+            // }
         }
     } 
 
@@ -1022,7 +1054,7 @@ void main() {
     // printf("%d %d %d \n", C.allRules[0].numOrs, C.allRules[0].RHS[0].numSyms, C.allRules[0].RHS[0].symbols[1].type); 
     // printf("%d %d %d %d %d %d '%s' '%s' '%s' '%s' \n", C.ff[23].numFirst, C.ff[23].numFollow, C.ff[23].follow[0], C.ff[23].follow[1], C.ff[23].follow[2], C.ff[23].follow[3], C.terminals[C.ff[23].follow[0]], C.terminals[C.ff[23].follow[1]], C.terminals[C.ff[23].follow[2]], C.terminals[C.ff[23].follow[3]]); 
 
-    char* testCaseFile = "./testcases_stage1/t2.txt"; 
+    char* testCaseFile = "./testcases_stage1/t5.txt"; 
     // FILE *fp = fopen("./testcases_stage1/t2.txt","r"); 
     // initialize();
     // fp = getStream(fp, 0);
