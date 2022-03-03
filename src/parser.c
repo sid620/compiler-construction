@@ -1,4 +1,12 @@
-#include "parser.h"
+#include "utils.h"
+#include "parser.h" 
+#include "parserDef.h"
+#include "tree.h"
+// #include "lookuptable.c" 
+// #include "lexerDef.h"
+// #include "lexer.h"
+// #include "lexer.c" 
+// #include "tree.c"
 
 // char* nonTerminals[] = { 
 //     "program", "mainFunction", "otherFunctions", "function", "input_par", "output_par", "parameter_list", "dataType", 
@@ -23,6 +31,7 @@ char* enumToStringP[]={"TK_ASSIGNOP","TK_COMMENT","TK_FIELDID","TK_ID","TK_NUM",
 "TK_WHILE","TK_UNION","TK_ENDUNION","TK_DEFINETYPE","TK_AS","TK_TYPE","TK_MAIN","TK_GLOBAL","TK_PARAMETER","TK_LIST","TK_SQL","TK_SQR","TK_INPUT","TK_OUTPUT","TK_INT","TK_REAL",
 "TK_COMMA","TK_SEM","TK_COLON","TK_DOT","TK_ENDWHILE","TK_OP","TK_CL","TK_IF","TK_THEN","TK_ENDIF","TK_READ","TK_WRITE","TK_RETURN","TK_PLUS","TK_MINUS","TK_MUL","TK_DIV",
 "TK_CALL","TK_RECORD","TK_ENDRECORD","TK_ELSE","TK_AND","TK_OR","TK_NOT","TK_LT","TK_LE","TK_EQ","TK_GT","TK_GE","TK_NE","ERROR","TK_EOF"};
+
 
 grammar readGrammar(char* file) { 
     
@@ -487,8 +496,6 @@ void printParseTable(grammar G,parseTable* T){
                 tot++;
                 printRule(G, T->cells[i][j].ruleInd, T->cells[i][j].rhsInd);
             }
-            if( T->cells[i][j].error==2 )
-            printf("synch: cells[%d][%d] %d\n",i,j,T->cells[i][j].error);
         }
         printf("******************************************\n");
     }
@@ -520,9 +527,9 @@ parseTable* intializeParseTable( int numNonTerminals, int numTerminals ){
 }
 
 void createParseTable(grammar G, FirstAndFollow* ff, parseTable* T){
-    // For each production A -> RHS of the grammar
-    //   1. For each terminal a in First(RHS), add A -> RHS to Table[A][a]
-    //   2. If eps is in First(RHS), then for each terminal b ( and "$" if applicable) in Follow(A), add A -> RHS to Table[A][b]. 
+    // For each production A -> alpha of the grammar
+    //      1. For each terminal a in FIRST(alpha), add A -> alpha to M [A][a]
+    //      2. If eps is in FIRST(alpha), then for each terminal b ( and "$" if applicable) in FOLLOW(A), add A -> alpha to M [A][b]. 
     
     int numNonTerminals = G.numNonTerminals, numTerminals = G.numTerminals;
     int index;
@@ -551,23 +558,10 @@ void createParseTable(grammar G, FirstAndFollow* ff, parseTable* T){
             }
         }
     }
-    // for each grammar rule
-    for( int i=0; i < G.totalNumRules; i++ ){
-        // for each indivisual production rule
-        for(int j = 0; j < G.allRules[i].numOrs; j++){
-            // for each terminal in first(alpha)
-            for( int follow_terminal_num = 0; follow_terminal_num < G.ff[i].numFollow; follow_terminal_num++ ){
-                // assign the production rule details
-                index = G.ff[i].follow[follow_terminal_num]; 
-                if ( T->cells[i][index].error == 1 ){   
-                    T->cells[i][index].error = 2;
-                }
-            }
-        }
-    }
 } 
 
-void parseInputSourceCode(char* testCaseFile, grammar G, parseTable* T) { 
+
+tree_n* parseInputSourceCode(char* testCaseFile, grammar G, parseTable* T) { 
 
     FILE *fp = fopen(testCaseFile,"r");
     initialize();
@@ -580,45 +574,124 @@ void parseInputSourceCode(char* testCaseFile, grammar G, parseTable* T) {
     stack[1].type = 0; 
     stack[1].symbol = 0; // Start symbol 
 
-    printf("stack[0].type %d stack[1].type %d %d %d '%s' '%s' \n", stack[0].type, stack[1].type, stack[0].symbol, stack[1].symbol, G.terminals[stack[0].symbol], G.nonTerminals[stack[1].symbol]); 
+    tree_n** pointers = (tree_n**) malloc(sizeof(tree_n*) * 2); 
+    pointers[0] = NULL; 
+    node rootNode = createEl(-1, -1, 0, 0); 
+    tree_n* root = add_node(rootNode); 
+    pointers[1] = root; 
+    printf("root %u %u %u %d %d \n", root, pointers[1], pointers[0], rootNode.curr, pointers[1]->elem.curr); 
+
+    printf("bruh %d %d %d %d '%s' '%s' \n", stack[0].type, stack[1].type, stack[0].symbol, stack[1].symbol, G.terminals[stack[0].symbol], G.nonTerminals[stack[1].symbol]); 
     int stackLen = 2; 
     int stackPointer = 1; 
-    // tokenInfo* currToken = NULL; 
-    // tokenInfo t = getNextToken(fp); 
-    // currToken = &t; 
-    // printf("%d %u %d '%s' '%s' \n", t.line, currToken, currToken->line, currToken->value.str, enumToStringP[currToken->tkn_name]); 
-    // if (currToken == NULL) { 
-    //     printf("NULL"); 
-    // } 
     tokenInfo currToken = getNextToken(fp); 
-    // while(currToken.tkn_name != TK_EOF) { 
-    //     printf("'%s' \n", enumToStringP[currToken.tkn_name]); 
-    //     currToken = getNextToken(fp); 
-    // }
-    
+    printf("%s\n",currToken.value.str);
+    printf("before while %u %u %u %d %d \n", root, pointers[1], pointers[0], rootNode.curr, pointers[1]->elem.curr); 
+
+
     while(1) { 
-        printf("enumToStringP[currToken.tkn_name] '%s' \n", enumToStringP[currToken.tkn_name]); 
+        printf("'%s' \n", enumToStringP[currToken.tkn_name]); 
         if (currToken.tkn_name == ERROR) { 
             printf("Lexical ERROR \n"); 
             break; 
             // Lexical error
         } 
-        if(stackPointer == 0 && currToken.tkn_name == TK_EOF) { 
-            printf("Parsing completed successfully \n"); 
-            break; 
-        } 
+        if (currToken.tkn_name == TK_EOF) { 
+            if (stackPointer == 0) { 
+                printf("Parsing completed successfully \n"); 
+            } 
+            else { 
+                int flag = 0; 
+                while (stackPointer != 0) { 
+                    if (stack[stackPointer].type == 1) { 
+                        printf("Top element of stack is a terminal but EOF has been reached ERROR \n"); 
+                        flag = 1; 
+                        break; 
+                    } 
+                    if(T->cells[stack[stackPointer].symbol][G.numTerminals - 1].error == 1) { 
+                        printf("M[X, a] is blank ERROR \n"); 
+                        printf("'%s' 'TK_EOF' \n", G.nonTerminals[stack[stackPointer].symbol]); 
+                        flag = 1; 
+                        break;
+                    } 
+                    else { 
+                        printf("'%s' 'TK_EOF' \n", G.nonTerminals[stack[stackPointer].symbol]); 
+                        int ruleInd = T->cells[stack[stackPointer].symbol][G.numTerminals - 1].ruleInd; 
+                        int rhsInd = T->cells[stack[stackPointer].symbol][G.numTerminals - 1].rhsInd; 
+                        // stackPointer += 1; 
+                        printf("%d %d %d %d \n", ruleInd, rhsInd, stackPointer, G.allRules[ruleInd].RHS[rhsInd].numSyms); 
+                        if (G.allRules[ruleInd].RHS[rhsInd].symbols[0].type == 1 && G.allRules[ruleInd].RHS[rhsInd].symbols[0].symbol == 0) { 
+                            node currNode = createEl(-1, stack[stackPointer].symbol, 0, 1); 
+                            tree_n* eps = add_child(pointers[stackPointer], currNode); 
+                            printf("Rule is epsilon, pop last non-terminal off the stack \n"); 
+                            stackPointer -= 1; 
+                        } 
+                        else { 
+                            int parentSymbol = pointers[stackPointer]->elem.curr; 
+                            tree_n* parent = pointers[stackPointer]; 
+                            for (int i = G.allRules[ruleInd].RHS[rhsInd].numSyms - 1; i >= 0; i--) { 
+                                if(stackPointer == stackLen) { 
+                                    stack = (varSymbol*) realloc(stack, sizeof(varSymbol) * (stackLen + 1)); 
+                                    pointers = (tree_n**) realloc(pointers, sizeof(tree_n*) * (stackLen + 1)); 
+                                    stackLen += 1; 
+                                }
+                                stack[stackPointer].type = G.allRules[ruleInd].RHS[rhsInd].symbols[i].type; 
+                                stack[stackPointer].symbol = G.allRules[ruleInd].RHS[rhsInd].symbols[i].symbol; 
+                    
+                                node currNode; 
+                                if (stack[stackPointer].type == 1) { 
+                                    currNode = createEl(-1, parentSymbol, stack[stackPointer].symbol, 1); 
+                                } 
+                                else { 
+                                    currNode = createEl(-1, parentSymbol, stack[stackPointer].symbol, 0); 
+                                } 
+                                pointers[stackPointer] = add_child(parent, currNode); 
+                    
+                                if (i != 0) { 
+                                    stackPointer += 1; 
+                                } 
+                            } 
+                        } 
+                        if (stack[stackPointer].type == 0) { 
+                            printf("'%s' \n", G.nonTerminals[stack[stackPointer].symbol]); 
+                        } 
+                        else { 
+                            printf("'%s' \n", G.terminals[stack[stackPointer].symbol]); 
+                        }
+                    } 
+                } 
+                if (flag == 1) { 
+                    break; 
+                } 
+                else { 
+                    printf("Parsing Completed successfully"); 
+                    break; 
+                }
+            }
+        }
+        
+        
         if (stackPointer == 0 && currToken.tkn_name != TK_EOF) { 
             printf("Start symbol popped from stack but end of file not reached \n"); 
             break; 
         } 
-        if (stackPointer != 0 && currToken.tkn_name == TK_EOF) { 
-            printf("End of file reached but stack not empty \n"); 
-            break; 
-        } 
+
         int tokenID = findIndex(G.terminals, G.numTerminals, enumToStringP[currToken.tkn_name]); 
         if (stack[stackPointer].type == 1 && stack[stackPointer].symbol == tokenID) { 
             printf("Terminals match \n"); 
-            printf("stackPointer %d G.terminals[stack[stackPointer].symbol]'%s' G.terminals[tokenID] '%s' \n", stackPointer, G.terminals[stack[stackPointer].symbol], G.terminals[tokenID]); 
+            printf("%d '%s' '%s' \n", stackPointer, G.terminals[stack[stackPointer].symbol], G.terminals[tokenID]); 
+            
+            pointers[stackPointer]->elem.lineNo = currToken.line; 
+            if (currToken.tkn_name == TK_NUM) { 
+                pointers[stackPointer]->elem.lex.numVal = currToken.value.num; 
+            } 
+            else if (currToken.tkn_name == TK_RNUM) { 
+                pointers[stackPointer]->elem.lex.rVal = currToken.value.rnum.v; 
+            } 
+            else { 
+                pointers[stackPointer]->elem.lex.lexemeStr = currToken.value.str; 
+            }
+            
             stackPointer -= 1; 
             currToken = getNextToken(fp); 
         } 
@@ -631,29 +704,44 @@ void parseInputSourceCode(char* testCaseFile, grammar G, parseTable* T) {
         } 
         else if(stack[stackPointer].type == 0 && T->cells[stack[stackPointer].symbol][tokenID].error == 1) { 
             printf("M[X, a] is blank ERROR \n"); 
-            printf("G.nonTerminals[stack[stackPointer].symbol]'%s' G.terminals[tokenID]'%s' \n", G.nonTerminals[stack[stackPointer].symbol], G.terminals[tokenID]); 
+            printf("'%s' '%s' \n", G.nonTerminals[stack[stackPointer].symbol], G.terminals[tokenID]); 
             break; 
             // M[X, a] is blank ERROR 
             // Add Panic Mode recovery code 
         } 
         else if (stack[stackPointer].type == 0 && T->cells[stack[stackPointer].symbol][tokenID].error != 1) { 
-            printf("G.nonTerminals[stack[stackPointer].symbol] '%s' G.terminals[tokenID]'%s' \n", G.nonTerminals[stack[stackPointer].symbol], G.terminals[tokenID]); 
+            printf("'%s' '%s' \n", G.nonTerminals[stack[stackPointer].symbol], G.terminals[tokenID]); 
             int ruleInd = T->cells[stack[stackPointer].symbol][tokenID].ruleInd; 
             int rhsInd = T->cells[stack[stackPointer].symbol][tokenID].rhsInd; 
             // stackPointer += 1; 
-            printf("ruleInd %d rhsInd %d stackPointer %d G.allRules[ruleInd].RHS[rhsInd].numSyms %d \n", ruleInd, rhsInd, stackPointer, G.allRules[ruleInd].RHS[rhsInd].numSyms); 
+            printf("%d %d %d %d \n", ruleInd, rhsInd, stackPointer, G.allRules[ruleInd].RHS[rhsInd].numSyms); 
             if (G.allRules[ruleInd].RHS[rhsInd].symbols[0].type == 1 && G.allRules[ruleInd].RHS[rhsInd].symbols[0].symbol == 0) { 
+                node currNode = createEl(-1, stack[stackPointer].symbol, 0, 1); 
+                tree_n* eps = add_child(pointers[stackPointer], currNode); 
                 printf("Rule is epsilon, pop last non-terminal off the stack \n"); 
                 stackPointer -= 1; 
             } 
             else { 
+                int parentSymbol = pointers[stackPointer]->elem.curr; 
+                tree_n* parent = pointers[stackPointer]; 
                 for (int i = G.allRules[ruleInd].RHS[rhsInd].numSyms - 1; i >= 0; i--) { 
                     if(stackPointer == stackLen) { 
                         stack = (varSymbol*) realloc(stack, sizeof(varSymbol) * (stackLen + 1)); 
+                        // pointers = (tree_n**) realloc(pointers, sizeof(tree_n*) * (stackLen + 1)); 
                         stackLen += 1; 
                     }
                     stack[stackPointer].type = G.allRules[ruleInd].RHS[rhsInd].symbols[i].type; 
                     stack[stackPointer].symbol = G.allRules[ruleInd].RHS[rhsInd].symbols[i].symbol; 
+                    
+                    node currNode; 
+                    if (stack[stackPointer].type == 1) { 
+                        currNode = createEl(-1, parentSymbol, stack[stackPointer].symbol, 1); 
+                    } 
+                    else { 
+                        currNode = createEl(-1, parentSymbol, stack[stackPointer].symbol, 0); 
+                    } 
+                    pointers[stackPointer] = add_child(parent, currNode); 
+                    
                     if (i != 0) { 
                         stackPointer += 1; 
                     } 
@@ -667,13 +755,237 @@ void parseInputSourceCode(char* testCaseFile, grammar G, parseTable* T) {
             }
         }
     } 
+
+    return root; 
 } 
+
+
+// tree_n* parseInputSourceCode(char* testCaseFile, grammar G, parseTable* T) { 
+
+//     // Returns only pointer to root node 
+//     FILE *fp = fopen(testCaseFile,"r");
+//     initialize();
+//     fp = getStream(fp, 0);
+    
+//     varSymbol* stack; 
+//     stack = (varSymbol*) malloc(sizeof(varSymbol) * 2); 
+//     stack[0].type = 1; 
+//     stack[0].symbol = G.numTerminals - 1; // $
+//     stack[1].type = 0; 
+//     stack[1].symbol = 0; // Start symbol 
+
+//     printf("%d %d %d %d '%s' '%s' \n", stack[0].type, stack[1].type, stack[0].symbol, stack[1].symbol, G.terminals[stack[0].symbol], G.nonTerminals[stack[1].symbol]); 
+//     printf("%d '%s' \n", G.numTerminals - 1, G.terminals[G.numTerminals - 1]); 
+//     int tokenIDa = findIndex(G.terminals, G.numTerminals, enumToStringP[TK_ASSIGNOP]); 
+//     printf("%d \n", tokenIDa); 
+//     int stackLen = 2; 
+//     int stackPointer = 1; 
+//     tokenInfo currToken = getNextToken(fp); 
+    
+//     // printf("%d %d \n", G.numTerminals, G.terminals[G.numTerminals - 1]); 
+//     // while(currToken.tkn_name != TK_EOF) { 
+//     //     printf("'%s' \n", enumToStringP[currToken.tkn_name]); 
+//     //     // int tokenIDn = findIndex(G.terminals, G.numTerminals, enumToStringP[currToken.tkn_name]); 
+//     //     // printf("%d '%s' \n", tokenIDn, G.terminals[tokenIDn]); 
+//     //     int tokenID = findIndex(G.terminals, G.numTerminals, enumToStringP[currToken.tkn_name]); 
+//     //     printf("%d \n", tokenID);
+//     //     currToken = getNextToken(fp); 
+//     // } 
+
+//     tree_n** parentNodePointers = (tree_n**) malloc(sizeof(tree_n*) * 2); 
+//     parentNodePointers[0] = NULL; 
+//     node rootNode; 
+//     // rootNode.isLeafNode = 0; 
+//     // rootNode.lex.lexemeStr = "____"; 
+//     // rootNode.lineNo = -1; 
+//     // rootNode.parentNodeSymbolID = -1; 
+//     // rootNode.symbolID = 0; 
+//     rootNode = createEl(-1, -1, 0, 0); 
+//     tree_n* root; 
+//     parentNodePointers[1] = root; 
+
+//     // while(currToken.tkn_name != TK_EOF) { 
+//     //     printf("'%s' \n", enumToStringP[currToken.tkn_name]); 
+//     //     int tokenID = findIndex(G.terminals, G.numTerminals, enumToStringP[currToken.tkn_name]); 
+//     //     currToken = getNextToken(fp); 
+//     // }
+
+//     while(1) { 
+//         printf("'%s' \n", enumToStringP[currToken.tkn_name]); 
+//         if (currToken.tkn_name == ERROR || currToken.tkn_name == TK_EOF) { 
+//             printf("Lexical ERROR \n"); 
+//             break; 
+//             // Lexical error
+//         } 
+//         if (stackPointer == 0 && currToken.tkn_name != TK_EOF) { 
+//             printf("Start symbol popped from stack but end of file not reached \n"); 
+//             break; 
+//         } 
+//         // if (currToken.tkn_name == TK_EOF) { 
+//         //     if(stackPointer == 0) { 
+//         //         printf("No non terminals left. Parsing completed successfully \n"); 
+//         //         break; 
+//         //     } 
+//         //     else { 
+//         //         int flag = 0; 
+//         //         while(stackPointer != 0) { 
+//         //             if (stack[stackPointer].type == 1) { 
+//         //                 printf("Top of stack is a terminal but end of file has been reached \n"); 
+//         //                 flag = 1; 
+//         //                 break; 
+//         //             } 
+//         //             else { 
+//         //                 if(T->cells[stack[stackPointer].symbol][G.numTerminals - 1].error == 1) { 
+//         //                     printf("M[X, a] is blank ERROR \n"); 
+//         //                     printf("'%s' 'TK_EOF' \n", G.nonTerminals[stack[stackPointer].symbol]); 
+//         //                     flag = 1; 
+//         //                     break;
+//         //                 } 
+//         //                 else { 
+//         //                     printf("'%s' 'TK_EOF' \n", G.nonTerminals[stack[stackPointer].symbol]); 
+//         //                     int ruleInd = T->cells[stack[stackPointer].symbol][G.numTerminals - 1].ruleInd; 
+//         //                     int rhsInd = T->cells[stack[stackPointer].symbol][G.numTerminals - 1].rhsInd; 
+//         //                     // stackPointer += 1; 
+//         //                     printf("%d %d %d %d \n", ruleInd, rhsInd, stackPointer, G.allRules[ruleInd].RHS[rhsInd].numSyms); 
+//         //                     if (G.allRules[ruleInd].RHS[rhsInd].symbols[0].type == 1 && G.allRules[ruleInd].RHS[rhsInd].symbols[0].symbol == 0) { 
+//         //                         // nodeInfo* currNode = createElem(-1, stack[stackPointer].symbol, 0, 1); 
+//         //                         // currNode->lexeme.lexemeStr = "____"; 
+//         //                         // tree_n* eps = add_child(parentNodePointers[stackPointer], currNode); 
+//         //                         printf("Rule is epsilon, pop last non-terminal off the stack \n"); 
+//         //                         stackPointer -= 1; 
+//         //                     } 
+//         //                     else { 
+//         //                         // int parentSymbol = parentNodePointers[stackPointer]->elem->symbolID; 
+//         //                         // tree_n* parentNode = parentNodePointers[stackPointer]; 
+//         //                         for (int i = G.allRules[ruleInd].RHS[rhsInd].numSyms - 1; i >= 0; i--) { 
+//         //                             if(stackPointer == stackLen) { 
+//         //                                 stack = (varSymbol*) realloc(stack, sizeof(varSymbol) * (stackLen + 1)); 
+//         //                                 // parentNodePointers = (tree_n**) realloc(parentNodePointers, sizeof(tree_n*) * (stackLen + 1)); 
+//         //                                 stackLen += 1; 
+//         //                             }
+//         //                             stack[stackPointer].type = G.allRules[ruleInd].RHS[rhsInd].symbols[i].type; 
+//         //                             stack[stackPointer].symbol = G.allRules[ruleInd].RHS[rhsInd].symbols[i].symbol; 
+//         //                             // nodeInfo* currNode; 
+//         //                             // if (stack[stackPointer].type == 1) { 
+//         //                             //     currNode = createElem(-1, parentSymbol, stack[stackPointer].symbol, 1); 
+//         //                             // } 
+//         //                             // else { 
+//         //                             //     currNode = createElem(-1, parentSymbol, stack[stackPointer].symbol, 0); 
+//         //                             // } 
+//         //                             // parentNodePointers[stackPointer] = add_child(parentNode, currNode); 
+//         //                             if (i != 0) { 
+//         //                                 stackPointer += 1; 
+//         //                             }
+//         //                         } 
+//         //                     } 
+//         //                     if (stack[stackPointer].type == 0) { 
+//         //                         printf("'%s' \n", G.nonTerminals[stack[stackPointer].symbol]); 
+//         //                     } 
+//         //                     else { 
+//         //                         printf("'%s' \n", G.terminals[stack[stackPointer].symbol]); 
+//         //                     }
+//         //                 }
+//         //             }
+//         //         } 
+//         //         if (flag == 1) { 
+//         //             break; 
+//         //         } 
+//         //         else { 
+//         //             printf("All non-terminals removed. Parsing completed successfully \n"); 
+//         //             break; 
+//         //         }
+//         //     }
+//         // } 
+
+//         if (stackPointer != 0 && currToken.tkn_name == TK_EOF) { 
+//             printf("End of file reached but stack not empty \n"); 
+//             break; 
+//         } 
+//         int tokenID = findIndex(G.terminals, G.numTerminals, enumToStringP[currToken.tkn_name]); 
+//         printf("%d \n", tokenID);
+//         if (stack[stackPointer].type == 1 && stack[stackPointer].symbol == tokenID) { 
+//             // parentNodePointers[stackPointer]->elem.lineNo = currToken.line; 
+//             // if (currToken.tkn_name == TK_NUM) { 
+//             //     parentNodePointers[stackPointer]->elem.lex.numVal = currToken.value.num; 
+//             // } 
+//             // else if (currToken.tkn_name == TK_RNUM) { 
+//             //     parentNodePointers[stackPointer]->elem.lex.rVal = currToken.value.rnum.v; 
+//             // } 
+//             // else { 
+//             //     parentNodePointers[stackPointer]->elem.lex.lexemeStr = currToken.value.str; 
+//             // }
+//             printf("Terminals match \n"); 
+//             printf("%d '%s' '%s' \n", stackPointer, G.terminals[stack[stackPointer].symbol], G.terminals[tokenID]); 
+//             stackPointer -= 1; 
+//             currToken = getNextToken(fp); 
+//         } 
+//         else if(stack[stackPointer].type == 1 && stack[stackPointer].symbol != tokenID) { 
+//             printf("Terminals do not match ERROR \n"); 
+//             printf("%d '%s' '%s' \n", stackPointer, G.terminals[stack[stackPointer].symbol], G.terminals[tokenID]); 
+//             break; 
+//             // Terminals do not match ERROR 
+//             // Add Panic Mode recovery code 
+//         } 
+//         else if(stack[stackPointer].type == 0 && T->cells[stack[stackPointer].symbol][tokenID].error == 1) { 
+//             printf("M[X, a] is blank ERROR \n"); 
+//             printf("'%s' '%s' \n", G.nonTerminals[stack[stackPointer].symbol], G.terminals[tokenID]); 
+//             break; 
+//             // M[X, a] is blank ERROR 
+//             // Add Panic Mode recovery code 
+//         } 
+//         else if (stack[stackPointer].type == 0 && T->cells[stack[stackPointer].symbol][tokenID].error != 1) { 
+//             printf("'%s' '%s' \n", G.nonTerminals[stack[stackPointer].symbol], G.terminals[tokenID]); 
+//             int ruleInd = T->cells[stack[stackPointer].symbol][tokenID].ruleInd; 
+//             int rhsInd = T->cells[stack[stackPointer].symbol][tokenID].rhsInd; 
+//             // stackPointer += 1; 
+//             printf("%d %d %d %d \n", ruleInd, rhsInd, stackPointer, G.allRules[ruleInd].RHS[rhsInd].numSyms); 
+//             if (G.allRules[ruleInd].RHS[rhsInd].symbols[0].type == 1 && G.allRules[ruleInd].RHS[rhsInd].symbols[0].symbol == 0) { 
+//                 // node currNode = createEl(-1, stack[stackPointer].symbol, 0, 1); 
+//                 // currNode.lex.lexemeStr = "____"; 
+//                 // tree_n* eps = add_child(parentNodePointers[stackPointer], currNode); 
+//                 printf("Rule is epsilon, pop last non-terminal off the stack \n"); 
+//                 stackPointer -= 1; 
+//             } 
+//             else { 
+//                 // int parentSymbol = parentNodePointers[stackPointer]->elem.symbolID; 
+//                 // tree_n* parentNode = parentNodePointers[stackPointer]; 
+//                 for (int i = G.allRules[ruleInd].RHS[rhsInd].numSyms - 1; i >= 0; i--) { 
+//                     if(stackPointer == stackLen) { 
+//                         stack = (varSymbol*) realloc(stack, sizeof(varSymbol) * (stackLen + 1)); 
+//                         parentNodePointers = (tree_n**) realloc(parentNodePointers, sizeof(tree_n*) * (stackLen + 1)); 
+//                         stackLen += 1; 
+//                     }
+//                     stack[stackPointer].type = G.allRules[ruleInd].RHS[rhsInd].symbols[i].type; 
+//                     stack[stackPointer].symbol = G.allRules[ruleInd].RHS[rhsInd].symbols[i].symbol; 
+//                     // nodeInfo* currNode; 
+//                     // if (stack[stackPointer].type == 1) { 
+//                     //     currNode = createElem(-1, parentSymbol, stack[stackPointer].symbol, 1); 
+//                     // } 
+//                     // else { 
+//                     //     currNode = createElem(-1, parentSymbol, stack[stackPointer].symbol, 0); 
+//                     // } 
+//                     // parentNodePointers[stackPointer] = add_child(parentNode, currNode); 
+//                     if (i != 0) { 
+//                         stackPointer += 1; 
+//                     } 
+//                 } 
+//             } 
+//             if (stack[stackPointer].type == 0) { 
+//                 printf("'%s' \n", G.nonTerminals[stack[stackPointer].symbol]); 
+//             } 
+//             else { 
+//                 printf("'%s' \n", G.terminals[stack[stackPointer].symbol]); 
+//             }
+//         }
+//     } 
+// } 
 
 void main() { 
     char* file; 
     file = "grammar.txt"; 
     grammar C; 
     C = readGrammar(file); 
+    printf("Grammar read and saved \n"); 
     printf("%d %d %d %d \n", C.totalNumRules, C.allRules[36].numOrs, C.allRules[31].epsilon, C.allRules[28].epsilon); 
     
     // printf("'%s' %d %d \n", C.nonTerminals[23], C.allRules[23].numOrs, C.allRules[23].epsilon); 
@@ -682,6 +994,7 @@ void main() {
     // prettyPrintGrammar(C);
     
     C.ff = ComputeFirstAndFollowSets(C); 
+    printf("First and Follow computed \n"); 
     printf("\n***** \n"); 
     // int n = 48; 
     // printf("C.ff[n].numFirst %d  C.ff[n].numFollow %d \n", C.ff[n].numFirst[0], C.ff[n].numFollow); 
@@ -702,10 +1015,11 @@ void main() {
     
     parseTable* T = intializeParseTable(C.numNonTerminals,C.numTerminals);
     createParseTable(C,C.ff,T);
-    printParseTable(C,T);
-    
-    printf("%d %d %d '%s' '%s' \n", C.allRules[2].numOrs, C.ff[2].numFirst[0], C.ff[2].numFirst[1], C.terminals[C.ff[2].first[0][0]], C.terminals[C.ff[2].first[1][0]]); 
-    printf("%d %d %d \n", C.allRules[0].numOrs, C.allRules[0].RHS[0].numSyms, C.allRules[0].RHS[0].symbols[1].type); 
+    // printParseTable(C,T);
+    printf("Parse Table created \n"); 
+
+    // printf("%d %d %d '%s' '%s' \n", C.allRules[2].numOrs, C.ff[2].numFirst[0], C.ff[2].numFirst[1], C.terminals[C.ff[2].first[0][0]], C.terminals[C.ff[2].first[1][0]]); 
+    // printf("%d %d %d \n", C.allRules[0].numOrs, C.allRules[0].RHS[0].numSyms, C.allRules[0].RHS[0].symbols[1].type); 
     // printf("%d %d %d %d %d %d '%s' '%s' '%s' '%s' \n", C.ff[23].numFirst, C.ff[23].numFollow, C.ff[23].follow[0], C.ff[23].follow[1], C.ff[23].follow[2], C.ff[23].follow[3], C.terminals[C.ff[23].follow[0]], C.terminals[C.ff[23].follow[1]], C.terminals[C.ff[23].follow[2]], C.terminals[C.ff[23].follow[3]]); 
 
     char* testCaseFile = "./testcases_stage1/t2.txt"; 
@@ -714,7 +1028,8 @@ void main() {
     // fp = getStream(fp, 0);
     // tokenInfo currToken = getNextToken(fp); 
     // printf("%d '%s' \n", findIndex(C.terminals, C.numTerminals, enumToStringP[currToken.tkn_name]), enumToStringP[currToken.tkn_name]); 
-    parseInputSourceCode(testCaseFile, C, T); 
+    tree_n* rootNode; 
+    rootNode = parseInputSourceCode(testCaseFile, C, T); 
 
     // printf("%d %d '%s' '%s' \n", C.ff[5].numFirst[0], C.ff[5].first[0][0], C.nonTerminals[5], C.terminals[C.ff[5].first[0][0]]); 
 } 
