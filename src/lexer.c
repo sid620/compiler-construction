@@ -579,19 +579,19 @@ tokenInfo getNextToken(FILE *fp){
             case 21: {
                 reset(1);
                 char* lex = accept(false);
-                if(strlen(lex) < 2) {
-                    printf("Line No %d: Error :Variable Identifier is smaller than the prescribed length of two characters\n" , lineNo);
-                    lexError=3;
-                    populateToken(TOK,ERROR,lex,lineNo);
-                }
-                else if(strlen(lex) > 20) {
-                    printf("Line No %d: Error :Variable Identifier is longer than the prescribed length of 20 characters\n" ,lineNo);
-                    lexError = 3;
-                    populateToken(TOK,ERROR, lex, lineNo);
-                }
-                else {
+                // if(strlen(lex) < 2) {
+                //     printf("Line No %d: Error :Variable Identifier is smaller than the prescribed length of two characters\n" , lineNo);
+                //     lexError=3;
+                //     populateToken(TOK,ERROR,lex,lineNo);
+                // }
+                // else if(strlen(lex) > 20) {
+                //     printf("Line No %d: Error :Variable Identifier is longer than the prescribed length of 20 characters\n" ,lineNo);
+                //     lexError = 3;
+                //     populateToken(TOK,ERROR, lex, lineNo);
+                // }
+                // else {
                     populateToken(TOK,actualToken(TK_FIELDID, lex),lex,lineNo);
-                }
+                // }
                 dfa_state=0;
                 return *TOK;
                 break;
@@ -687,27 +687,27 @@ tokenInfo getNextToken(FILE *fp){
                 break;
             }
             case 28: {
-                if(strlen(twin_buffer->lexeme)<=21){
+                // if(strlen(twin_buffer->lexeme)<=21){
                     reset(1);
                     char* lex = accept(false);
                     populateToken(TOK, TK_RUID, lex,lineNo);
-                }
-                else{
-                    if(strlen(twin_buffer->lexeme)<2){
-                        reset(1);
-                        char *lex = reject();
-                        lexError = 3;
-                        printf("Line No %d: Error :Record Identifier is smaller than the prescribed length of 2 characters\n" ,lineNo);
-                        populateToken(TOK, ERROR, lex, lineNo);
-                    }
-                    else if(strlen(twin_buffer->lexeme)>21){
-                        reset(1);
-                        char *lex = reject();
-                        lexError = 3;
-                        printf("Line No %d: Error :Record Identifier is smaller than the prescribed length of 2 characters\n" ,lineNo);
-                        populateToken(TOK,ERROR,lex,lineNo);
-                    }
-                }
+                // }
+                // else{
+                //     if(strlen(twin_buffer->lexeme)<2){
+                //         reset(1);
+                //         char *lex = reject();
+                //         lexError = 3;
+                //         printf("Line No %d: Error :Record Identifier is smaller than the prescribed length of 2 characters\n" ,lineNo);
+                //         populateToken(TOK, ERROR, lex, lineNo);
+                //     }
+                //     else if(strlen(twin_buffer->lexeme)>21){
+                //         reset(1);
+                //         char *lex = reject();
+                //         lexError = 3;
+                //         printf("Line No %d: Error :Record Identifier is smaller than the prescribed length of 2 characters\n" ,lineNo);
+                //         populateToken(TOK,ERROR,lex,lineNo);
+                //     }
+                // }
                 return *TOK;
                 dfa_state = 0;
                 break;
