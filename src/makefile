@@ -1,13 +1,3 @@
-# Build project
-# TODO: check if this works as expected
-CC :=gcc
-SOURCES :=$(wildcard *.c)
-EXECUTABLE :=$(SOURCES:.c=)
- 
-all:$(EXECUTABLE)
-
-$(EXECUTABLE):$(SOURCES)
-		$(CC) $< -o $@
-
-clean:
-		rm $(EXECUTABLE)
+# Group 40
+  all:
+	gcc -g -o stage1exe lexer.c parser.c lookuptable.c utils.c tree.c driver.c

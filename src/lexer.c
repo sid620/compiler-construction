@@ -128,8 +128,8 @@ void populateToken(tokenInfo *TOK, token_name t, char * lexeme, int lineNo){
         for(int i=0;i<strlen(lexeme);i++)
             TOK->value.str[i] = *(lexeme +i);
     }
-    if(t!=ERROR && t!=TK_EOF)
-    printf("Line no. %d  Lexeme %s Token %s %d\n", lineNo, lexeme, enumToString[t],strnlen(lexeme,40));
+    // if(t!=ERROR && t!=TK_EOF)
+    // printf("Line no. %d  Lexeme %s Token %s %d\n", lineNo, lexeme, enumToString[t],strnlen(lexeme,40));
 }   
 
 /*
@@ -153,6 +153,18 @@ void initializeTwinBuffer(){
     lineNo = 1;
     // printf("done initTwinBuff\n");
 
+}
+
+/*
+    This funcion frees the memory allocated to the twin buffer, and sets it to NULL.
+*/
+void clearTwinBuffer(){
+    free(twin_buffer->lexeme);
+    free(twin_buffer->buffer);
+    free(twin_buffer);
+    twin_buffer = NULL;
+    initializeTwinBuffer();
+    // printf("== twin buffer -- %d -- \n", twin_buffer==NULL);
 }
 
 /*
@@ -208,7 +220,6 @@ FILE *getStream(FILE *fp, int bufferNumber){
 void reset(int amt) {
     twin_buffer->forward-=amt;
 }
-
 
 /*
     This function returns the next token (which can be ERROR)
@@ -1056,57 +1067,89 @@ tokenInfo getNextToken(FILE *fp){
 
 }
 
-// void removeComments(char *testcaseFile, char *cleanFile){
-//     int tcf = open(testcaseFile, O_RDONLY);
-//     // Commenting this as printing is required in the console
-//     // int cf = open(cleanFile,O_CREAT|O_WRONLY|O_TRUNC);
-//     initializeBuffers(tcf);
-//     // Check has 3 values
-//     // 0 => Indicates it encountered a newline
-//     // 2 => Indicates that the line has been confirmed to not be a comment
-//     // 1 => Indicates that the line is confirmed to be a comment
-//     int is_comment = 0;
-//     char c;
-//     while((c = next_char()) != EOF) {
+/*
+    This function removes all comments and stores the cleaned code in the filename passed to the function (parameter:cleanFile).
+    Default filename is "commentremoval.txt".
+*/
+void removeComments(char *testcaseFile, char *cleanFile){
+    FILE *test_fptr = fopen(testcaseFile, "r");
 
-//         switch(is_comment) {
-//             case 0: {
-//                 // if(c == ' ' || c == '\f' || c == '\r' || c == '\t' || c == '\v') {
-//                     // write(1,&c,1);
-//                     // is_comment = 0;
-//                 // }
-//                 if(c == '%') {
-//                     is_comment = 1;
-//                 }
-//                 else if(c == '\n') {
-//                     write(1,&c,1);
-//                     is_comment = 0;
-//                 }
-//                 else {
-//                     write(1,&c,1);
-//                     is_comment = 2;
-//                 }
-//                 break;
-//             }
-//             case 1: {
-//                 if(c == '\n') {
-//                     write(1,&c,1);
-//                     is_comment = 0;
-//                 }
-//                 break;
-//             }
-//             case 2: {
-//                 write(1,&c,1);
-//                 if(c == '\n')
-//                     is_comment = 0;
-//                 break;
-//             }
-//         }
+    FILE *fptr = fopen(cleanFile, "w");
+    // printf("\nremoving comments, file opened\n");
+    initializeTwinBuffer();
 
-//     }
+    int is_comment = 0;
+    char c = fgetc(test_fptr);
+    while(c != EOF) {
+        switch(is_comment) {
+            case 0: {
+                if(c == ' ' || c == '\f' || c == '\r' || c == '\t' || c == '\v') {
+                    // whitespace
+                    fwrite(&c, sizeof(char), 1, fptr);
+                    is_comment = 0;
+                }
+                if(c == '%') {
+                    // comment
+                    is_comment = 1;
+                }
+                else if(c == '\n') {
+                    // new line
+                    fwrite(&c, sizeof(char), 1, fptr);
+                    is_comment = 0;
+                }
+                else {
+                    fwrite(&c, sizeof(char), 1, fptr);
+                    is_comment = 2;
+                }
+                break;
+            }
+            case 1: {
+                // end of comment
+                if(c == '\n') {
+                    fwrite(&c, sizeof(char), 1, fptr);
+                    is_comment = 0;
+                }
+                break;
+            }
+            case 2: {
+                fwrite(&c, sizeof(char), 1, fptr);
+                if(c == '\n')
+                    is_comment = 0;
+                break;
+            }
+        }
+        c = fgetc(test_fptr);
+    }
+    clearTwinBuffer(twin_buffer);
+    fclose(fptr);
+    fclose(test_fptr);
+}
 
-//     close(tcf);
-// }
+/*
+    This function invokes the lexer and prints all the lexemes and the corresponding tokens (and errors if present).
+*/
+void prettyPrint(char *testcaseFile){
+    // char *file = testcaseFile;
+    FILE *f = fopen(testcaseFile,"r");
+    printf("\n--- PRETTY PRINT LEXER ---\n");
+    // initialize();
+    f = getStream(f,0);
+    // printf("%c this",twin_buffer->buffer[0]);
+    tokenInfo t = getNextToken(f);
+    while(t.tkn_name!=TK_EOF){
+        if(t.tkn_name==TK_NUM)
+            printf("Line no. %-5d  Lexeme %-30d Token %-5s\n",t.line,t.value.num, enumToString[t.tkn_name]);
+        else if(t.tkn_name==TK_RNUM)
+            printf("Line no. %-5d  Lexeme %-30s Token %-5s\n",t.line,t.value.rnum.rep, enumToString[t.tkn_name]);
+        else
+            printf("Line no. %-5d  Lexeme %-30s Token %-5s\n",t.line,t.value.str, enumToString[t.tkn_name]);
+        t = getNextToken(f);
+    }
+    clearTwinBuffer(twin_buffer);
+    fclose(f);
+    f=NULL;
+}
+
 // int main(){
 
 //     FILE *f =fopen("./testcases_stage1/t5.txt","r");
