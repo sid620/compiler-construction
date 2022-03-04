@@ -28,9 +28,11 @@ treeN createNode(node el, grammar G) {
         new.elem.lex.numVal=el.lex.numVal;
     else if(strcmp(G.terminals[el.curr],"TK_RNUM")==0)
         new.elem.lex.rVal=el.lex.rVal;
-    else
+    else{
+        // printf("inside create node when not rnum/num %d\n",new.elem.curr);
         new.elem.lex.lexemeStr=el.lex.lexemeStr;
-    new.elem.lex = el.lex; 
+    }
+    // new.elem.lex = el.lex; 
     new.elem.lineNo = el.lineNo; 
     new.elem.parentNodeSymbolID = el.parentNodeSymbolID;
 

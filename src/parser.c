@@ -581,6 +581,7 @@ treeN parseInputSourceCode(char* testCaseFile, grammar G, parseTable* T) {
 
     FILE *fp = fopen(testCaseFile,"r");
     initialize();
+    initializeTwinBuffer();
     fp = getStream(fp, 0);
     
     varSymbol* stack; 
@@ -601,7 +602,7 @@ treeN parseInputSourceCode(char* testCaseFile, grammar G, parseTable* T) {
     int stackLen = 2; 
     int stackPointer = 1; 
     tokenInfo currToken = getNextToken(fp); 
-    // printf("%s\n",currToken.value.str);
+    // printf("curr token %s\n",currToken.value.str);
     printf("before while %u %u %u %d %d \n", &root, pointers[1], pointers[0], rootNode.curr, pointers[1]->elem.curr); 
 
     printf("%d %d \n", root.numChild, pointers[1]->numChild); 
@@ -622,6 +623,7 @@ treeN parseInputSourceCode(char* testCaseFile, grammar G, parseTable* T) {
         if (currToken.tkn_name == ERROR) { 
             printf("Lexical ERROR \n"); 
             currToken = getNextToken(fp);
+            printf("curr token %s\n",enumToString[currToken.tkn_name]);
             stackPointer--;
             // break; 
             // Lexical error
@@ -729,7 +731,8 @@ treeN parseInputSourceCode(char* testCaseFile, grammar G, parseTable* T) {
             }
             
             stackPointer -= 1; 
-            currToken = getNextToken(fp); 
+            currToken = getNextToken(fp);
+            printf("curr token %s\n",enumToString[currToken.tkn_name]);
         } 
         else if(stack[stackPointer].type == 1 && stack[stackPointer].symbol != tokenID) { 
             printf("Terminals do not match ERROR \n"); 
@@ -737,6 +740,7 @@ treeN parseInputSourceCode(char* testCaseFile, grammar G, parseTable* T) {
 
             // Ignore the terminal at lookahead
             currToken = getNextToken(fp);
+            printf("curr token %s\n",enumToString[currToken.tkn_name]);
             // break; 
             // Terminals do not match ERROR 
             // Add Panic Mode recovery code 
@@ -749,6 +753,7 @@ treeN parseInputSourceCode(char* testCaseFile, grammar G, parseTable* T) {
             // move lookahead till 
             if(!isInArr(G.ff[stack[stackPointer].symbol].follow,tokenID,G.ff[stack[stackPointer].symbol].numFollow)){
                 currToken=getNextToken(fp);
+                printf("curr token %s\n",enumToString[currToken.tkn_name]);
                 tokenID = currToken.tkn_name;
             }
             else{
@@ -821,38 +826,75 @@ treeN parseInputSourceCode(char* testCaseFile, grammar G, parseTable* T) {
 
 void inorder(treeN* n, grammar G)
 {   
+    char *str;
+    char *nt;
+    printf("%d ", n->elem.curr);
+    if(n->elem.isLeaf==1){
+        str="yes";
+        nt="Not_NT";
+    }
+    else{
+        str="no";
+        nt=G.nonTerminals[n->elem.curr];
+    }
+    char *eps_lex;
+    if(strcmp(G.terminals[n->elem.curr], "eps") == 0){
+        eps_lex = "eps";
+    }
+    else{
+        eps_lex = n->elem.lex.lexemeStr;
+    }
     if(n->numChild == 0){
-        if(n->elem.isLeaf && strcmp(G.terminals[n->elem.curr],"TK_NUM")==0)
-            printf("%d %d %s %d %s yes %s\n",n->elem.lex.numVal,n->elem.lineNo,G.terminals[n->elem.curr],n->elem.lex.numVal,G.nonTerminals[n->elem.parentNodeSymbolID],G.nonTerminals[n->elem.curr]);
-        else if(n->elem.isLeaf && strcmp(G.terminals[n->elem.curr],"TK_RNUM")==0)
-            printf("%f %d %s %f %s yes %s\n",n->elem.lex.rVal,n->elem.lineNo,G.terminals[n->elem.curr],n->elem.lex.rVal,G.nonTerminals[n->elem.parentNodeSymbolID],G.nonTerminals[n->elem.curr]);
-        else 
-            printf("%s %d %s NULL %s yes\n",n->elem.lex.lexemeStr,n->elem.lineNo,G.terminals[n->elem.curr],G.nonTerminals[n->elem.parentNodeSymbolID],G.nonTerminals[n->elem.curr]);
+        if(strcmp(G.terminals[n->elem.curr],"TK_NUM")==0)
+            printf("%d %d %s %d %s %s %s\n",n->elem.lex.numVal,n->elem.lineNo,G.terminals[n->elem.curr],n->elem.lex.numVal,G.nonTerminals[n->elem.parentNodeSymbolID],str,nt);
+        else if(strcmp(G.terminals[n->elem.curr],"TK_RNUM")==0)
+            printf("%f %d %s %f %s %s %s\n",n->elem.lex.rVal,n->elem.lineNo,G.terminals[n->elem.curr],n->elem.lex.rVal,G.nonTerminals[n->elem.parentNodeSymbolID],str,nt);
+        else {
+            if(n->elem.parentNodeSymbolID != -1){
+            printf("%s %d %s NULL %s %s %s\n",eps_lex,n->elem.lineNo,G.terminals[n->elem.curr],G.nonTerminals[n->elem.parentNodeSymbolID],str,nt);
+            }
+            else{
+                printf("%s %d %s NULL %s ROOT %s\n",eps_lex,n->elem.lineNo,G.terminals[n->elem.curr],str,nt);
+            }
+        }      
         return;  
     }
     if(n->numChild==1){
         inorder(n->children[0],G);
-        if(n->elem.isLeaf && strcmp(G.terminals[n->elem.curr],"TK_NUM")==0)
-            printf("%d %d %s %d %s yes %s\n",n->elem.lex.numVal,n->elem.lineNo,G.terminals[n->elem.curr],n->elem.lex.numVal,G.nonTerminals[n->elem.parentNodeSymbolID],G.nonTerminals[n->elem.curr]);
-        else if(n->elem.isLeaf && strcmp(G.terminals[n->elem.curr],"TK_RNUM")==0)
-            printf("%f %d %s %f %s yes %s\n",n->elem.lex.rVal,n->elem.lineNo,G.terminals[n->elem.curr],n->elem.lex.rVal,G.nonTerminals[n->elem.parentNodeSymbolID],G.nonTerminals[n->elem.curr]);
-        else 
-            printf("%s %d %s NULL %s yes\n",n->elem.lex.lexemeStr,n->elem.lineNo,G.terminals[n->elem.curr],G.nonTerminals[n->elem.parentNodeSymbolID],G.nonTerminals[n->elem.curr]);
-        return;
+                if(strcmp(G.terminals[n->elem.curr],"TK_NUM")==0)
+            printf("%d %d %s %d %s %s %s\n",n->elem.lex.numVal,n->elem.lineNo,G.terminals[n->elem.curr],n->elem.lex.numVal,G.nonTerminals[n->elem.parentNodeSymbolID],str,nt);
+        else if(strcmp(G.terminals[n->elem.curr],"TK_RNUM")==0)
+            printf("%f %d %s %f %s %s %s\n",n->elem.lex.rVal,n->elem.lineNo,G.terminals[n->elem.curr],n->elem.lex.rVal,G.nonTerminals[n->elem.parentNodeSymbolID],str,nt);
+        else{
+            if(n->elem.parentNodeSymbolID != -1){
+            printf("%s %d %s NULL %s %s %s\n",eps_lex,n->elem.lineNo,G.terminals[n->elem.curr],G.nonTerminals[n->elem.parentNodeSymbolID],str,nt);
+            }
+            else{
+                printf("%s %d %s NULL %s ROOT %s\n",eps_lex,n->elem.lineNo,G.terminals[n->elem.curr],str,nt);
+            }
+        }
+
+       return;  
     }
     for(int i=n->numChild-1;i>0;i--){
         inorder(n->children[i],G);
     }
-        if(n->elem.isLeaf && strcmp(G.terminals[n->elem.curr],"TK_NUM")==0)
-            printf("%d %d %s %d %s yes %s\n",n->elem.lex.numVal,n->elem.lineNo,G.terminals[n->elem.curr],n->elem.lex.numVal,G.nonTerminals[n->elem.parentNodeSymbolID],G.nonTerminals[n->elem.curr]);
-        else if(n->elem.isLeaf && strcmp(G.terminals[n->elem.curr],"TK_RNUM")==0)
-            printf("%f %d %s %f %s yes %s\n",n->elem.lex.rVal,n->elem.lineNo,G.terminals[n->elem.curr],n->elem.lex.rVal,G.nonTerminals[n->elem.parentNodeSymbolID],G.nonTerminals[n->elem.curr]);
-        else 
-            printf("%s %d %s NULL %s yes\n",n->elem.lex.lexemeStr,n->elem.lineNo,G.terminals[n->elem.curr],G.nonTerminals[n->elem.parentNodeSymbolID],G.nonTerminals[n->elem.curr]);
+        if(strcmp(G.terminals[n->elem.curr],"TK_NUM")==0)
+            printf("%d %d %s %d %s %s %s\n",n->elem.lex.numVal,n->elem.lineNo,G.terminals[n->elem.curr],n->elem.lex.numVal,G.nonTerminals[n->elem.parentNodeSymbolID],str,nt);
+        else if(strcmp(G.terminals[n->elem.curr],"TK_RNUM")==0)
+            printf("%f %d %s %f %s %s %s\n",n->elem.lex.rVal,n->elem.lineNo,G.terminals[n->elem.curr],n->elem.lex.rVal,G.nonTerminals[n->elem.parentNodeSymbolID],str,nt);
+        else{
+            if(n->elem.parentNodeSymbolID != -1){
+            printf("%s %d %s NULL %s %s %s\n",eps_lex,n->elem.lineNo,G.terminals[n->elem.curr],G.nonTerminals[n->elem.parentNodeSymbolID],str,nt);
+            }
+            else{
+                printf("%s %d %s NULL %s ROOT %s\n",eps_lex,n->elem.lineNo,G.terminals[n->elem.curr],str,nt);
+            }
+        }
     inorder(n->children[0],G);
     return;
    
-} 
+}
 
 void printParseTree(treeN* rootNode, char *outfile,grammar G){
     printf("Printing the parse tree inorder------\n");
@@ -906,7 +948,7 @@ void main() {
     // printf("%d %d %d \n", C.allRules[0].numOrs, C.allRules[0].RHS[0].numSyms, C.allRules[0].RHS[0].symbols[1].type); 
     // printf("%d %d %d %d %d %d '%s' '%s' '%s' '%s' \n", C.ff[23].numFirst, C.ff[23].numFollow, C.ff[23].follow[0], C.ff[23].follow[1], C.ff[23].follow[2], C.ff[23].follow[3], C.terminals[C.ff[23].follow[0]], C.terminals[C.ff[23].follow[1]], C.terminals[C.ff[23].follow[2]], C.terminals[C.ff[23].follow[3]]); 
 
-    char* testCaseFile = "./testcases_stage1/t5.txt"; 
+    char* testCaseFile = "./testcases_stage1/t2.txt"; 
     // FILE *fp = fopen("./testcases_stage1/t2.txt","r"); 
     // initialize();
     // fp = getStream(fp, 0);

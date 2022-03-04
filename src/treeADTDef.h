@@ -3,7 +3,7 @@ typedef struct node {
     int parentNodeSymbolID; 
     int curr; 
     int isLeaf; 
-    union lex { 
+    struct lex { 
         char* lexemeStr; 
         int numVal; 
         float rVal; 
