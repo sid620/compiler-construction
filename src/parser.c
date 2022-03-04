@@ -846,15 +846,15 @@ void inorder(treeN* n,FILE *f, grammar G)
     }
     if(n->numChild == 0){
         if(strcmp(G.terminals[n->elem.curr],"TK_NUM")==0)
-            fprintf(f,"%d    %d %s %d %s %s %s\n",n->elem.lex.numVal,n->elem.lineNo,G.terminals[n->elem.curr],n->elem.lex.numVal,G.nonTerminals[n->elem.parentNodeSymbolID],str,nt);
+            fprintf(f,"%d\t%d\t%s\t%d\t%s\t%s\t%s\n",n->elem.lex.numVal,n->elem.lineNo,G.terminals[n->elem.curr],n->elem.lex.numVal,G.nonTerminals[n->elem.parentNodeSymbolID],str,nt);
         else if(strcmp(G.terminals[n->elem.curr],"TK_RNUM")==0)
-            fprintf(f,"%f    %d %s %f %s %s %s\n",n->elem.lex.rVal,n->elem.lineNo,G.terminals[n->elem.curr],n->elem.lex.rVal,G.nonTerminals[n->elem.parentNodeSymbolID],str,nt);
+            fprintf(f,"%f\t%d\t%s\t%f\t%s\t%s\t%s\n",n->elem.lex.rVal,n->elem.lineNo,G.terminals[n->elem.curr],n->elem.lex.rVal,G.nonTerminals[n->elem.parentNodeSymbolID],str,nt);
         else {
             if(n->elem.parentNodeSymbolID != -1){
-                fprintf(f,"%s    %d %s NOT_NUM %s %s %s\n",eps_lex,n->elem.lineNo,G.terminals[n->elem.curr],G.nonTerminals[n->elem.parentNodeSymbolID],str,nt);
+                fprintf(f,"%s\t%d\t%s\tNOT_NUM\t%s\t%s\t%s\n",eps_lex,n->elem.lineNo,G.terminals[n->elem.curr],G.nonTerminals[n->elem.parentNodeSymbolID],str,nt);
             }
             else{
-                fprintf(f,"%s    %d %s NOT_NUM %s ROOT %s\n",eps_lex,n->elem.lineNo,G.terminals[n->elem.curr],str,nt);
+                fprintf(f,"%s\t%d\t%s\tNOT_NUM\t%s\tROOT\t%s\n",eps_lex,n->elem.lineNo,G.terminals[n->elem.curr],str,nt);
             }
         }      
         return;  
@@ -862,15 +862,15 @@ void inorder(treeN* n,FILE *f, grammar G)
     if(n->numChild==1){
         inorder(n->children[0],f,G);
             if(strcmp(G.terminals[n->elem.curr],"TK_NUM")==0)
-                fprintf(f,"%d    %d %s %d %s %s %s\n",n->elem.lex.numVal,n->elem.lineNo,G.terminals[n->elem.curr],n->elem.lex.numVal,G.nonTerminals[n->elem.parentNodeSymbolID],str,nt);
+                fprintf(f,"%d\t%d\t%s\t%d\t%s\t%s\t%s\n",n->elem.lex.numVal,n->elem.lineNo,G.terminals[n->elem.curr],n->elem.lex.numVal,G.nonTerminals[n->elem.parentNodeSymbolID],str,nt);
             else if(strcmp(G.terminals[n->elem.curr],"TK_RNUM")==0)
-                fprintf(f,"%f    %d %s %f %s %s %s\n",n->elem.lex.rVal,n->elem.lineNo,G.terminals[n->elem.curr],n->elem.lex.rVal,G.nonTerminals[n->elem.parentNodeSymbolID],str,nt);
+                fprintf(f,"%f\t%d\t%s\t%f\t%s\t%s\t%s\n",n->elem.lex.rVal,n->elem.lineNo,G.terminals[n->elem.curr],n->elem.lex.rVal,G.nonTerminals[n->elem.parentNodeSymbolID],str,nt);
             else{
                 if(n->elem.parentNodeSymbolID != -1){
-                    fprintf("%s    %d %s NOT_NUM %s %s %s\n",eps_lex,n->elem.lineNo,G.terminals[n->elem.curr],G.nonTerminals[n->elem.parentNodeSymbolID],str,nt);
+                    fprintf(f,"%s\t%d\t%s\tNOT_NUM\t%s\t%s\t%s\n",eps_lex,n->elem.lineNo,G.terminals[n->elem.curr],G.nonTerminals[n->elem.parentNodeSymbolID],str,nt);
                 }
                 else{
-                    fprintf("%s    %d %s NOT_NUM %s ROOT %s\n",eps_lex,n->elem.lineNo,G.terminals[n->elem.curr],str,nt);
+                    fprintf(f,"%s\t%d\t%s\tNOT_NUM\t%s\tROOT\t%s\n",eps_lex,n->elem.lineNo,G.terminals[n->elem.curr],str,nt);
                 }
             }
 
@@ -880,15 +880,15 @@ void inorder(treeN* n,FILE *f, grammar G)
     inorder(n->children[n->numChild-1],f,G);
     
     if(strcmp(G.terminals[n->elem.curr],"TK_NUM")==0)
-        fprintf(f,"%d    %d %s %d %s %s %s\n",n->elem.lex.numVal,n->elem.lineNo,G.terminals[n->elem.curr],n->elem.lex.numVal,G.nonTerminals[n->elem.parentNodeSymbolID],str,nt);
+        fprintf(f,"%d\t%d\t%s\t%d\t%s\t%s\t%s\n",n->elem.lex.numVal,n->elem.lineNo,G.terminals[n->elem.curr],n->elem.lex.numVal,G.nonTerminals[n->elem.parentNodeSymbolID],str,nt);
     else if(strcmp(G.terminals[n->elem.curr],"TK_RNUM")==0)
-        fprintf(f,"%f    %d %s %f %s %s %s\n",n->elem.lex.rVal,n->elem.lineNo,G.terminals[n->elem.curr],n->elem.lex.rVal,G.nonTerminals[n->elem.parentNodeSymbolID],str,nt);
+        fprintf(f,"%f\t%d\t%s\t%f\t%s\t%s\t%s\n",n->elem.lex.rVal,n->elem.lineNo,G.terminals[n->elem.curr],n->elem.lex.rVal,G.nonTerminals[n->elem.parentNodeSymbolID],str,nt);
     else{
         if(n->elem.parentNodeSymbolID != -1){
-            fprintf("%s    %d %s NOT_NUM %s %s %s\n",eps_lex,n->elem.lineNo,G.terminals[n->elem.curr],G.nonTerminals[n->elem.parentNodeSymbolID],str,nt);
+            fprintf(f,"%s\t%d\t%s\tNOT_NUM\t%s\t%s\t%s\n",eps_lex,n->elem.lineNo,G.terminals[n->elem.curr],G.nonTerminals[n->elem.parentNodeSymbolID],str,nt);
         }
         else{
-            fprintf("%s    %d %s NOT_NUM %s ROOT %s\n",eps_lex,n->elem.lineNo,G.terminals[n->elem.curr],str,nt);
+            fprintf(f,"%s\t%d\t%s\tNOT_NUM\t%s\tROOT\t%s\n",eps_lex,n->elem.lineNo,G.terminals[n->elem.curr],str,nt);
         }
     }
     
