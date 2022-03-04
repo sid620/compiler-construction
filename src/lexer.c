@@ -37,34 +37,41 @@ int range_match(char a, char start, char end) {
     In all of the cases accept(false) is preceded by reset(1)
 */
 char* accept(bool isLastUseful){
-    char *str="";
+    char *str=NULL;
+    int l;
     if(isLastUseful){
         twin_buffer->lexemeBegin=twin_buffer->forward+1;    // the begin pointer is updated for future use
         twin_buffer->lexeme[twin_buffer->pos]='\0';         // '\0' is appended for string operations
-        str=twin_buffer->lexeme;                            // the value to be returned is stored
+        str =(char *)malloc(sizeof(char)*(twin_buffer->pos+1));
+        l = twin_buffer->pos+1;
+        // str=twin_buffer->lexeme;                            // the value to be returned is stored
     }
     else{
         if(twin_buffer->pos!=0){
             twin_buffer->lexeme[twin_buffer->pos-1]='\0';
-            str=twin_buffer->lexeme;
+            str =(char *)malloc(sizeof(char)*twin_buffer->pos);
+            l = twin_buffer->pos;
+            // str=twin_buffer->lexeme;
             // printf("%s accepted \n",str);
         }
     }
     // printf("%s \n",str);
 
     // The below way of populating strings works, i.e. the values are not erased post memset.
-    char *ret =(char *)malloc(sizeof(char)*strlen(str));
-    for(int i=0;i<strlen(str);i++){
-        ret[i] = *(str + i);    
+
+    for(int i=0;i<l;i++){
+        str[i] = *(twin_buffer->lexeme + i);    
     }
     dfa_state=0;                                            // dfa_state is initialized to zero for future use
     // printf("%s \n",str);    
     twin_buffer->lexemeBegin=twin_buffer->forward+1;
     // printf("%s\n",str) ;
-    memset(twin_buffer->lexeme,0,strlen(twin_buffer->lexeme));  // empty contents of lexeme string once it is used
+    // memset(twin_buffer->lexeme,0,MAX_LEXEME);  // empty contents of lexeme string once it is used
+    free(twin_buffer->lexeme);
+    twin_buffer->lexeme = (char *)malloc(sizeof(char *)*MAX_LEXEME);
     // printf("%s\n",ret);
     twin_buffer->pos=0;                                         // re-initialize the position to which a new character is added in twin_buffer->lexeme
-    return ret;
+    return str;
 }
 
 
@@ -74,27 +81,30 @@ char* accept(bool isLastUseful){
 */
 
 char * reject(){                                                
-    char * str="";
+    char * str=NULL;
+    int l;
     // printf("%d \n",strlen(twin_buffer->lexeme));    
     if(twin_buffer->pos!=0){
         twin_buffer->lexeme[twin_buffer->pos-1]='\0';   // append '\0' for string operations
-        str = twin_buffer->lexeme;
+        str = (char *)malloc(sizeof(char)*twin_buffer->pos);
     }
-
+    l = twin_buffer->pos;
     // below way of populating strings is unaffected by memset
-    char *ret =(char *)malloc(sizeof(char)*strlen(str));
+    // char *ret =(char *)malloc(sizeof(char)*strlen(str));
     for(int i=0;i<strlen(str);i++){
-        ret[i] = *(str + i);    
+        str[i] = *(twin_buffer->lexeme + i);    
     }
     
     dfa_state=0;
     twin_buffer->lexemeBegin=twin_buffer->forward+1;
     
-
-    memset(twin_buffer->lexeme,0,strlen(twin_buffer->lexeme));  // empty contents of lexeme string once it is used
+    
+    // memset(twin_buffer->lexeme,0,MAX_LEXEME);  // empty contents of lexeme string once it is used
+    free(twin_buffer->lexeme);
+    twin_buffer->lexeme = (char *)malloc(sizeof(char *)*MAX_LEXEME);
     twin_buffer->pos=0;
 
-    return ret;
+    return str;
 }
 
 /*
@@ -119,7 +129,7 @@ void populateToken(tokenInfo *TOK, token_name t, char * lexeme, int lineNo){
             TOK->value.str[i] = *(lexeme +i);
     }
     if(t!=ERROR && t!=TK_EOF)
-    printf("Line no. %d  Lexeme %s Token %s\n", lineNo, lexeme, enumToString[t]);
+    printf("Line no. %d  Lexeme %s Token %s %d\n", lineNo, lexeme, enumToString[t],strnlen(lexeme,40));
 }   
 
 /*
@@ -1099,7 +1109,7 @@ tokenInfo getNextToken(FILE *fp){
 // }
 // int main(){
 
-//     FILE *f =fopen("./testcases_stage1/t2.txt","r");
+//     FILE *f =fopen("./testcases_stage1/t5.txt","r");
 //     initialize();
 //     f = getStream(f,0);
 //     // printf("%c this",twin_buffer->buffer[0]);
