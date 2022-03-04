@@ -1,7 +1,7 @@
 #ifndef LEXER_DEF
 #define LEXER_DEF
 #define BUFFER_SIZE 4096
-#define MAX_LEXEME 40
+#define MAX_LEXEME 400
 // #include "lookuptable.h"
 #include<stdio.h>
 #include<stdlib.h>
@@ -93,7 +93,7 @@ static const char * enumToString[]={"TK_ASSIGNOP","TK_COMMENT","TK_FIELDID","TK_
 typedef struct TOKEN{
     int line;
     token_name tkn_name;
-    union value{
+    struct value{
         int num;        // numeric value of int
         struct rnum{
             char *rep;  // string form of reals
