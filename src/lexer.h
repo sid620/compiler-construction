@@ -18,3 +18,6 @@ int char_match(char a, char b);
 FILE *getStream(FILE *fp, int bufferNo);
 tokenInfo getNextToken(FILE *fp);
 void removeComments(char *testcaseFile, char *cleanFile);
+void clearTwinBuffer();
+void removeComments(char *testcaseFile, char *cleanFile);
+void prettyPrint(char *testcaseFile); 

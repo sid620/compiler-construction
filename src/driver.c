@@ -16,20 +16,20 @@ int main(int argc, char *argv[]){
             case 1:{
                 // printf("\nChoice  1: COMMENT REMOVAL CALLED\n");
                 removeComments(argv[1], "commentremoval.txt");
-                FILE *fptr = fopen("commentremoval.txt", "r");
+                FILE *comment_fptr = fopen("commentremoval.txt", "r");
                 printf("\nChoice  1: COMMENT REMOVAL CALLED\n");
-                if (fptr == NULL){
+                if (comment_fptr == NULL){
                     printf("Cannot open file \n");
                 }
                 char c;
                 // Read contents from file
-                c = fgetc(fptr);
+
+                c = fgetc(comment_fptr);
                 while (c != EOF){
                     printf ("%c", c);
-                    c = fgetc(fptr);
+                    c = fgetc(comment_fptr);
                 }
-            
-                fclose(fptr);
+                fclose(comment_fptr);
             }
             break;
 
@@ -48,7 +48,9 @@ int main(int argc, char *argv[]){
                 C.ff = ComputeFirstAndFollowSets(C);
                 parseTable* T = intializeParseTable(C.numNonTerminals,C.numTerminals);
                 createParseTable(C,C.ff,T);
-                parseInputSourceCode(argv[1], C, T);
+                treeN rootNode; 
+                rootNode = parseInputSourceCode(argv[1], C, T); 
+                printParseTree(&rootNode,argv[2],C);
             }
             break;
 
