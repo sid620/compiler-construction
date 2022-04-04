@@ -731,7 +731,7 @@ treeN parseInputSourceCode(char* testCaseFile, grammar G, parseTable* T) {
             // printf("curr token %s\n",enumToString[currToken.tkn_name]);
         } 
         else if(stack[stackPointer].type == 1 && stack[stackPointer].symbol != tokenID) { 
-            printf("Terminals do not match ERROR \n"); 
+            printf("At line number %d, top of stack is %s and lookahead is %s : Terminals do not match ERROR \n",currToken.line,G.terminals[stack[stackPointer].symbol], G.terminals[tokenID]); 
             // printf("%d '%s' '%s' \n", stackPointer, G.terminals[stack[stackPointer].symbol], G.terminals[tokenID]); 
            
             
@@ -743,7 +743,7 @@ treeN parseInputSourceCode(char* testCaseFile, grammar G, parseTable* T) {
             // Add Panic Mode recovery code 
         } 
         else if(stack[stackPointer].type == 0 && T->cells[stack[stackPointer].symbol][tokenID].error != 0) { 
-            printf("M[X, a] is blank ERROR \n"); 
+            printf("At line number %d, top of stack is %s and lookahead is %s : M[X, a] is blank ERROR \n", currToken.line,G.nonTerminals[stack[stackPointer].symbol], G.terminals[tokenID]);      // printf("'%s' '%s' \n", G.nonTerminals[stack[stackPointer].symbol], G.terminals[tokenID]); 
             // printf("'%s' '%s' \n", G.nonTerminals[stack[stackPointer].symbol], G.terminals[tokenID]); 
             
 
