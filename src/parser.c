@@ -585,7 +585,7 @@ treeN parseInputSourceCode(char* testCaseFile, grammar G, parseTable* T) {
 
     treeN** pointers = (treeN**) malloc(sizeof(treeN*) * 2); 
     pointers[0] = NULL; 
-    node rootNode = createEl(-1, -1, 0, 0); 
+    node rootNode = createEl(-1, -1, 0, 0,  0); 
     treeN root = createNode(rootNode,G); 
     pointers[1] = &root; 
     // printf("root %u %u %u %d %d \n", &root, pointers[1], pointers[0], rootNode.curr, pointers[1]->elem.curr); 
@@ -650,7 +650,7 @@ treeN parseInputSourceCode(char* testCaseFile, grammar G, parseTable* T) {
                         // stackPointer += 1; 
                         // printf("%d %d %d %d \n", ruleInd, rhsInd, stackPointer, G.allRules[ruleInd].RHS[rhsInd].numSyms); 
                         if (G.allRules[ruleInd].RHS[rhsInd].symbols[0].type == 1 && G.allRules[ruleInd].RHS[rhsInd].symbols[0].symbol == 0) { 
-                            node currNode = createEl(-1, stack[stackPointer].symbol, 0, 1); 
+                            node currNode = createEl(-1, stack[stackPointer].symbol, 0, 1, 0); 
                             treeN* eps = (treeN*) malloc(sizeof(treeN)); 
                             *eps = createNode(currNode,G); 
                             addChild(pointers[stackPointer], eps); 
@@ -671,10 +671,10 @@ treeN parseInputSourceCode(char* testCaseFile, grammar G, parseTable* T) {
                     
                                 node currNode; 
                                 if (stack[stackPointer].type == 1) { 
-                                    currNode = createEl(-1, parentSymbol, stack[stackPointer].symbol, 1); 
+                                    currNode = createEl(-1, parentSymbol, stack[stackPointer].symbol, 1, 0); 
                                 } 
                                 else { 
-                                    currNode = createEl(-1, parentSymbol, stack[stackPointer].symbol, 0); 
+                                    currNode = createEl(-1, parentSymbol, stack[stackPointer].symbol, 0, 0); 
                                 } 
                                 treeN* new = (treeN*) malloc(sizeof(treeN)); 
                                 *new = createNode(currNode,G); 
@@ -764,10 +764,12 @@ treeN parseInputSourceCode(char* testCaseFile, grammar G, parseTable* T) {
             // printf("'%s' '%s' \n", G.nonTerminals[stack[stackPointer].symbol], G.terminals[tokenID]); 
             int ruleInd = T->cells[stack[stackPointer].symbol][tokenID].ruleInd; 
             int rhsInd = T->cells[stack[stackPointer].symbol][tokenID].rhsInd; 
+            int expansionRule = getRuleNumber(ruleInd, rhsInd, G);
+            pointers[stackPointer]->elem.ruleNumber = expansionRule;    // Assign the rule number used by parent
             // stackPointer += 1; 
             // printf("%d %d %d %d \n", ruleInd, rhsInd, stackPointer, G.allRules[ruleInd].RHS[rhsInd].numSyms); 
             if (G.allRules[ruleInd].RHS[rhsInd].symbols[0].type == 1 && G.allRules[ruleInd].RHS[rhsInd].symbols[0].symbol == 0) { 
-                node currNode = createEl(-1, stack[stackPointer].symbol, 0, 1); 
+                node currNode = createEl(-1, stack[stackPointer].symbol, 0, 1, 0); 
                 treeN* eps = (treeN*) malloc(sizeof(treeN)); 
                 *eps = createNode(currNode,G); 
                 addChild(pointers[stackPointer], eps); 
@@ -788,10 +790,10 @@ treeN parseInputSourceCode(char* testCaseFile, grammar G, parseTable* T) {
                     
                     node currNode; 
                     if (stack[stackPointer].type == 1) { 
-                        currNode = createEl(-1, parentSymbol, stack[stackPointer].symbol, 1); 
+                        currNode = createEl(-1, parentSymbol, stack[stackPointer].symbol, 1, 0); 
                     } 
                     else { 
-                        currNode = createEl(-1, parentSymbol, stack[stackPointer].symbol, 0); 
+                        currNode = createEl(-1, parentSymbol, stack[stackPointer].symbol, 0, 0); 
                     } 
                     treeN* new = (treeN*) malloc(sizeof(treeN)); 
                     *new = createNode(currNode,G); 
@@ -914,7 +916,15 @@ void printParseTree(treeN* rootNode, char *outfile,grammar G){
     inorder(rootNode,f,G);    
     fclose(f);
 } 
-
+int getRuleNumber(int ruleId, int rhsId, grammar G){
+    int c = 0;
+    for(int i=0;i<G.totalNumRules;i++){
+        for(int j = 0;j<G.allRules[i].numOrs+1;j++){
+            if(i<ruleId || (i==ruleId && j<=rhsId))c++;
+        }
+    }
+    return c;
+}
 // void main() { 
 //     char* file; 
 //     file = "grammar.txt"; 
