@@ -918,11 +918,14 @@ void printParseTree(treeN* rootNode, char *outfile,grammar G){
 } 
 int getRuleNumber(int ruleId, int rhsId, grammar G){
     int c = 0;
+    // printf("LHS of rule: %s\n",G.nonTerminals[G.allRules[ruleId].LHS]);
     for(int i=0;i<G.totalNumRules;i++){
-        for(int j = 0;j<G.allRules[i].numOrs+1;j++){
+        for(int j = 0;j<G.allRules[i].numOrs;j++){
             if(i<ruleId || (i==ruleId && j<=rhsId))c++;
+            // printf("LHS of rule %d ors %d: %s\n",c,G.allRules[i].numOrs,G.nonTerminals[G.allRules[i].LHS]);
         }
     }
+    // printf("LHS of rule %d ors %d: %s\n",c,G.allRules[ruleId].numOrs,G.nonTerminals[G.allRules[ruleId].LHS]);
     return c;
 }
 // void main() { 

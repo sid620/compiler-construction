@@ -1,10 +1,11 @@
 #pragma once
 #include<stdbool.h>
-#include "treeADTDef.h"
-typedef struct astNode{
+#include "parser.h"
+typedef struct astNode astNode;
+struct astNode{
     astNode *next;
     astNode *child;
     // astNode **children;
-    int numChildren;
+    // int numChildren;
     node *elem;
-}astNode;
+};
