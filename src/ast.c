@@ -2,7 +2,7 @@
 #include "ast.h"
 #include<stdio.h>
 #include<stdlib.h>
-astNode *mknode(node elem){
+astNode *mknode(node elem, grammar G){
     astNode *new = (astNode *)malloc(sizeof(astNode));
     new->child  = (astNode *)malloc(sizeof(astNode));
     new->next   = (astNode *)malloc(sizeof(astNode));
@@ -16,9 +16,9 @@ astNode *mknode(node elem){
     new->elem->parentNodeSymbolID = elem.parentNodeSymbolID;
     new->elem->ruleNumber = elem.ruleNumber;
     if(elem.isLeaf){
-        if(elem.curr == TK_NUM)
+        if(strcmp(G.terminals[elem.curr],"TK_NUM")==0)
             new->elem->lex.numVal = elem.lex.numVal;
-        else if(elem.curr == TK_RNUM)
+        else if(strcmp(G.terminals[elem.curr],"TK_RNUM")==0)
             new->elem->lex.rVal = elem.lex.rVal;
         else 
             new->elem->lex.lexemeStr = elem.lex.lexemeStr;
@@ -144,8 +144,8 @@ void performAction(int ruleNumber, astNode *node, treeN *root, grammar G, bool *
     case 1:{
         //<program> ===> <otherFunctions> <mainFunction>
         // make  node for <otherFunctions> and <mainFunction>
-        astNode *node1 = mknode(root->children[root->numChild-1-0]->elem);
-        astNode *node2 = mknode(root->children[root->numChild-1-1]->elem);
+        astNode *node1 = mknode(root->children[root->numChild-1-0]->elem,G);
+        astNode *node2 = mknode(root->children[root->numChild-1-1]->elem,G);
         addChildAST(node, node1);
         addChildAST(node, node2);
         break;
@@ -154,7 +154,7 @@ void performAction(int ruleNumber, astNode *node, treeN *root, grammar G, bool *
         //<mainFunction> ===> TK_MAIN <stmts> TK_END
         // make node for <stmts>
         // printf("Rule 2 has BT\n");
-        astNode *node1 = mknode(root->children[root->numChild-1-1]->elem);
+        astNode *node1 = mknode(root->children[root->numChild-1-1]->elem,G);
         node1->next = node->next;
         *node = *node1;
         *insertUsed = true;
@@ -164,8 +164,8 @@ void performAction(int ruleNumber, astNode *node, treeN *root, grammar G, bool *
     case 3:{
         //<otherFunctions> ===> <function> <otherFunctions1>
         // make node for <function> and <otherFunctions1>
-        astNode *node1 = mknode(root->children[root->numChild-1-0]->elem);
-        astNode *node2 = mknode(root->children[root->numChild-1-1]->elem);
+        astNode *node1 = mknode(root->children[root->numChild-1-0]->elem,G);
+        astNode *node2 = mknode(root->children[root->numChild-1-1]->elem,G);
         // insertAST
         // printf("next of rule 3 is %s\n",G.nonTerminals[node->elem->curr]);
         node1->next = node->next;
@@ -181,7 +181,7 @@ void performAction(int ruleNumber, astNode *node, treeN *root, grammar G, bool *
         //<otherFunctions> ===> ∈
         // otherFunctions --> epsilon
         // can't assign null else next will be inaccessible
-        astNode *node1 = mknode(root->children[root->numChild-1-0]->elem);
+        astNode *node1 = mknode(root->children[root->numChild-1-0]->elem,G);
         node1->next = node->next;
         *node = *node1;
         *insertUsed = true;
@@ -190,10 +190,10 @@ void performAction(int ruleNumber, astNode *node, treeN *root, grammar G, bool *
     case 5:{
         //<function> ===> TK_FUNID <input_par> <output_par> TK_SEM <stmts> TK_END
         // create node for FUNID, input_par, output_par, and stmts
-        astNode *node1 = mknode(root->children[root->numChild-1-0]->elem);
-        astNode *node2 = mknode(root->children[root->numChild-1-1]->elem);
-        astNode *node3 = mknode(root->children[root->numChild-1-2]->elem);
-        astNode *node4 = mknode(root->children[root->numChild-1-4]->elem);
+        astNode *node1 = mknode(root->children[root->numChild-1-0]->elem,G);
+        astNode *node2 = mknode(root->children[root->numChild-1-1]->elem,G);
+        astNode *node3 = mknode(root->children[root->numChild-1-2]->elem,G);
+        astNode *node4 = mknode(root->children[root->numChild-1-4]->elem,G);
         // printf("Rule 5 BT %s\n",G.nonTerminals[node->elem->curr]);
         // Add children
 
@@ -209,8 +209,8 @@ void performAction(int ruleNumber, astNode *node, treeN *root, grammar G, bool *
     case 6: {
         // <input_par> ===> TK_INPUT TK_PARAMETER TK_LIST TK_SQL <parameter_list> TK_SQR
         // mknode for TK_INPUT and <parameter_list>
-        astNode *node1 = mknode(root->children[root->numChild-1-0]->elem);
-        astNode *node2 = mknode(root->children[root->numChild-1-4]->elem);
+        astNode *node1 = mknode(root->children[root->numChild-1-0]->elem,G);
+        astNode *node2 = mknode(root->children[root->numChild-1-4]->elem,G);
         node1->next = node->next;
         *node = *node1;
         insertAST(node, node2);
@@ -221,8 +221,8 @@ void performAction(int ruleNumber, astNode *node, treeN *root, grammar G, bool *
     }
     case 7: {
         //<output_par> ===> TK_OUTPUT TK_PARAMETER TK_LIST TK_SQL <parameter_list> TK_SQR
-        astNode *node1 = mknode(root->children[root->numChild-1-0]->elem);
-        astNode *node2 = mknode(root->children[root->numChild-1-4]->elem);
+        astNode *node1 = mknode(root->children[root->numChild-1-0]->elem,G);
+        astNode *node2 = mknode(root->children[root->numChild-1-4]->elem,G);
         node1->next = node->next;
         *node = *node1;
         insertAST(node, node2);
@@ -232,7 +232,7 @@ void performAction(int ruleNumber, astNode *node, treeN *root, grammar G, bool *
     }
     case 8:{
         // <output_par>===>∈
-        astNode *node1 = mknode(root->children[root->numChild-1-0]->elem);
+        astNode *node1 = mknode(root->children[root->numChild-1-0]->elem,G);
         node1->next = node->next;
         *insertUsed = true;
         break;
@@ -240,9 +240,9 @@ void performAction(int ruleNumber, astNode *node, treeN *root, grammar G, bool *
     case 9:{
         //<parameter_list> ===> <dataType> TK_ID <remaining_list>
         // printf("Rule 9 has BT\n");
-        astNode *node1 = mknode(root->children[root->numChild-1-0]->elem);
-        astNode *node2 = mknode(root->children[root->numChild-1-1]->elem);
-        astNode *node3 = mknode(root->children[root->numChild-1-2]->elem);
+        astNode *node1 = mknode(root->children[root->numChild-1-0]->elem,G);
+        astNode *node2 = mknode(root->children[root->numChild-1-1]->elem,G);
+        astNode *node3 = mknode(root->children[root->numChild-1-2]->elem,G);
         addChildAST(node,node1);
         addChildAST(node,node2);
         addChildAST(node,node3);
@@ -251,7 +251,7 @@ void performAction(int ruleNumber, astNode *node, treeN *root, grammar G, bool *
     }
     case 10:{
         //<dataType> ===> <primitiveDatatype> 
-        astNode *node1 = mknode(root->children[root->numChild-1-0]->elem);
+        astNode *node1 = mknode(root->children[root->numChild-1-0]->elem,G);
         node1->next = node->next;
         *node = *node1;
         *insertUsed = true;
@@ -259,7 +259,7 @@ void performAction(int ruleNumber, astNode *node, treeN *root, grammar G, bool *
     }
     case 11:{
         //<dataType> ===> <constructedDatatype>
-        astNode *node1 = mknode(root->children[root->numChild-1-0]->elem);
+        astNode *node1 = mknode(root->children[root->numChild-1-0]->elem,G);
         node1->next = node->next;
         *node = *node1;
         *insertUsed = true;
@@ -267,7 +267,7 @@ void performAction(int ruleNumber, astNode *node, treeN *root, grammar G, bool *
     }
     case 12:{
         //<primitiveDatatype> ===> TK_INT
-        astNode *node1 = mknode(root->children[root->numChild-1-0]->elem);
+        astNode *node1 = mknode(root->children[root->numChild-1-0]->elem,G);
         node1->next = node->next;
         *node = *node1;
         *insertUsed = true;
@@ -275,7 +275,7 @@ void performAction(int ruleNumber, astNode *node, treeN *root, grammar G, bool *
     }
     case 13:{
         //<primitiveDatatype> ===> TK_REAL
-        astNode *node1 = mknode(root->children[root->numChild-1-0]->elem);
+        astNode *node1 = mknode(root->children[root->numChild-1-0]->elem,G);
 
         node1->next = node->next;
         *node = *node1;
@@ -284,23 +284,23 @@ void performAction(int ruleNumber, astNode *node, treeN *root, grammar G, bool *
     }
     case 14:{
         //<constructedDatatype> ===> TK_RECORD TK_RUID
-        astNode *node1 = mknode(root->children[root->numChild-1-0]->elem);
-        astNode *node2 = mknode(root->children[root->numChild-1-1]->elem);
+        astNode *node1 = mknode(root->children[root->numChild-1-0]->elem,G);
+        astNode *node2 = mknode(root->children[root->numChild-1-1]->elem,G);
         addChildAST(node, node1);
         addChildAST(node, node2);
         break;
     }
     case 15:{
         //<constructedDatatype> ===> TK_UNION TK_RUID
-        astNode *node1 = mknode(root->children[root->numChild-1-0]->elem);
-        astNode *node2 = mknode(root->children[root->numChild-1-1]->elem);
+        astNode *node1 = mknode(root->children[root->numChild-1-0]->elem,G);
+        astNode *node2 = mknode(root->children[root->numChild-1-1]->elem,G);
         addChildAST(node, node1);
         addChildAST(node, node2);
         break;
     }
     case 16:{
         //<constructedDatatype> ===> TK_RUID
-        astNode *node1 = mknode(root->children[root->numChild-1-0]->elem);
+        astNode *node1 = mknode(root->children[root->numChild-1-0]->elem,G);
         node1->next = node->next;
         *node = *node1;
         *insertUsed = true;
@@ -309,7 +309,7 @@ void performAction(int ruleNumber, astNode *node, treeN *root, grammar G, bool *
     case 17:{
         //<remaining_list> ===> TK_COMMA <parameter_list>
         // printf("Rule 17 has BT\n");
-        astNode *node1 = mknode(root->children[root->numChild-1-1]->elem);
+        astNode *node1 = mknode(root->children[root->numChild-1-1]->elem,G);
         node1->next = node->next;
         *node = *node1;
         *insertUsed = true;
@@ -319,7 +319,7 @@ void performAction(int ruleNumber, astNode *node, treeN *root, grammar G, bool *
     case 18:{
         //<remaining_list> ===> ∈
         // can't assign null else next will be inaccessible
-        astNode *node1 = mknode(root->children[root->numChild-1-0]->elem);
+        astNode *node1 = mknode(root->children[root->numChild-1-0]->elem,G);
         node1->next = node->next;
         *node = *node1;
         *insertUsed = true;
@@ -328,10 +328,10 @@ void performAction(int ruleNumber, astNode *node, treeN *root, grammar G, bool *
     case 19:{
         //<stmts> ===> <typeDefinitions> <declarations> <otherStmts> <returnStmt>
         // printf("Rule 19 has BT\n");
-        astNode *node1 = mknode(root->children[root->numChild-1-0]->elem);
-        astNode *node2 = mknode(root->children[root->numChild-1-1]->elem);
-        astNode *node3 = mknode(root->children[root->numChild-1-2]->elem);
-        astNode *node4 = mknode(root->children[root->numChild-1-3]->elem);
+        astNode *node1 = mknode(root->children[root->numChild-1-0]->elem,G);
+        astNode *node2 = mknode(root->children[root->numChild-1-1]->elem,G);
+        astNode *node3 = mknode(root->children[root->numChild-1-2]->elem,G);
+        astNode *node4 = mknode(root->children[root->numChild-1-3]->elem,G);
         node1->next = node->next;
         *node = *node1;
         insertAST(node, node2);
@@ -345,8 +345,8 @@ void performAction(int ruleNumber, astNode *node, treeN *root, grammar G, bool *
     case 20:{
         //<typeDefinitions> ===> <actualOrRedefined> <typeDefinitions1>
         // printf("Rule 20 has BT\n");
-        astNode *node1 = mknode(root->children[root->numChild-1-0]->elem);
-        astNode *node2 = mknode(root->children[root->numChild-1-1]->elem);
+        astNode *node1 = mknode(root->children[root->numChild-1-0]->elem,G);
+        astNode *node2 = mknode(root->children[root->numChild-1-1]->elem,G);
         node1->next = node->next;
         *node = *node1;
         insertAST(node, node2);
@@ -359,7 +359,7 @@ void performAction(int ruleNumber, astNode *node, treeN *root, grammar G, bool *
         //<typeDefinitions> ===> ∈
         // can't assign null else next will be inaccessible
         // printf("Rule 21 has BT\n");
-        astNode *node1 = mknode(root->children[root->numChild-1-0]->elem);
+        astNode *node1 = mknode(root->children[root->numChild-1-0]->elem,G);
         node1->next = node->next;
         *node = *node1;
         *insertUsed = true;
@@ -369,7 +369,7 @@ void performAction(int ruleNumber, astNode *node, treeN *root, grammar G, bool *
     case 22:{
         //<actualOrRedefined> ===> <typeDefinition>
         // printf("Rule 22 has BT\n");
-        astNode *node1 = mknode(root->children[root->numChild-1-0]->elem);
+        astNode *node1 = mknode(root->children[root->numChild-1-0]->elem,G);
         node1->next = node->next;
         *node = *node1;
         *insertUsed = true;
@@ -379,7 +379,7 @@ void performAction(int ruleNumber, astNode *node, treeN *root, grammar G, bool *
     case 23:{
         //<actualOrRedefined> ===> <definetypestmt>
         // printf("Rule 23 has BT\n");
-        astNode *node1 = mknode(root->children[root->numChild-1-0]->elem);
+        astNode *node1 = mknode(root->children[root->numChild-1-0]->elem,G);
         node1->next = node->next;
         *node = *node1;
         *insertUsed = true;
@@ -390,9 +390,9 @@ void performAction(int ruleNumber, astNode *node, treeN *root, grammar G, bool *
         //<typeDefinition> ===> TK_RECORD TK_RUID <fieldDefinitions> TK_ENDRECORD
         // Rule changed here, else exceptions would be needed
         // printf("Rule 24 has no BT\n");
-        astNode *node1 = mknode(root->children[root->numChild-1-0]->elem);
-        astNode *node2 = mknode(root->children[root->numChild-1-1]->elem);
-        astNode *node3 = mknode(root->children[root->numChild-1-2]->elem);
+        astNode *node1 = mknode(root->children[root->numChild-1-0]->elem,G);
+        astNode *node2 = mknode(root->children[root->numChild-1-1]->elem,G);
+        astNode *node3 = mknode(root->children[root->numChild-1-2]->elem,G);
         // node1->next = node->next;
         // *node = *node1;
         addChildAST(node, node1);
@@ -405,9 +405,9 @@ void performAction(int ruleNumber, astNode *node, treeN *root, grammar G, bool *
         //<typeDefinition> ===> TK_UNION TK_RUID <fieldDefinitions> TK_ENDUNION
         // Rule changed here, else exceptions would be needed
         // printf("Rule 25 has BT\n");
-        astNode *node1 = mknode(root->children[root->numChild-1-0]->elem);
-        astNode *node2 = mknode(root->children[root->numChild-1-1]->elem);
-        astNode *node3 = mknode(root->children[root->numChild-1-2]->elem);
+        astNode *node1 = mknode(root->children[root->numChild-1-0]->elem,G);
+        astNode *node2 = mknode(root->children[root->numChild-1-1]->elem,G);
+        astNode *node3 = mknode(root->children[root->numChild-1-2]->elem,G);
         // node1->next = node->next;
         // *node = *node1;
         addChildAST(node, node1);
@@ -419,9 +419,9 @@ void performAction(int ruleNumber, astNode *node, treeN *root, grammar G, bool *
     case 26:{
         //<fieldDefinitions> ===> <fieldDefinition> <fieldDefinition1> <moreFields>
         // printf("Rule 26 has BT\n");
-        astNode *node1 = mknode(root->children[root->numChild-1-0]->elem);
-        astNode *node2 = mknode(root->children[root->numChild-1-1]->elem);
-        astNode *node3 = mknode(root->children[root->numChild-1-2]->elem);
+        astNode *node1 = mknode(root->children[root->numChild-1-0]->elem,G);
+        astNode *node2 = mknode(root->children[root->numChild-1-1]->elem,G);
+        astNode *node3 = mknode(root->children[root->numChild-1-2]->elem,G);
         node1->next = node->next;
         *node = *node1;
         insertAST(node, node2);
@@ -434,8 +434,8 @@ void performAction(int ruleNumber, astNode *node, treeN *root, grammar G, bool *
     case 27:{
         //<fieldDefinition> ===> TK_TYPE <fieldType> TK_COLON TK_FIELDID TK_SEM
         // printf("Rule 27 has BT\n");
-        astNode *node1 = mknode(root->children[root->numChild-1-1]->elem);
-        astNode *node2 = mknode(root->children[root->numChild-1-3]->elem);
+        astNode *node1 = mknode(root->children[root->numChild-1-1]->elem,G);
+        astNode *node2 = mknode(root->children[root->numChild-1-3]->elem,G);
         addChildAST(node, node1);
         addChildAST(node, node2);
         // printf("Rule 27 has no BT\n");
@@ -444,7 +444,7 @@ void performAction(int ruleNumber, astNode *node, treeN *root, grammar G, bool *
     case 28:{
         // <fieldType> ===> <primitiveDatatype>
         // printf("Rule 28 has BT\n");
-        astNode *node1 = mknode(root->children[root->numChild-1-0]->elem);
+        astNode *node1 = mknode(root->children[root->numChild-1-0]->elem,G);
         node1->next = node->next;
         *node = *node1;
         *insertUsed = true;
@@ -454,7 +454,7 @@ void performAction(int ruleNumber, astNode *node, treeN *root, grammar G, bool *
     case 29:{
         // <fieldType> ===> TK_RUID
         // printf("Rule 29 has BT\n");
-        astNode *node1 = mknode(root->children[root->numChild-1-0]->elem);
+        astNode *node1 = mknode(root->children[root->numChild-1-0]->elem,G);
         node1->next = node->next;
         *node = *node1;
         *insertUsed = true;
@@ -464,8 +464,8 @@ void performAction(int ruleNumber, astNode *node, treeN *root, grammar G, bool *
     case 30:{
         //<moreFields> ===> <fieldDefinition> <moreFields1>
         // printf("Rule 30 has BT\n");
-        astNode *node1 = mknode(root->children[root->numChild-1-0]->elem);
-        astNode *node2 = mknode(root->children[root->numChild-1-1]->elem);
+        astNode *node1 = mknode(root->children[root->numChild-1-0]->elem,G);
+        astNode *node2 = mknode(root->children[root->numChild-1-1]->elem,G);
         node1->next = node->next;
         *node = *node1;
         insertAST(node, node2);
@@ -478,7 +478,7 @@ void performAction(int ruleNumber, astNode *node, treeN *root, grammar G, bool *
         // <moreFields> ===> ∈
         // can't assign null else next will be inaccessible
         // printf("Rule 31 has BT\n");
-        astNode *node1 = mknode(root->children[root->numChild-1-0]->elem);
+        astNode *node1 = mknode(root->children[root->numChild-1-0]->elem,G);
         node1->next = node->next;
         *node = *node1;
         *insertUsed = true;
@@ -488,11 +488,11 @@ void performAction(int ruleNumber, astNode *node, treeN *root, grammar G, bool *
     case 32:{
         // <definetypestmt> ===> TK_DEFINETYPE <A> TK_RUID TK_AS TK_RUID
         // printf("Rule 32 has BT\n");
-        astNode *node1 = mknode(root->children[root->numChild-1-0]->elem);
-        astNode *node2 = mknode(root->children[root->numChild-1-1]->elem);
-        astNode *node3 = mknode(root->children[root->numChild-1-2]->elem);
-        astNode *node4 = mknode(root->children[root->numChild-1-3]->elem);
-        astNode *node5 = mknode(root->children[root->numChild-1-4]->elem);
+        astNode *node1 = mknode(root->children[root->numChild-1-0]->elem,G);
+        astNode *node2 = mknode(root->children[root->numChild-1-1]->elem,G);
+        astNode *node3 = mknode(root->children[root->numChild-1-2]->elem,G);
+        astNode *node4 = mknode(root->children[root->numChild-1-3]->elem,G);
+        astNode *node5 = mknode(root->children[root->numChild-1-4]->elem,G);
         node1->next = node->next;
         *node = *node1;
         addChildAST(node,node2);
@@ -504,8 +504,8 @@ void performAction(int ruleNumber, astNode *node, treeN *root, grammar G, bool *
     }
     case 33:{
         // <declarations> ===> <declaration> <declarations1>
-        astNode *node1 = mknode(root->children[root->numChild-1-0]->elem);
-        astNode *node2 = mknode(root->children[root->numChild-1-1]->elem);
+        astNode *node1 = mknode(root->children[root->numChild-1-0]->elem,G);
+        astNode *node2 = mknode(root->children[root->numChild-1-1]->elem,G);
         node1->next = node->next;
         *node = *node1;
         insertAST(node, node2);
@@ -516,7 +516,7 @@ void performAction(int ruleNumber, astNode *node, treeN *root, grammar G, bool *
     case 34:{
         // <declarations> ===> ∈
         // can't assign null else next will be inaccessible
-        astNode *node1 = mknode(root->children[root->numChild-1-0]->elem);
+        astNode *node1 = mknode(root->children[root->numChild-1-0]->elem,G);
         node1->next = node->next;
         *node = *node1;
         *insertUsed = true;
@@ -524,9 +524,9 @@ void performAction(int ruleNumber, astNode *node, treeN *root, grammar G, bool *
     }
     case 35:{
         // <declaration> ===> TK_TYPE <dataType> TK_COLON TK_ID <global_or_not> TK_SEM
-        astNode *node1 = mknode(root->children[root->numChild-1-1]->elem);
-        astNode *node2 = mknode(root->children[root->numChild-1-3]->elem);
-        astNode *node3 = mknode(root->children[root->numChild-1-4]->elem);
+        astNode *node1 = mknode(root->children[root->numChild-1-1]->elem,G);
+        astNode *node2 = mknode(root->children[root->numChild-1-3]->elem,G);
+        astNode *node3 = mknode(root->children[root->numChild-1-4]->elem,G);
         addChildAST(node,node1);
         addChildAST(node,node2);
         addChildAST(node,node3);
@@ -534,7 +534,7 @@ void performAction(int ruleNumber, astNode *node, treeN *root, grammar G, bool *
     }
     case 36:{
         // <global_or_not> ===> TK_COLON TK_GLOBAL
-        astNode *node1 = mknode(root->children[root->numChild-1-1]->elem);
+        astNode *node1 = mknode(root->children[root->numChild-1-1]->elem,G);
         node1->next = node->next;
         *node = *node1;
         *insertUsed = true;
@@ -543,7 +543,7 @@ void performAction(int ruleNumber, astNode *node, treeN *root, grammar G, bool *
     case 37:{
         // <global_or_not> ===> ∈
         // can't assign null else next will be inaccessible
-        astNode *node1 = mknode(root->children[root->numChild-1-0]->elem);
+        astNode *node1 = mknode(root->children[root->numChild-1-0]->elem,G);
         node1->next = node->next;
         *node = *node1;
         *insertUsed = true;
@@ -552,8 +552,8 @@ void performAction(int ruleNumber, astNode *node, treeN *root, grammar G, bool *
     case 38:{
         // <otherStmts> ===> <stmt> <otherStmts1>
         // printf("Rule 38 has BT\n");
-        astNode *node1 = mknode(root->children[root->numChild-1-0]->elem);
-        astNode *node2 = mknode(root->children[root->numChild-1-1]->elem);
+        astNode *node1 = mknode(root->children[root->numChild-1-0]->elem,G);
+        astNode *node2 = mknode(root->children[root->numChild-1-1]->elem,G);
         node1->next = node->next;
         *node = *node1;
         insertAST(node,node2);
@@ -565,7 +565,7 @@ void performAction(int ruleNumber, astNode *node, treeN *root, grammar G, bool *
     case 39:{
         // <otherStmts> ===> ∈
         // can't assign null else next will be inaccessible
-        astNode *node1 = mknode(root->children[root->numChild-1-0]->elem);
+        astNode *node1 = mknode(root->children[root->numChild-1-0]->elem,G);
         node1->next = node->next;
         *node = *node1;
         *insertUsed = true;
@@ -574,7 +574,7 @@ void performAction(int ruleNumber, astNode *node, treeN *root, grammar G, bool *
     }
     case 40:{
         // <stmt> ===> <assignmentStmt>
-        astNode *node1  = mknode(root->children[root->numChild-1-0]->elem);
+        astNode *node1  = mknode(root->children[root->numChild-1-0]->elem,G);
         node1->next = node->next;
         *node = *node1;
         *insertUsed = true;
@@ -583,7 +583,7 @@ void performAction(int ruleNumber, astNode *node, treeN *root, grammar G, bool *
     case 41:{
         // <stmt> ===> <iterativeStmt>
         // printf("Rule 41 has BT\n");
-        astNode *node1 = mknode(root->children[root->numChild-1-0]->elem);
+        astNode *node1 = mknode(root->children[root->numChild-1-0]->elem,G);
         node1->next = node->next;
         *node = *node1;
         *insertUsed = true;
@@ -592,7 +592,7 @@ void performAction(int ruleNumber, astNode *node, treeN *root, grammar G, bool *
     }
     case 42:{
         // <stmt> ===> <conditionalStmt>
-        astNode *node1 = mknode(root->children[root->numChild-1-0]->elem);
+        astNode *node1 = mknode(root->children[root->numChild-1-0]->elem,G);
         node1->next = node->next;
         *node = *node1;
         *insertUsed = true;
@@ -600,7 +600,7 @@ void performAction(int ruleNumber, astNode *node, treeN *root, grammar G, bool *
     }
     case 43:{
         // <stmt> ===> <ioStmt>
-        astNode *node1 = mknode(root->children[root->numChild-1-0]->elem);
+        astNode *node1 = mknode(root->children[root->numChild-1-0]->elem,G);
         node1->next = node->next;
         *node = *node1;
         *insertUsed = true;
@@ -608,7 +608,7 @@ void performAction(int ruleNumber, astNode *node, treeN *root, grammar G, bool *
     }
     case 44:{
         // <stmt> ===> <funCallStmt>
-        astNode *node1 = mknode(root->children[root->numChild-1-0]->elem);
+        astNode *node1 = mknode(root->children[root->numChild-1-0]->elem,G);
         node1->next = node->next;
         *node = *node1;
         *insertUsed = true;
@@ -616,10 +616,10 @@ void performAction(int ruleNumber, astNode *node, treeN *root, grammar G, bool *
     }
     case 45:{
         // <assignmentStmt> ===> <singleOrRecId> TK_ASSIGNOP <arithmeticExpression> TK_SEM
-        // node = mknode(root->children[root->numChild-1-0]->elem);
-        astNode *node1 = mknode(root->children[root->numChild-1-0]->elem);
-        astNode *node2 = mknode(root->children[root->numChild-1-1]->elem);
-        astNode *node3 = mknode(root->children[root->numChild-1-2]->elem);
+        // node = mknode(root->children[root->numChild-1-0]->elem,G);
+        astNode *node1 = mknode(root->children[root->numChild-1-0]->elem,G);
+        astNode *node2 = mknode(root->children[root->numChild-1-1]->elem,G);
+        astNode *node3 = mknode(root->children[root->numChild-1-2]->elem,G);
         addChildAST(node,node1);
         addChildAST(node,node2);
         addChildAST(node,node3);
@@ -627,16 +627,16 @@ void performAction(int ruleNumber, astNode *node, treeN *root, grammar G, bool *
     }
     case 46:{
         // <singleOrRecId> ===> TK_ID <option_single_constructed>
-        astNode *node1 = mknode(root->children[root->numChild-1-0]->elem);
-        astNode *node2 = mknode(root->children[root->numChild-1-1]->elem);
+        astNode *node1 = mknode(root->children[root->numChild-1-0]->elem,G);
+        astNode *node2 = mknode(root->children[root->numChild-1-1]->elem,G);
         addChildAST(node,node1);
         addChildAST(node,node2);
         break;
     }
     case 47:{
         // <option_single_constructed> ===> <oneExpansion> <moreExpansions>
-        astNode *node1 = mknode(root->children[root->numChild-1-0]->elem);
-        astNode *node2 = mknode(root->children[root->numChild-1-1]->elem);
+        astNode *node1 = mknode(root->children[root->numChild-1-0]->elem,G);
+        astNode *node2 = mknode(root->children[root->numChild-1-1]->elem,G);
         node1->next = node->next;
         *node = *node1;
         insertAST(node,node2);
@@ -647,7 +647,7 @@ void performAction(int ruleNumber, astNode *node, treeN *root, grammar G, bool *
     case 48:{
         // <option_single_constructed> ===> ∈
         // can't assign null else next will be inaccessible
-        astNode *node1 = mknode(root->children[root->numChild-1-0]->elem);
+        astNode *node1 = mknode(root->children[root->numChild-1-0]->elem,G);
         node1->next = node->next;
         *node = *node1;
         *insertUsed = true;
@@ -655,7 +655,7 @@ void performAction(int ruleNumber, astNode *node, treeN *root, grammar G, bool *
     }
     case 49:{
         // <oneExpansion> ===> TK_DOT TK_FIELDID
-        astNode *node1 = mknode(root->children[root->numChild-1-1]->elem);
+        astNode *node1 = mknode(root->children[root->numChild-1-1]->elem,G);
         node1->next = node->next;
         *node = *node1;
         *insertUsed = true;
@@ -663,8 +663,8 @@ void performAction(int ruleNumber, astNode *node, treeN *root, grammar G, bool *
     }
     case 50:{
         // <moreExpansions> ===> <oneExpansion> <moreExpansions1>
-        astNode *node1 = mknode(root->children[root->numChild-1-0]->elem);
-        astNode *node2 = mknode(root->children[root->numChild-1-1]->elem);
+        astNode *node1 = mknode(root->children[root->numChild-1-0]->elem,G);
+        astNode *node2 = mknode(root->children[root->numChild-1-1]->elem,G);
         node1->next = node->next;
         *node = *node1;
         insertAST(node, node2);
@@ -675,7 +675,7 @@ void performAction(int ruleNumber, astNode *node, treeN *root, grammar G, bool *
     case 51:{
         // <moreExpansions> ===> ∈
         // can't assign null else next will be inaccessible
-        astNode *node1 = mknode(root->children[root->numChild-1-0]->elem);
+        astNode *node1 = mknode(root->children[root->numChild-1-0]->elem,G);
         node1->next = node->next;
         *node = *node1;
         *insertUsed = true;
@@ -683,11 +683,11 @@ void performAction(int ruleNumber, astNode *node, treeN *root, grammar G, bool *
     }
     case 52:{
         // <funCallStmt> ===> <outputParameters> TK_CALL TK_FUNID TK_WITH TK_PARAMETERS <inputParameters> TK_SEM
-        astNode *node1 = mknode(root->children[root->numChild-1-0]->elem);
-        astNode *node2 = mknode(root->children[root->numChild-1-1]->elem);
-        astNode *node3 = mknode(root->children[root->numChild-1-2]->elem);
-        astNode *node4 = mknode(root->children[root->numChild-1-4]->elem);
-        astNode *node5 = mknode(root->children[root->numChild-1-5]->elem);
+        astNode *node1 = mknode(root->children[root->numChild-1-0]->elem,G);
+        astNode *node2 = mknode(root->children[root->numChild-1-1]->elem,G);
+        astNode *node3 = mknode(root->children[root->numChild-1-2]->elem,G);
+        astNode *node4 = mknode(root->children[root->numChild-1-4]->elem,G);
+        astNode *node5 = mknode(root->children[root->numChild-1-5]->elem,G);
         addChildAST(node,node1);
         addChildAST(node,node2);
         addChildAST(node,node3);
@@ -697,14 +697,14 @@ void performAction(int ruleNumber, astNode *node, treeN *root, grammar G, bool *
     }
     case 53:{
         // <outputParameters> ===> TK_SQL <idList> TK_SQR TK_ASSIGNOP
-        astNode *node1 = mknode(root->children[root->numChild-1-1]->elem);
+        astNode *node1 = mknode(root->children[root->numChild-1-1]->elem,G);
         addChildAST(node,node1);
         break;
     }
     case 54:{
         // <outputParameters> ===> ∈
         // can't assign null else next will be inaccessible
-        astNode *node1 = mknode(root->children[root->numChild-1-0]->elem);
+        astNode *node1 = mknode(root->children[root->numChild-1-0]->elem,G);
         node1->next = node->next;
         *node = *node1;
         *insertUsed = true;
@@ -712,7 +712,7 @@ void performAction(int ruleNumber, astNode *node, treeN *root, grammar G, bool *
     }
     case 55:{
         // <inputParameters> ===> TK_SQL <idList> TK_SQR
-        astNode *node1 = mknode(root->children[root->numChild-1-1]->elem);
+        astNode *node1 = mknode(root->children[root->numChild-1-1]->elem,G);
         node1->next = node->next;
         *node = *node1;
         *insertUsed = true;
@@ -720,9 +720,9 @@ void performAction(int ruleNumber, astNode *node, treeN *root, grammar G, bool *
     }
     case 56:{
         // <iterativeStmt> ===> TK_WHILE TK_OP <booleanExpression> TK_CL <stmt> <otherStmts> TK_ENDWHILE
-        astNode *node1 = mknode(root->children[root->numChild-1-2]->elem);
-        astNode *node2 = mknode(root->children[root->numChild-1-4]->elem);
-        astNode *node3 = mknode(root->children[root->numChild-1-5]->elem);
+        astNode *node1 = mknode(root->children[root->numChild-1-2]->elem,G);
+        astNode *node2 = mknode(root->children[root->numChild-1-4]->elem,G);
+        astNode *node3 = mknode(root->children[root->numChild-1-5]->elem,G);
         addChildAST(node,node1);
         addChildAST(node,node2);
         addChildAST(node,node3);
@@ -732,12 +732,12 @@ void performAction(int ruleNumber, astNode *node, treeN *root, grammar G, bool *
 
         // <conditionalStmt> ===> TK_IF TK_OP <booleanExpression> TK_CL TK_THEN <stmt> <otherStmts> <elsePart>
 
-        astNode *node1 = mknode(root->children[root->numChild-1-0]->elem);
-        astNode *node2 = mknode(root->children[root->numChild-1-2]->elem);
-        astNode *node3 = mknode(root->children[root->numChild-1-4]->elem);
-        astNode *node4 = mknode(root->children[root->numChild-1-5]->elem);
-        astNode *node5 = mknode(root->children[root->numChild-1-6]->elem);
-        astNode *node6 = mknode(root->children[root->numChild-1-7]->elem);
+        astNode *node1 = mknode(root->children[root->numChild-1-0]->elem,G);
+        astNode *node2 = mknode(root->children[root->numChild-1-2]->elem,G);
+        astNode *node3 = mknode(root->children[root->numChild-1-4]->elem,G);
+        astNode *node4 = mknode(root->children[root->numChild-1-5]->elem,G);
+        astNode *node5 = mknode(root->children[root->numChild-1-6]->elem,G);
+        astNode *node6 = mknode(root->children[root->numChild-1-7]->elem,G);
         addChildAST(node, node1);
         addChildAST(node, node2);
         addChildAST(node, node3);
@@ -748,15 +748,15 @@ void performAction(int ruleNumber, astNode *node, treeN *root, grammar G, bool *
     }
     case 58:{
         // <elsePart> ===> TK_ELSE <stmt> <otherStmts> TK_ENDIF
-        astNode *node1 = mknode(root->children[root->numChild-1-1]->elem);
-        astNode *node2 = mknode(root->children[root->numChild-1-2]->elem);
+        astNode *node1 = mknode(root->children[root->numChild-1-1]->elem,G);
+        astNode *node2 = mknode(root->children[root->numChild-1-2]->elem,G);
         addChildAST(node, node1);
         addChildAST(node, node2);
         break;
     }
     case 59:{
         //<elsePart> ===> TK_ENDIF
-        astNode *node1 = mknode(root->children[root->numChild-1-0]->elem);
+        astNode *node1 = mknode(root->children[root->numChild-1-0]->elem,G);
         node1->next = node->next;
         *node = *node1;
         *insertUsed = true;
@@ -764,24 +764,24 @@ void performAction(int ruleNumber, astNode *node, treeN *root, grammar G, bool *
     }
     case 60:{
         // <ioStmt> ===> TK_READ TK_OP <var> TK_CL TK_SEM
-        astNode *node1 = mknode(root->children[root->numChild-1-0]->elem);
-        astNode *node2 = mknode(root->children[root->numChild-1-2]->elem);
+        astNode *node1 = mknode(root->children[root->numChild-1-0]->elem,G);
+        astNode *node2 = mknode(root->children[root->numChild-1-2]->elem,G);
         addChildAST(node, node1);
         addChildAST(node, node2);
         break;
     }
     case 61:{
         // <ioStmt> ===> TK_WRITE TK_OP <var> TK_CL TK_SEM
-        astNode *node1 = mknode(root->children[root->numChild-1-0]->elem);
-        astNode *node2 = mknode(root->children[root->numChild-1-2]->elem);
+        astNode *node1 = mknode(root->children[root->numChild-1-0]->elem,G);
+        astNode *node2 = mknode(root->children[root->numChild-1-2]->elem,G);
         addChildAST(node, node1);
         addChildAST(node, node2);
         break;
     }
     case 62:{
         // <arithmeticExpression> ===> <term> <expPrime>
-        astNode *node1 = mknode(root->children[root->numChild-1-0]->elem);
-        astNode *node2 = mknode(root->children[root->numChild-1-1]->elem);
+        astNode *node1 = mknode(root->children[root->numChild-1-0]->elem,G);
+        astNode *node2 = mknode(root->children[root->numChild-1-1]->elem,G);
         node1->next = node->next;
         *node = *node1;
         insertAST(node, node2);
@@ -791,9 +791,9 @@ void performAction(int ruleNumber, astNode *node, treeN *root, grammar G, bool *
     }
     case 63:{
         // <expPrime> ===> <lowPrecedenceOperators> <term> <expPrime>
-        astNode *node1 = mknode(root->children[root->numChild-1-0]->elem);
-        astNode *node2 = mknode(root->children[root->numChild-1-1]->elem);
-        astNode *node3 = mknode(root->children[root->numChild-1-2]->elem);
+        astNode *node1 = mknode(root->children[root->numChild-1-0]->elem,G);
+        astNode *node2 = mknode(root->children[root->numChild-1-1]->elem,G);
+        astNode *node3 = mknode(root->children[root->numChild-1-2]->elem,G);
         node1->next = node->next;
         *node = *node1;
         insertAST(node, node2);
@@ -805,7 +805,7 @@ void performAction(int ruleNumber, astNode *node, treeN *root, grammar G, bool *
     case 64:{
         // <expPrime> ===> ∈
         // can't assign null else next will be inaccessible
-        astNode *node1 = mknode(root->children[root->numChild-1-0]->elem);
+        astNode *node1 = mknode(root->children[root->numChild-1-0]->elem,G);
         node1->next = node->next;
         *node = *node1;
         *insertUsed = true;
@@ -813,8 +813,8 @@ void performAction(int ruleNumber, astNode *node, treeN *root, grammar G, bool *
     }
     case 65:{
         // <term> ===> <factor> <termPrime>
-        astNode *node1 = mknode(root->children[root->numChild-1-0]->elem);
-        astNode *node2 = mknode(root->children[root->numChild-1-1]->elem);
+        astNode *node1 = mknode(root->children[root->numChild-1-0]->elem,G);
+        astNode *node2 = mknode(root->children[root->numChild-1-1]->elem,G);
         node1->next = node->next;
         *node = *node1;
         insertAST(node, node2);
@@ -824,9 +824,9 @@ void performAction(int ruleNumber, astNode *node, treeN *root, grammar G, bool *
     }
     case 66:{
         // <termPrime> ===> <highPrecedenceOperators> <factor> <termPrime>
-        astNode *node1 = mknode(root->children[root->numChild-1-0]->elem);
-        astNode *node2 = mknode(root->children[root->numChild-1-1]->elem);
-        astNode *node3 = mknode(root->children[root->numChild-1-2]->elem);
+        astNode *node1 = mknode(root->children[root->numChild-1-0]->elem,G);
+        astNode *node2 = mknode(root->children[root->numChild-1-1]->elem,G);
+        astNode *node3 = mknode(root->children[root->numChild-1-2]->elem,G);
         node1->next = node->next;
         *node = *node1;
         insertAST(node, node2);
@@ -838,7 +838,7 @@ void performAction(int ruleNumber, astNode *node, treeN *root, grammar G, bool *
     case 67:{
         // <termPrime> ===> ∈
         // can't assign null else next will be inaccessible
-        astNode *node1 = mknode(root->children[root->numChild-1-0]->elem);
+        astNode *node1 = mknode(root->children[root->numChild-1-0]->elem,G);
         node1->next = node->next;
         *node = *node1;
         *insertUsed = true;
@@ -846,7 +846,7 @@ void performAction(int ruleNumber, astNode *node, treeN *root, grammar G, bool *
     }
     case 68:{
         // <factor> ===> TK_OP <arithmeticExpression> TK_CL
-        astNode *node1 = mknode(root->children[root->numChild-1-1]->elem);
+        astNode *node1 = mknode(root->children[root->numChild-1-1]->elem,G);
         node1->next = node->next;
         *node = *node1;
         *insertUsed = true;
@@ -854,7 +854,7 @@ void performAction(int ruleNumber, astNode *node, treeN *root, grammar G, bool *
     }
     case 69:{
         // <factor> ===> <var>
-        astNode *node1 = mknode(root->children[root->numChild-1-0]->elem);
+        astNode *node1 = mknode(root->children[root->numChild-1-0]->elem,G);
         node1->next = node->next;
         *node = *node1;
         *insertUsed = true;
@@ -862,7 +862,7 @@ void performAction(int ruleNumber, astNode *node, treeN *root, grammar G, bool *
     }
     case 70:{
         // <highPrecedenceOperators> ===> TK_MUL
-        astNode *node1 = mknode(root->children[root->numChild-1-0]->elem);
+        astNode *node1 = mknode(root->children[root->numChild-1-0]->elem,G);
         node1->next = node->next;
         *node = *node1;
         *insertUsed = true;
@@ -870,7 +870,7 @@ void performAction(int ruleNumber, astNode *node, treeN *root, grammar G, bool *
     }
     case 71:{
         // <highPrecedenceOperators> ===> TK_DIV 
-        astNode *node1 = mknode(root->children[root->numChild-1-0]->elem);
+        astNode *node1 = mknode(root->children[root->numChild-1-0]->elem,G);
         node1->next = node->next;
         *node = *node1;
         *insertUsed = true;
@@ -878,7 +878,7 @@ void performAction(int ruleNumber, astNode *node, treeN *root, grammar G, bool *
     }
     case 72:{
         // <lowPrecedenceOperators> ===> TK_PLUS
-        astNode *node1 = mknode(root->children[root->numChild-1-0]->elem);
+        astNode *node1 = mknode(root->children[root->numChild-1-0]->elem,G);
         node1->next = node->next;
         *node = *node1;
         *insertUsed = true;
@@ -886,7 +886,7 @@ void performAction(int ruleNumber, astNode *node, treeN *root, grammar G, bool *
     }
     case 73:{
         // <lowPrecedenceOperators> ===> TK_MINUS
-        astNode *node1 = mknode(root->children[root->numChild-1-0]->elem);
+        astNode *node1 = mknode(root->children[root->numChild-1-0]->elem,G);
         node1->next = node->next;
         *node = *node1;
         *insertUsed = true;
@@ -894,9 +894,9 @@ void performAction(int ruleNumber, astNode *node, treeN *root, grammar G, bool *
     }
     case 74:{
         // <booleanExpression> ===> TK_OP <booleanExpression1> TK_CL <logicalOp> TK_OP <booleanExpression2> TK_CL
-        astNode *node1 = mknode(root->children[root->numChild-1-1]->elem);
-        astNode *node2 = mknode(root->children[root->numChild-1-3]->elem);
-        astNode *node3 = mknode(root->children[root->numChild-1-5]->elem);
+        astNode *node1 = mknode(root->children[root->numChild-1-1]->elem,G);
+        astNode *node2 = mknode(root->children[root->numChild-1-3]->elem,G);
+        astNode *node3 = mknode(root->children[root->numChild-1-5]->elem,G);
         addChildAST(node, node1);
         addChildAST(node, node2);
         addChildAST(node, node3);
@@ -904,9 +904,9 @@ void performAction(int ruleNumber, astNode *node, treeN *root, grammar G, bool *
     }
     case 75:{
         // <booleanExpression> ===> <var> <relationalOp> <var1>
-        astNode *node1 = mknode(root->children[root->numChild-1-0]->elem);
-        astNode *node2 = mknode(root->children[root->numChild-1-1]->elem);
-        astNode *node3 = mknode(root->children[root->numChild-1-2]->elem);
+        astNode *node1 = mknode(root->children[root->numChild-1-0]->elem,G);
+        astNode *node2 = mknode(root->children[root->numChild-1-1]->elem,G);
+        astNode *node3 = mknode(root->children[root->numChild-1-2]->elem,G);
         node1->next = node->next;
         *node = *node1;
         insertAST(node, node2);
@@ -917,8 +917,8 @@ void performAction(int ruleNumber, astNode *node, treeN *root, grammar G, bool *
     }
     case 76:{
         // <booleanExpression> ===> TK_NOT TK_OP <booleanExpression1> TK_CL
-        node = mknode(root->children[root->numChild-1-0]->elem);
-        astNode *node1 = mknode(root->children[root->numChild-1-2]->elem);
+        node = mknode(root->children[root->numChild-1-0]->elem,G);
+        astNode *node1 = mknode(root->children[root->numChild-1-2]->elem,G);
         node1->next = node->next;
         insertAST(node, node1);
         *insertUsed = true;
@@ -927,7 +927,7 @@ void performAction(int ruleNumber, astNode *node, treeN *root, grammar G, bool *
     }
     case 77:{
         // <var> ===> <singleOrRecId>
-        astNode *node1 = mknode(root->children[root->numChild-1-0]->elem);
+        astNode *node1 = mknode(root->children[root->numChild-1-0]->elem,G);
         node1->next = node->next;
         *node = *node1;
         *insertUsed = true;
@@ -935,7 +935,7 @@ void performAction(int ruleNumber, astNode *node, treeN *root, grammar G, bool *
     }
     case 78:{
         // <var> ===> TK_NUM
-        astNode *node1 = mknode(root->children[root->numChild-1-0]->elem);
+        astNode *node1 = mknode(root->children[root->numChild-1-0]->elem,G);
         node1->next = node->next;
         *node = *node1;
         *insertUsed = true;
@@ -943,7 +943,7 @@ void performAction(int ruleNumber, astNode *node, treeN *root, grammar G, bool *
     }
     case 79:{
         // <var> ===> TK_RNUM
-        astNode *node1 = mknode(root->children[root->numChild-1-0]->elem);
+        astNode *node1 = mknode(root->children[root->numChild-1-0]->elem,G);
         node1->next = node->next;
         *node = *node1;
         *insertUsed = true;
@@ -951,7 +951,7 @@ void performAction(int ruleNumber, astNode *node, treeN *root, grammar G, bool *
     }
     case 80:{
         // <logicalOp> ===> TK_AND
-        astNode *node1 = mknode(root->children[root->numChild-1-0]->elem);
+        astNode *node1 = mknode(root->children[root->numChild-1-0]->elem,G);
         node1->next = node->next;
         *node = *node1;
         *insertUsed = true;
@@ -959,7 +959,7 @@ void performAction(int ruleNumber, astNode *node, treeN *root, grammar G, bool *
     }
     case 81:{
         // <logicalOp> ===> TK_OR
-        astNode *node1 = mknode(root->children[root->numChild-1-0]->elem);
+        astNode *node1 = mknode(root->children[root->numChild-1-0]->elem,G);
         node1->next = node->next;
         *node = *node1;
         *insertUsed = true;
@@ -967,7 +967,7 @@ void performAction(int ruleNumber, astNode *node, treeN *root, grammar G, bool *
     }
     case 82:{
         // <relationalOp> ===> TK_LT
-        astNode *node1 = mknode(root->children[root->numChild-1-0]->elem);
+        astNode *node1 = mknode(root->children[root->numChild-1-0]->elem,G);
         node1->next = node->next;
         *node = *node1;
         *insertUsed = true;
@@ -975,7 +975,7 @@ void performAction(int ruleNumber, astNode *node, treeN *root, grammar G, bool *
     }
     case 83:{
         // <relationalOp> ===> TK_LE
-        astNode *node1 = mknode(root->children[root->numChild-1-0]->elem);
+        astNode *node1 = mknode(root->children[root->numChild-1-0]->elem,G);
         node1->next = node->next;
         *node = *node1;
         *insertUsed = true;
@@ -983,7 +983,7 @@ void performAction(int ruleNumber, astNode *node, treeN *root, grammar G, bool *
     }
     case 84:{
         // <relationalOp> ===> TK_EQ
-        astNode *node1 = mknode(root->children[root->numChild-1-0]->elem);
+        astNode *node1 = mknode(root->children[root->numChild-1-0]->elem,G);
         node1->next = node->next;
         *node = *node1;
         *insertUsed = true;
@@ -991,7 +991,7 @@ void performAction(int ruleNumber, astNode *node, treeN *root, grammar G, bool *
     }
     case 85:{
         // <relationalOp> ===> TK_GT
-        astNode *node1 = mknode(root->children[root->numChild-1-0]->elem);
+        astNode *node1 = mknode(root->children[root->numChild-1-0]->elem,G);
         node1->next = node->next;
         *node = *node1;
         *insertUsed = true;
@@ -999,7 +999,7 @@ void performAction(int ruleNumber, astNode *node, treeN *root, grammar G, bool *
     }
     case 86:{
         // <relationalOp> ===> TK_GE
-        astNode *node1 = mknode(root->children[root->numChild-1-0]->elem);
+        astNode *node1 = mknode(root->children[root->numChild-1-0]->elem,G);
         node1->next = node->next;
         *node = *node1;
         *insertUsed = true;
@@ -1007,7 +1007,7 @@ void performAction(int ruleNumber, astNode *node, treeN *root, grammar G, bool *
     }
     case 87:{
         // <relationalOp> ===> TK_NE
-        astNode *node1 = mknode(root->children[root->numChild-1-0]->elem);
+        astNode *node1 = mknode(root->children[root->numChild-1-0]->elem,G);
         node1->next = node->next;
         *node = *node1;
         *insertUsed = true;
@@ -1015,15 +1015,15 @@ void performAction(int ruleNumber, astNode *node, treeN *root, grammar G, bool *
     }
     case 88:{
         // <returnStmt> ===> TK_RETURN <optionalReturn> TK_SEM
-        astNode *node1 = mknode(root->children[root->numChild-1-0]->elem);
-        astNode *node2 = mknode(root->children[root->numChild-1-1]->elem);
+        astNode *node1 = mknode(root->children[root->numChild-1-0]->elem,G);
+        astNode *node2 = mknode(root->children[root->numChild-1-1]->elem,G);
         addChildAST(node, node1);
         addChildAST(node, node2);
         break;
     }
     case 89:{
         // <optionalReturn> ===> TK_SQL <idList> TK_SQR
-        astNode *node1 = mknode(root->children[root->numChild-1-1]->elem);
+        astNode *node1 = mknode(root->children[root->numChild-1-1]->elem,G);
         node1->next = node->next;
         *node = *node1;
         *insertUsed = true;
@@ -1032,7 +1032,7 @@ void performAction(int ruleNumber, astNode *node, treeN *root, grammar G, bool *
     case 90:{
         // <optionalReturn> ===> ∈
         // can't assign null else next will be inaccessible
-        astNode *node1 = mknode(root->children[root->numChild-1-0]->elem);
+        astNode *node1 = mknode(root->children[root->numChild-1-0]->elem,G);
         node1->next = node->next;
         *node = *node1;
         *insertUsed = true;
@@ -1040,8 +1040,8 @@ void performAction(int ruleNumber, astNode *node, treeN *root, grammar G, bool *
     }
     case 91:{
         // <idList> ===> TK_ID <more_ids>
-        astNode *node1 = mknode(root->children[root->numChild-1-0]->elem);
-        astNode *node2 = mknode(root->children[root->numChild-1-1]->elem);
+        astNode *node1 = mknode(root->children[root->numChild-1-0]->elem,G);
+        astNode *node2 = mknode(root->children[root->numChild-1-1]->elem,G);
         node1->next = node->next;
         *node = *node1;
         insertAST(node, node2);
@@ -1051,7 +1051,7 @@ void performAction(int ruleNumber, astNode *node, treeN *root, grammar G, bool *
     }
     case 92:{
         // <more_ids> ===> TK_COMMA <idList>
-        astNode *node1 = mknode(root->children[root->numChild-1-1]->elem);
+        astNode *node1 = mknode(root->children[root->numChild-1-1]->elem,G);
         node1->next = node->next;
         *node = *node1;
         *insertUsed = true;
@@ -1060,7 +1060,7 @@ void performAction(int ruleNumber, astNode *node, treeN *root, grammar G, bool *
     case 93:{
         // <more_ids> ===> ∈
         // can't assign null else next will be inaccessible
-        astNode *node1 = mknode(root->children[root->numChild-1-0]->elem);
+        astNode *node1 = mknode(root->children[root->numChild-1-0]->elem,G);
         node1->next = node->next;
         *node = *node1;
         *insertUsed = true;
@@ -1068,7 +1068,7 @@ void performAction(int ruleNumber, astNode *node, treeN *root, grammar G, bool *
     }
     case 94:{
         // <A> ===> TK_RECORD
-        astNode *node1 = mknode(root->children[root->numChild-1-0]->elem);
+        astNode *node1 = mknode(root->children[root->numChild-1-0]->elem,G);
         node1->next = node->next;
         *node = *node1;
         *insertUsed = true;
@@ -1076,7 +1076,7 @@ void performAction(int ruleNumber, astNode *node, treeN *root, grammar G, bool *
     }
     case 95:{
         // <A> ===> TK_UNION
-        astNode *node1 = mknode(root->children[root->numChild-1-0]->elem);
+        astNode *node1 = mknode(root->children[root->numChild-1-0]->elem,G);
         node1->next = node->next;
         *node = *node1;
         *insertUsed = true;
@@ -1091,10 +1091,10 @@ void performAction(int ruleNumber, astNode *node, treeN *root, grammar G, bool *
 void printAST(astNode *root, grammar G){
     if(!root)return;
     if(!root->child){
-        if(root->elem->isLeaf && root->elem->curr == TK_RNUM)
-            printf("AST\tNode\t%f\n",root->elem->lex.rVal);
-        else if(root->elem->isLeaf && root->elem->curr == TK_NUM)
-            printf("AST\tNode\t%d\n",root->elem->lex.numVal);
+        if(root->elem->isLeaf && strcmp(G.terminals[root->elem->curr],"TK_RNUM")==0)
+            printf("AST\tLeaf\t%0.2f\n",root->elem->lex.rVal);
+        else if(root->elem->isLeaf && strcmp(G.terminals[root->elem->curr],"TK_NUM")==0)
+            printf("AST\tLeaf\t%d\n",root->elem->lex.numVal);
         else {
             if(root->elem->isLeaf)
                 printf("AST\tnode\t%s\n",G.terminals[root->elem->curr]);
@@ -1107,10 +1107,10 @@ void printAST(astNode *root, grammar G){
     astNode *temp = root->child;
     if(!temp->next){
         printAST(temp,G);
-        if(root->elem->isLeaf && root->elem->curr == TK_RNUM)
-            printf("AST\tNode\t%f\n",root->elem->lex.rVal);
-        else if(root->elem->isLeaf && root->elem->curr == TK_NUM)
-            printf("AST\tNode\t%d\n",root->elem->lex.numVal);
+        if(root->elem->isLeaf && strcmp(G.terminals[root->elem->curr],"TK_RNUM")==0)
+            printf("AST\tLeaf\t%0.2f\n",root->elem->lex.rVal);
+        else if(root->elem->isLeaf && strcmp(G.terminals[root->elem->curr],"TK_NUM")==0)
+            printf("AST\tLeaf\t%d\n",root->elem->lex.numVal);
         else {
             if(root->elem->isLeaf)
                 printf("AST\tnode\t%s\n",G.terminals[root->elem->curr]);
@@ -1124,10 +1124,10 @@ void printAST(astNode *root, grammar G){
             printAST(temp,G);
             temp = temp->next;
         }
-        if(root->elem->isLeaf && root->elem->curr == TK_RNUM)
-            printf("AST\tNode\t%f\n",root->elem->lex.rVal);
-        else if(root->elem->isLeaf && root->elem->curr == TK_NUM)
-            printf("AST\tNode\t%d\n",root->elem->lex.numVal);
+        if(root->elem->isLeaf && strcmp(G.terminals[root->elem->curr],"TK_RNUM")==0)
+            printf("AST\tLeaf\t%0.2f\n",root->elem->lex.rVal);
+        else if(root->elem->isLeaf && strcmp(G.terminals[root->elem->curr],"TK_NUM")==0)
+            printf("AST\tLeaf\t%d\n",root->elem->lex.numVal);
         else {
             if(root->elem->isLeaf)
                 printf("AST\tnode\t%s\n",G.terminals[root->elem->curr]);
@@ -1180,7 +1180,7 @@ int main(){
     // printf("%d %d %d \n", C.allRules[0].numOrs, C.allRules[0].RHS[0].numSyms, C.allRules[0].RHS[0].symbols[1].type); 
     // printf("%d %d %d %d %d %d '%s' '%s' '%s' '%s' \n", C.ff[23].numFirst, C.ff[23].numFollow, C.ff[23].follow[0], C.ff[23].follow[1], C.ff[23].follow[2], C.ff[23].follow[3], C.terminals[C.ff[23].follow[0]], C.terminals[C.ff[23].follow[1]], C.terminals[C.ff[23].follow[2]], C.terminals[C.ff[23].follow[3]]); 
 
-    char* testCaseFile = "./testcases_stage1/t5.txt"; 
+    char* testCaseFile = "./testcases_stage1/t4.txt"; 
     // FILE *fp = fopen("./testcases_stage1/t2.txt","r"); 
     // initialize();
     // fp = getStream(fp, 0);
@@ -1195,7 +1195,7 @@ int main(){
     // printParseTree(&rootNode,"op.txt",C);
     int *insertPrev = (int *)malloc(sizeof(int));
     *insertPrev = 0;
-    astNode *astroot = mknode(rootNode.elem);
+    astNode *astroot = mknode(rootNode.elem,C);
     constructAst(astroot, &rootNode,C,insertPrev);
     printf("*************************************************************************************************\n\n");
     printf("Printing Abstract Syntax Tree\n");
