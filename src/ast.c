@@ -172,9 +172,13 @@ void performAction(int ruleNumber, astNode *node, treeN *root, grammar G, bool *
         // make node for <stmts>
         // printf("Rule 2 has BT\n");
         astNode *node1 = mknode(root->children[root->numChild-1-1]->elem,G);
-        node1->next = node->next;
-        *node = *node1;
-        *insertUsed = true;
+        // Old rule:
+        // node1->next = node->next;
+        // *node = *node1;
+        // *insertUsed = true;
+
+        // new rule
+        addChildAST(node, node1);
         // printf("Rule 2 has no BT\n");
         break;
     }
@@ -183,15 +187,19 @@ void performAction(int ruleNumber, astNode *node, treeN *root, grammar G, bool *
         // make node for <function> and <otherFunctions1>
         astNode *node1 = mknode(root->children[root->numChild-1-0]->elem,G);
         astNode *node2 = mknode(root->children[root->numChild-1-1]->elem,G);
-        // insertAST
+        //old rule
         // printf("next of rule 3 is %s\n",G.nonTerminals[node->elem->curr]);
-        node1->next = node->next;
-        *node = *node1;
-        // printf("Rule 3 next %s\n",G.nonTerminals[node->elem->curr]);
-        // if(node1->next==NULL)printf("next of rule 3 is null\n");
-        insertAST(node, node2);
-        *insertUsed = true;
-        (*insertCount)++;
+        // node1->next = node->next;
+        // *node = *node1;
+        // // printf("Rule 3 next %s\n",G.nonTerminals[node->elem->curr]);
+        // // if(node1->next==NULL)printf("next of rule 3 is null\n");
+        // insertAST(node, node2);
+        // *insertUsed = true;
+        // (*insertCount)++;
+
+        //new rule
+        addChildAST(node, node1);
+        addChildAST(node, node2);
         break;
     }
     case 4:{
@@ -228,11 +236,16 @@ void performAction(int ruleNumber, astNode *node, treeN *root, grammar G, bool *
         // mknode for TK_INPUT and <parameter_list>
         astNode *node1 = mknode(root->children[root->numChild-1-0]->elem,G);
         astNode *node2 = mknode(root->children[root->numChild-1-4]->elem,G);
-        node1->next = node->next;
-        *node = *node1;
-        insertAST(node, node2);
-        *insertUsed = true;
-        (*insertCount)++;
+        // old rule
+        // node1->next = node->next;
+        // *node = *node1;
+        // insertAST(node, node2);
+        // *insertUsed = true;
+        // (*insertCount)++;
+
+        //new rule
+        addChildAST(node, node1);
+        addChildAST(node, node2);
         // printf("No BT in rule 6 %s\n",G.nonTerminals[node2->elem->curr]);
         break;
     }
@@ -240,11 +253,16 @@ void performAction(int ruleNumber, astNode *node, treeN *root, grammar G, bool *
         //<output_par> ===> TK_OUTPUT TK_PARAMETER TK_LIST TK_SQL <parameter_list> TK_SQR
         astNode *node1 = mknode(root->children[root->numChild-1-0]->elem,G);
         astNode *node2 = mknode(root->children[root->numChild-1-4]->elem,G);
-        node1->next = node->next;
-        *node = *node1;
-        insertAST(node, node2);
-        (*insertCount)++;
-        *insertUsed = true;
+        //old rule
+        // node1->next = node->next;
+        // *node = *node1;
+        // insertAST(node, node2);
+        // (*insertCount)++;
+        // *insertUsed = true;
+
+        //new rule
+        addChildAST(node, node1);
+        addChildAST(node, node2);
         break;
     }
     case 8:{
@@ -280,6 +298,7 @@ void performAction(int ruleNumber, astNode *node, treeN *root, grammar G, bool *
         node1->next = node->next;
         *node = *node1;
         *insertUsed = true;
+
         break;
     }
     case 12:{
@@ -288,6 +307,7 @@ void performAction(int ruleNumber, astNode *node, treeN *root, grammar G, bool *
         node1->next = node->next;
         *node = *node1;
         *insertUsed = true;
+
         break;
     }
     case 13:{
@@ -297,6 +317,7 @@ void performAction(int ruleNumber, astNode *node, treeN *root, grammar G, bool *
         node1->next = node->next;
         *node = *node1;
         *insertUsed = true;
+
         break;
     }
     case 14:{
@@ -330,6 +351,7 @@ void performAction(int ruleNumber, astNode *node, treeN *root, grammar G, bool *
         node1->next = node->next;
         *node = *node1;
         *insertUsed = true;
+
         // printf("Rule 17 has no BT\n");
         break;
     }
@@ -349,13 +371,21 @@ void performAction(int ruleNumber, astNode *node, treeN *root, grammar G, bool *
         astNode *node2 = mknode(root->children[root->numChild-1-1]->elem,G);
         astNode *node3 = mknode(root->children[root->numChild-1-2]->elem,G);
         astNode *node4 = mknode(root->children[root->numChild-1-3]->elem,G);
-        node1->next = node->next;
-        *node = *node1;
-        insertAST(node, node2);
-        insertAST(node2, node3);
-        insertAST(node3, node4);
-        *insertUsed = true;
-        *insertCount+=3;
+        // old rule
+        // node1->next = node->next;
+        // *node = *node1;
+        // insertAST(node, node2);
+        // insertAST(node2, node3);
+        // insertAST(node3, node4);
+        // *insertUsed = true;
+        // *insertCount+=3;
+
+        // new rule
+        addChildAST(node, node1);
+        addChildAST(node, node2);
+        addChildAST(node, node3);
+        addChildAST(node, node4);
+        
         // printf("Rule 19 has no BT\n");
         break;
     }
@@ -364,11 +394,15 @@ void performAction(int ruleNumber, astNode *node, treeN *root, grammar G, bool *
         // printf("Rule 20 has BT\n");
         astNode *node1 = mknode(root->children[root->numChild-1-0]->elem,G);
         astNode *node2 = mknode(root->children[root->numChild-1-1]->elem,G);
-        node1->next = node->next;
-        *node = *node1;
-        insertAST(node, node2);
-        *insertUsed = true;
-        (*insertCount)++;
+        // old rule
+        // node1->next = node->next;
+        // *node = *node1;
+        // insertAST(node, node2);
+        // *insertUsed = true;
+        // (*insertCount)++;
+        // new rule
+        addChildAST(node, node1);
+        addChildAST(node, node2);
         // printf("Rule 20 has no BT\n");
         break;
     }
@@ -439,12 +473,17 @@ void performAction(int ruleNumber, astNode *node, treeN *root, grammar G, bool *
         astNode *node1 = mknode(root->children[root->numChild-1-0]->elem,G);
         astNode *node2 = mknode(root->children[root->numChild-1-1]->elem,G);
         astNode *node3 = mknode(root->children[root->numChild-1-2]->elem,G);
-        node1->next = node->next;
-        *node = *node1;
-        insertAST(node, node2);
-        insertAST(node2, node3);
-        *insertUsed = true;
-        *insertCount+=2;
+        // old rule
+        // node1->next = node->next;
+        // *node = *node1;
+        // insertAST(node, node2);
+        // insertAST(node2, node3);
+        // *insertUsed = true;
+        // *insertCount+=2;
+        // new rule
+        addChildAST(node, node1);
+        addChildAST(node, node2);
+        addChildAST(node, node3);
         // printf("Rule 26 has no BT\n");
         break;
     }
@@ -483,11 +522,15 @@ void performAction(int ruleNumber, astNode *node, treeN *root, grammar G, bool *
         // printf("Rule 30 has BT\n");
         astNode *node1 = mknode(root->children[root->numChild-1-0]->elem,G);
         astNode *node2 = mknode(root->children[root->numChild-1-1]->elem,G);
-        node1->next = node->next;
-        *node = *node1;
-        insertAST(node, node2);
-        *insertUsed = true;
-        (*insertCount)++;
+        // old rule
+        // node1->next = node->next;
+        // *node = *node1;
+        // insertAST(node, node2);
+        // *insertUsed = true;
+        // (*insertCount)++;
+        // new rule
+        addChildAST(node, node1);
+        addChildAST(node, node2);
         // printf("Rule 30 has no BT\n");
         break;
     }
@@ -522,11 +565,15 @@ void performAction(int ruleNumber, astNode *node, treeN *root, grammar G, bool *
         // <declarations> ===> <declaration> <declarations1>
         astNode *node1 = mknode(root->children[root->numChild-1-0]->elem,G);
         astNode *node2 = mknode(root->children[root->numChild-1-1]->elem,G);
-        node1->next = node->next;
-        *node = *node1;
-        insertAST(node, node2);
-        *insertUsed = true;
-        (*insertCount)++;
+        // old rule
+        // node1->next = node->next;
+        // *node = *node1;
+        // insertAST(node, node2);
+        // *insertUsed = true;
+        // (*insertCount)++;
+        // new rule
+        addChildAST(node, node1);
+        addChildAST(node, node2);
         // printf("Testing stuff: \n");
         // astNode *temp = node;
         
@@ -577,11 +624,15 @@ void performAction(int ruleNumber, astNode *node, treeN *root, grammar G, bool *
         // printf("Rule 38 has BT\n");
         astNode *node1 = mknode(root->children[root->numChild-1-0]->elem,G);
         astNode *node2 = mknode(root->children[root->numChild-1-1]->elem,G);
-        node1->next = node->next;
-        *node = *node1;
-        insertAST(node,node2);
-        *insertUsed = true;
-        (*insertCount)++;
+        // old rule
+        // node1->next = node->next;
+        // *node = *node1;
+        // insertAST(node,node2);
+        // *insertUsed = true;
+        // (*insertCount)++;
+        // new rule
+        addChildAST(node, node1);
+        addChildAST(node, node2);
         // printf("Rule 38 has no BT\n");
         break;
     }
@@ -661,11 +712,15 @@ void performAction(int ruleNumber, astNode *node, treeN *root, grammar G, bool *
         // <option_single_constructed> ===> <oneExpansion> <moreExpansions>
         astNode *node1 = mknode(root->children[root->numChild-1-0]->elem,G);
         astNode *node2 = mknode(root->children[root->numChild-1-1]->elem,G);
-        node1->next = node->next;
-        *node = *node1;
-        insertAST(node,node2);
-        *insertUsed = true;
-        (*insertCount)++;
+        // old rule
+        // node1->next = node->next;
+        // *node = *node1;
+        // insertAST(node,node2);
+        // *insertUsed = true;
+        // (*insertCount)++;
+        // new rule
+        addChildAST(node, node1);
+        addChildAST(node, node2);
         break;
     }
     case 48:{
@@ -689,11 +744,15 @@ void performAction(int ruleNumber, astNode *node, treeN *root, grammar G, bool *
         // <moreExpansions> ===> <oneExpansion> <moreExpansions1>
         astNode *node1 = mknode(root->children[root->numChild-1-0]->elem,G);
         astNode *node2 = mknode(root->children[root->numChild-1-1]->elem,G);
-        node1->next = node->next;
-        *node = *node1;
-        insertAST(node, node2);
-        (*insertCount)++;
-        *insertUsed = true;
+        // old rule
+        // node1->next = node->next;
+        // *node = *node1;
+        // insertAST(node, node2);
+        // (*insertCount)++;
+        // *insertUsed = true;
+        // new rule
+        addChildAST(node, node1);
+        addChildAST(node, node2);
         break;
     }
     case 51:{
@@ -810,11 +869,15 @@ void performAction(int ruleNumber, astNode *node, treeN *root, grammar G, bool *
         // <arithmeticExpression> ===> <term> <expPrime>
         astNode *node1 = mknode(root->children[root->numChild-1-0]->elem,G);
         astNode *node2 = mknode(root->children[root->numChild-1-1]->elem,G);
-        node1->next = node->next;
-        *node = *node1;
-        insertAST(node, node2);
-        *insertUsed = true;
-        (*insertCount)++;
+        // old rule
+        // node1->next = node->next;
+        // *node = *node1;
+        // insertAST(node, node2);
+        // *insertUsed = true;
+        // (*insertCount)++;
+        // new rule
+        addChildAST(node, node1);
+        addChildAST(node, node2);
         break;
     }
     case 63:{
@@ -822,12 +885,15 @@ void performAction(int ruleNumber, astNode *node, treeN *root, grammar G, bool *
         astNode *node1 = mknode(root->children[root->numChild-1-0]->elem,G);
         astNode *node2 = mknode(root->children[root->numChild-1-1]->elem,G);
         astNode *node3 = mknode(root->children[root->numChild-1-2]->elem,G);
-        node1->next = node->next;
-        *node = *node1;
-        insertAST(node, node2);
-        insertAST(node2, node3);
-        *insertCount+=2;
-        *insertUsed = true;
+        // node1->next = node->next;
+        // *node = *node1;
+        // insertAST(node, node2);
+        // insertAST(node2, node3);
+        // *insertCount+=2;
+        // *insertUsed = true;
+        addChildAST(node, node1);
+        addChildAST(node, node2);
+        addChildAST(node, node3);
         break;
     }
     case 64:{
@@ -843,11 +909,15 @@ void performAction(int ruleNumber, astNode *node, treeN *root, grammar G, bool *
         // <term> ===> <factor> <termPrime>
         astNode *node1 = mknode(root->children[root->numChild-1-0]->elem,G);
         astNode *node2 = mknode(root->children[root->numChild-1-1]->elem,G);
-        node1->next = node->next;
-        *node = *node1;
-        insertAST(node, node2);
-        *insertUsed = true;
-        (*insertCount)++;
+        // old rule
+        // node1->next = node->next;
+        // *node = *node1;
+        // insertAST(node, node2);
+        // *insertUsed = true;
+        // (*insertCount)++;
+        // new rule
+        addChildAST(node, node1);
+        addChildAST(node, node2);
         break;
     }
     case 66:{
@@ -855,12 +925,17 @@ void performAction(int ruleNumber, astNode *node, treeN *root, grammar G, bool *
         astNode *node1 = mknode(root->children[root->numChild-1-0]->elem,G);
         astNode *node2 = mknode(root->children[root->numChild-1-1]->elem,G);
         astNode *node3 = mknode(root->children[root->numChild-1-2]->elem,G);
-        node1->next = node->next;
-        *node = *node1;
-        insertAST(node, node2);
-        insertAST(node2, node3);
-        *insertUsed = true;
-        *insertCount+=2;
+        // old rule
+        // node1->next = node->next;
+        // *node = *node1;
+        // insertAST(node, node2);
+        // insertAST(node2, node3);
+        // *insertUsed = true;
+        // *insertCount+=2;
+        // new rule
+        addChildAST(node, node1);
+        addChildAST(node, node2);
+        addChildAST(node, node3);
         break;
     }
     case 67:{
@@ -935,23 +1010,30 @@ void performAction(int ruleNumber, astNode *node, treeN *root, grammar G, bool *
         astNode *node1 = mknode(root->children[root->numChild-1-0]->elem,G);
         astNode *node2 = mknode(root->children[root->numChild-1-1]->elem,G);
         astNode *node3 = mknode(root->children[root->numChild-1-2]->elem,G);
-        node1->next = node->next;
-        *node = *node1;
-        insertAST(node, node2);
-        insertAST(node2, node3);
-        *insertUsed = true;
-        *insertCount+=2;
+        // old rule
+        // node1->next = node->next;
+        // *node = *node1;
+        // insertAST(node, node2);
+        // insertAST(node2, node3);
+        // *insertUsed = true;
+        // *insertCount+=2;
+        // new rule
+        addChildAST(node, node1);
+        addChildAST(node, node2);
+        addChildAST(node, node3);
         break;
     }
     case 76:{
         // <booleanExpression> ===> TK_NOT TK_OP <booleanExpression1> TK_CL
         astNode *node1 = mknode(root->children[root->numChild-1-0]->elem,G);
         astNode *node2 = mknode(root->children[root->numChild-1-2]->elem,G);
-        node1->next = node->next;
-        *node = *node1;
-        insertAST(node, node2);
-        *insertUsed = true;
-        (*insertCount)++;
+        // node1->next = node->next;
+        // *node = *node1;
+        // insertAST(node, node2);
+        // *insertUsed = true;
+        // (*insertCount)++;
+        addChildAST(node, node1);
+        addChildAST(node, node2);
         break;
     }
     case 77:{
@@ -1071,11 +1153,14 @@ void performAction(int ruleNumber, astNode *node, treeN *root, grammar G, bool *
         // <idList> ===> TK_ID <more_ids>
         astNode *node1 = mknode(root->children[root->numChild-1-0]->elem,G);
         astNode *node2 = mknode(root->children[root->numChild-1-1]->elem,G);
-        node1->next = node->next;
-        *node = *node1;
-        insertAST(node, node2);
-        *insertUsed = true;
-        (*insertCount)++;
+        // old rule
+        // node1->next = node->next;
+        // *node = *node1;
+        // insertAST(node, node2);
+        // *insertUsed = true;
+        // (*insertCount)++;
+        addChildAST(node, node1);
+        addChildAST(node, node2);
         break;
     }
     case 92:{
@@ -1209,7 +1294,7 @@ int main(){
     // printf("%d %d %d \n", C.allRules[0].numOrs, C.allRules[0].RHS[0].numSyms, C.allRules[0].RHS[0].symbols[1].type); 
     // printf("%d %d %d %d %d %d '%s' '%s' '%s' '%s' \n", C.ff[23].numFirst, C.ff[23].numFollow, C.ff[23].follow[0], C.ff[23].follow[1], C.ff[23].follow[2], C.ff[23].follow[3], C.terminals[C.ff[23].follow[0]], C.terminals[C.ff[23].follow[1]], C.terminals[C.ff[23].follow[2]], C.terminals[C.ff[23].follow[3]]); 
 
-    char* testCaseFile = "./testcases_stage1/t4.txt"; 
+    char* testCaseFile = "./testcases_stage1/t3.txt"; 
     // FILE *fp = fopen("./testcases_stage1/t2.txt","r"); 
     // initialize();
     // fp = getStream(fp, 0);
