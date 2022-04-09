@@ -37,14 +37,16 @@ void addChildAST(astNode *parent, astNode *child){
         astNode *temp;
         temp = parent->child;
         while(temp->next!=NULL)temp = temp->next;
-        temp->next  = child;
+        temp->next  = (astNode *)malloc(sizeof(astNode));
+        temp->next = child;
         // parent->numChildren++;
     }
 }
 void insertAST(astNode *curr, astNode *sibling){
-    astNode *temp = curr->next;
+    // astNode *temp = curr->next;
+    sibling->next = curr->next;
     curr->next = sibling;
-    sibling->next = temp;
+    // sibling->next = temp;
 }
 bool isUseful(int tokenID){
     switch(tokenID-1){
@@ -102,7 +104,7 @@ astNode *findChild(astNode *node, int position, bool insertUsed, int insertCount
     }
     return temp;
 }
-void constructAst(astNode *node, treeN *root, grammar G, int *insertPrev){
+void constructAst(astNode *node, treeN *root, grammar G, int *insertPrev, astNode *mainRoot){
     // printf("Here %s\n",G.nonTerminals[node->elem->curr]);
     bool *insertUsed = (bool *)malloc(sizeof(bool));
     int *insertCount = (int *)malloc(sizeof(int));
@@ -113,7 +115,7 @@ void constructAst(astNode *node, treeN *root, grammar G, int *insertPrev){
         // printf("Rule %d Leaf %s\n",node->elem->ruleNumber,G.terminals[root->elem.curr]);
         return;
     }
-    printf("constructing node rule:%d, number of children in parse tree: %d\n",root->elem.ruleNumber,root->numChild);
+    printf("constructing node rule:%d NT: %s, number of children in parse tree: %d\n",root->elem.ruleNumber,root->elem.isLeaf?G.terminals[root->elem.curr]:G.nonTerminals[root->elem.curr],root->numChild);
     performAction(root->elem.ruleNumber,node,root,G,insertUsed,insertPrev);
     int j = 0;
     for(int i = root->numChild-1;i >= 0;i--){
@@ -126,17 +128,32 @@ void constructAst(astNode *node, treeN *root, grammar G, int *insertPrev){
                 // printf("Hi %d %s rule number %d\n",j,G.nonTerminals[node->elem->curr],node->elem->ruleNumber);
                 // printf("hello\n");
                 // printf("before construct Parent name: %s Child number %d child name: %s\n",temp->elem->isLeaf?G.terminals[temp->elem->curr]:G.nonTerminals[temp->elem->curr],j,root->children[i]->elem.isLeaf?G.terminals[root->children[i]->elem.curr]:G.nonTerminals[root->children[i]->elem.curr]);
-                constructAst(temp,root->children[i],G,insertCount);
+                // int x = *insertCount;
+                constructAst(temp,root->children[i],G,insertCount,mainRoot);
+                // if(*insertCount>x)*insertPrev+=(*insertCount-x);
                 // printf("Parent name: %s Child rule number %d rule number child belongs to %d child name: %s\n",temp->elem->isLeaf?G.terminals[temp->elem->curr]:G.nonTerminals[temp->elem->curr],temp->elem->ruleNumber,node->elem->ruleNumber,root->children[i]->elem.isLeaf?G.terminals[root->children[i]->elem.curr]:G.nonTerminals[root->children[i]->elem.curr]);
             }
-
+            else{
+                astNode *temp = findChild(node,j,*insertUsed,*insertCount);
+                printf("Leaf %s in parse tree, belongs to rule %d\n",G.terminals[temp->elem->curr],node->elem->ruleNumber);
+            }
             j++;
         }
         else{
-            printf("Child %s not in parse tree. Rule number child belongs to: %d lineNo: %d\n",G.terminals[root->children[i]->elem.curr],root->elem.ruleNumber,root->children[i]->elem.lineNo);
+            printf("Child %s not in abstract syntax tree. Rule number child belongs to: %d lineNo: %d\n",G.terminals[root->children[i]->elem.curr],root->elem.ruleNumber,root->children[i]->elem.lineNo);
         }
+        
     }
+    if(*insertUsed)*insertPrev+=*insertCount;
+    // printf("\n\n**************************************************************************************\n\n");
+    // printf("First level of mainRoot offSet value: %d\n",*insertPrev);
+    // astNode *curr = mainRoot->child;
+    // while(curr!=NULL){
+    //     printf("isLeaf: %d curr: %d name:%s Line:%d\n",curr->elem->isLeaf,curr->elem->curr,curr->elem->isLeaf?G.terminals[curr->elem->curr]:G.nonTerminals[curr->elem->curr],curr->elem->lineNo);
+    //     curr = curr->next;
+    // }
     // printf("Over here\n");
+    // printf("\n\n**************************************************************************************\n\n");
     // printf("Recurse back to parent of %s\n",node->elem->isLeaf?G.terminals[node->elem->curr]:G.nonTerminals[node->elem->curr]);
 }
 void performAction(int ruleNumber, astNode *node, treeN *root, grammar G, bool *insertUsed, int *insertCount){
@@ -174,7 +191,7 @@ void performAction(int ruleNumber, astNode *node, treeN *root, grammar G, bool *
         // if(node1->next==NULL)printf("next of rule 3 is null\n");
         insertAST(node, node2);
         *insertUsed = true;
-        *insertCount++;
+        (*insertCount)++;
         break;
     }
     case 4:{
@@ -215,7 +232,7 @@ void performAction(int ruleNumber, astNode *node, treeN *root, grammar G, bool *
         *node = *node1;
         insertAST(node, node2);
         *insertUsed = true;
-        *insertCount++;
+        (*insertCount)++;
         // printf("No BT in rule 6 %s\n",G.nonTerminals[node2->elem->curr]);
         break;
     }
@@ -226,7 +243,7 @@ void performAction(int ruleNumber, astNode *node, treeN *root, grammar G, bool *
         node1->next = node->next;
         *node = *node1;
         insertAST(node, node2);
-        *insertCount++;
+        (*insertCount)++;
         *insertUsed = true;
         break;
     }
@@ -351,7 +368,7 @@ void performAction(int ruleNumber, astNode *node, treeN *root, grammar G, bool *
         *node = *node1;
         insertAST(node, node2);
         *insertUsed = true;
-        *insertCount++;
+        (*insertCount)++;
         // printf("Rule 20 has no BT\n");
         break;
     }
@@ -470,7 +487,7 @@ void performAction(int ruleNumber, astNode *node, treeN *root, grammar G, bool *
         *node = *node1;
         insertAST(node, node2);
         *insertUsed = true;
-        *insertCount++;
+        (*insertCount)++;
         // printf("Rule 30 has no BT\n");
         break;
     }
@@ -493,8 +510,7 @@ void performAction(int ruleNumber, astNode *node, treeN *root, grammar G, bool *
         astNode *node3 = mknode(root->children[root->numChild-1-2]->elem,G);
         astNode *node4 = mknode(root->children[root->numChild-1-3]->elem,G);
         astNode *node5 = mknode(root->children[root->numChild-1-4]->elem,G);
-        node1->next = node->next;
-        *node = *node1;
+        addChildAST(node,node1);
         addChildAST(node,node2);
         addChildAST(node,node3);
         addChildAST(node,node4);
@@ -510,7 +526,14 @@ void performAction(int ruleNumber, astNode *node, treeN *root, grammar G, bool *
         *node = *node1;
         insertAST(node, node2);
         *insertUsed = true;
-        *insertCount++;
+        (*insertCount)++;
+        // printf("Testing stuff: \n");
+        // astNode *temp = node;
+        
+        // while(temp!=NULL){
+        //     printf("%s \n",G.nonTerminals[temp->elem->curr]);
+        //     temp = temp->next;
+        // }
         break;
     }
     case 34:{
@@ -558,7 +581,7 @@ void performAction(int ruleNumber, astNode *node, treeN *root, grammar G, bool *
         *node = *node1;
         insertAST(node,node2);
         *insertUsed = true;
-        *insertCount++;
+        (*insertCount)++;
         // printf("Rule 38 has no BT\n");
         break;
     }
@@ -569,7 +592,8 @@ void performAction(int ruleNumber, astNode *node, treeN *root, grammar G, bool *
         node1->next = node->next;
         *node = *node1;
         *insertUsed = true;
-        *insertCount++;
+        // printf("Testing 39\n");
+        // printf("%s\n",G.terminals[node->elem->curr]);
         break;
     }
     case 40:{
@@ -641,7 +665,7 @@ void performAction(int ruleNumber, astNode *node, treeN *root, grammar G, bool *
         *node = *node1;
         insertAST(node,node2);
         *insertUsed = true;
-        *insertCount++;
+        (*insertCount)++;
         break;
     }
     case 48:{
@@ -668,7 +692,7 @@ void performAction(int ruleNumber, astNode *node, treeN *root, grammar G, bool *
         node1->next = node->next;
         *node = *node1;
         insertAST(node, node2);
-        *insertCount++;
+        (*insertCount)++;
         *insertUsed = true;
         break;
     }
@@ -698,7 +722,9 @@ void performAction(int ruleNumber, astNode *node, treeN *root, grammar G, bool *
     case 53:{
         // <outputParameters> ===> TK_SQL <idList> TK_SQR TK_ASSIGNOP
         astNode *node1 = mknode(root->children[root->numChild-1-1]->elem,G);
+        astNode *node2 = mknode(root->children[root->numChild-1-3]->elem,G);
         addChildAST(node,node1);
+        addChildAST(node,node2);
         break;
     }
     case 54:{
@@ -750,8 +776,10 @@ void performAction(int ruleNumber, astNode *node, treeN *root, grammar G, bool *
         // <elsePart> ===> TK_ELSE <stmt> <otherStmts> TK_ENDIF
         astNode *node1 = mknode(root->children[root->numChild-1-1]->elem,G);
         astNode *node2 = mknode(root->children[root->numChild-1-2]->elem,G);
+        astNode *node3 = mknode(root->children[root->numChild-1-3]->elem,G);
         addChildAST(node, node1);
         addChildAST(node, node2);
+        addChildAST(node, node3);
         break;
     }
     case 59:{
@@ -786,7 +814,7 @@ void performAction(int ruleNumber, astNode *node, treeN *root, grammar G, bool *
         *node = *node1;
         insertAST(node, node2);
         *insertUsed = true;
-        *insertCount++;
+        (*insertCount)++;
         break;
     }
     case 63:{
@@ -819,7 +847,7 @@ void performAction(int ruleNumber, astNode *node, treeN *root, grammar G, bool *
         *node = *node1;
         insertAST(node, node2);
         *insertUsed = true;
-        *insertCount++;
+        (*insertCount)++;
         break;
     }
     case 66:{
@@ -917,12 +945,13 @@ void performAction(int ruleNumber, astNode *node, treeN *root, grammar G, bool *
     }
     case 76:{
         // <booleanExpression> ===> TK_NOT TK_OP <booleanExpression1> TK_CL
-        node = mknode(root->children[root->numChild-1-0]->elem,G);
-        astNode *node1 = mknode(root->children[root->numChild-1-2]->elem,G);
+        astNode *node1 = mknode(root->children[root->numChild-1-0]->elem,G);
+        astNode *node2 = mknode(root->children[root->numChild-1-2]->elem,G);
         node1->next = node->next;
-        insertAST(node, node1);
+        *node = *node1;
+        insertAST(node, node2);
         *insertUsed = true;
-        *insertCount++;
+        (*insertCount)++;
         break;
     }
     case 77:{
@@ -1046,7 +1075,7 @@ void performAction(int ruleNumber, astNode *node, treeN *root, grammar G, bool *
         *node = *node1;
         insertAST(node, node2);
         *insertUsed = true;
-        *insertCount++;
+        (*insertCount)++;
         break;
     }
     case 92:{
@@ -1196,9 +1225,18 @@ int main(){
     int *insertPrev = (int *)malloc(sizeof(int));
     *insertPrev = 0;
     astNode *astroot = mknode(rootNode.elem,C);
-    constructAst(astroot, &rootNode,C,insertPrev);
+    constructAst(astroot, &rootNode,C,insertPrev,astroot);
     printf("*************************************************************************************************\n\n");
     printf("Printing Abstract Syntax Tree\n");
     printAST(astroot,C);
+    printf("*************************************************************************************************\n\n");
+    printf("Level 1 printing\n");
+    printf("Root : isLeaf: %d curr: %d name: %s Line: %d \n",astroot->elem->isLeaf,astroot->elem->curr,astroot->elem->isLeaf?C.terminals[astroot->elem->curr]:C.nonTerminals[astroot->elem->curr],astroot->elem->lineNo);
+    astNode *curr = astroot->child;
+    while(curr!=NULL){
+        printf("isLeaf: %d curr: %d name:%s Line:%d\n",curr->elem->isLeaf,curr->elem->curr,curr->elem->isLeaf?C.terminals[curr->elem->curr]:C.nonTerminals[curr->elem->curr],curr->elem->lineNo);
+        curr = curr->next;
+    }
+
     // printf("rule number %d LHS %s RHS %s\n",getRuleNumber(52,1,C),C.nonTerminals[C.allRules[52].LHS],C.terminals[C.allRules[52].RHS[1].symbols[0].symbol]);
 }
