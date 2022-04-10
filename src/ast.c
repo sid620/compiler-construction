@@ -1203,8 +1203,8 @@ void performAction(int ruleNumber, astNode *node, treeN *root, grammar G, bool *
 
 // Inorder traversal
 void printAST(astNode *root, grammar G){
-    if(!root)return;
-    if(!root->child){
+    if(root==NULL)return;
+    if(root->child==NULL){
         if(root->elem->isLeaf && strcmp(G.terminals[root->elem->curr],"TK_RNUM")==0)
             printf("AST\tLeaf\t%0.2f\n",root->elem->lex.rVal);
         else if(root->elem->isLeaf && strcmp(G.terminals[root->elem->curr],"TK_NUM")==0)
@@ -1219,7 +1219,7 @@ void printAST(astNode *root, grammar G){
         return;
     }
     astNode *temp = root->child;
-    if(!temp->next){
+    if(temp->next==NULL){
         printAST(temp,G);
         if(root->elem->isLeaf && strcmp(G.terminals[root->elem->curr],"TK_RNUM")==0)
             printf("AST\tLeaf\t%0.2f\n",root->elem->lex.rVal);
@@ -1238,6 +1238,7 @@ void printAST(astNode *root, grammar G){
             printAST(temp,G);
             temp = temp->next;
         }
+        printAST(temp,G);
         if(root->elem->isLeaf && strcmp(G.terminals[root->elem->curr],"TK_RNUM")==0)
             printf("AST\tLeaf\t%0.2f\n",root->elem->lex.rVal);
         else if(root->elem->isLeaf && strcmp(G.terminals[root->elem->curr],"TK_NUM")==0)
@@ -1294,7 +1295,7 @@ int main(){
     // printf("%d %d %d \n", C.allRules[0].numOrs, C.allRules[0].RHS[0].numSyms, C.allRules[0].RHS[0].symbols[1].type); 
     // printf("%d %d %d %d %d %d '%s' '%s' '%s' '%s' \n", C.ff[23].numFirst, C.ff[23].numFollow, C.ff[23].follow[0], C.ff[23].follow[1], C.ff[23].follow[2], C.ff[23].follow[3], C.terminals[C.ff[23].follow[0]], C.terminals[C.ff[23].follow[1]], C.terminals[C.ff[23].follow[2]], C.terminals[C.ff[23].follow[3]]); 
 
-    char* testCaseFile = "./testcases_stage1/t3.txt"; 
+    char* testCaseFile = "./testcases_stage1/t4.txt"; 
     // FILE *fp = fopen("./testcases_stage1/t2.txt","r"); 
     // initialize();
     // fp = getStream(fp, 0);
@@ -1322,6 +1323,6 @@ int main(){
         printf("isLeaf: %d curr: %d name:%s Line:%d\n",curr->elem->isLeaf,curr->elem->curr,curr->elem->isLeaf?C.terminals[curr->elem->curr]:C.nonTerminals[curr->elem->curr],curr->elem->lineNo);
         curr = curr->next;
     }
-
+    // printf("isLeaf: %d curr: %d name: %s\n",astroot->child->elem->isLeaf,astroot->child->elem->curr,astroot->child->elem->isLeaf?C.terminals[astroot->child->elem->curr]:C.nonTerminals[astroot->child->elem->curr]);
     // printf("rule number %d LHS %s RHS %s\n",getRuleNumber(52,1,C),C.nonTerminals[C.allRules[52].LHS],C.terminals[C.allRules[52].RHS[1].symbols[0].symbol]);
 }
