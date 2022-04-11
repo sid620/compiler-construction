@@ -14,3 +14,4 @@ void createParseTable(grammar G, FirstAndFollow* ff, parseTable* T);
 treeN parseInputSourceCode(char* testCaseFile, grammar G, parseTable* T);
 void inorder(treeN* n,FILE *f, grammar G);
 void printParseTree(treeN* rootNode, char *outfile,grammar G);
+int getRuleNumber(int ruleInd, int rhsInd, grammar G);

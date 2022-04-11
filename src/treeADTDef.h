@@ -8,11 +8,11 @@ typedef struct node {
         int numVal; 
         float rVal; 
     } lex; 
-    
+    int ruleNumber;     // This variable stores the rule number used for expansion, 0 means that it is a terminal
 } node; 
 
 typedef struct treeNode {
     struct treeNode** children;
-    node elem; 
+    struct node elem; 
     int numChild; 
 } treeN; 

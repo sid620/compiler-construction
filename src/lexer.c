@@ -91,7 +91,7 @@ char * reject(){
     l = twin_buffer->pos;
     // below way of populating strings is unaffected by memset
     // char *ret =(char *)malloc(sizeof(char)*strlen(str));
-    for(int i=0;i<strlen(str);i++){
+    for(int i=0;i<strlen(twin_buffer->lexeme);i++){
         str[i] = *(twin_buffer->lexeme + i);    
     }
     
@@ -128,7 +128,7 @@ void populateToken(tokenInfo *TOK, token_name t, char * lexeme, int lineNo){
         for(int i=0;i<strlen(lexeme);i++)
             TOK->value.str[i] = *(lexeme +i);
         TOK->value.str[strlen(lexeme)]='\0';
-        printf("token length %ld ",strlen(lexeme));
+        // printf("token length %ld ",strlen(lexeme));
     }
 
 }   

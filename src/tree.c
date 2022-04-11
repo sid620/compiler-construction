@@ -4,13 +4,13 @@
 #include <stdlib.h>
 #include <string.h>
 
-node createEl(int lineNo, int parentSymbolID, int symbolID, int isLeafNode) { 
+node createEl(int lineNo, int parentSymbolID, int symbolID, int isLeafNode, int expansionRule) { 
     node new; 
     new.lineNo = lineNo; 
     new.parentNodeSymbolID = parentSymbolID; 
     new.curr = symbolID; 
     new.isLeaf = isLeafNode; 
-
+    new.ruleNumber = expansionRule;
     if (isLeafNode == 0) { 
         new.lex.lexemeStr = "____"; 
     } 
@@ -35,7 +35,7 @@ treeN createNode(node el, grammar G) {
     // new.elem.lex = el.lex; 
     new.elem.lineNo = el.lineNo; 
     new.elem.parentNodeSymbolID = el.parentNodeSymbolID;
-
+    new.elem.ruleNumber = el.ruleNumber;
     // printf("%d \n", new.elem.curr);
     return new;
 }
