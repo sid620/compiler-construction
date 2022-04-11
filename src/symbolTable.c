@@ -3,10 +3,11 @@
 #include <stdbool.h> 
 #include "string.h" 
 #include "symbolTable.h" 
-#include "ast.c"
+// #include "ast.c"
 
 // #define HASH_SIZE 101 
-int size = 101; 
+// int size = 101; 
+int size = 1; 
 
 int hashS(char* lexeme, int i){
     int x = h1(lexeme);
@@ -60,6 +61,21 @@ int insertS(entry* new, entry** hashT){
         i++;
     }
 } 
+
+// int insertSRez(entry* new, entry** hashT, int numEntries, int hashSize) { 
+//     if (numEntries == hashSize) { 
+//         hashSize *= 2; 
+//         entry** newT = (entry**) malloc(sizeof(entry*) * hashSize); 
+//         entry* move = (entry*) malloc(sizeof(entry)); 
+//         for (int i = 0; i < numEntries; i++) { 
+//             move = hashT[i]; 
+//             insertS(move, newT); 
+//         } 
+//         hashT = newT; 
+//         return (hashSize / 2) + insertS(new, hashT); 
+//     } 
+//     return insertS(new, hashT); 
+// }
 
 entry** initialiseS() { 
     entry** hashT = (entry**) malloc(sizeof(entry*) * size); 
@@ -124,7 +140,7 @@ void handleNT(astNode* root, grammar G, symbolTable* sTable, int index, int recI
         in->isPrim = 0; 
         in->numFields = 0; 
         in->name = "inPar"; 
-        in->fInd = index; 
+        // in->fInd = index; 
 
         while(child != NULL) { 
             if (child->elem->isLeaf == 1 && strcmp(G.terminals[child->elem->curr], "TK_INT") == 0) { 
@@ -162,7 +178,7 @@ void handleNT(astNode* root, grammar G, symbolTable* sTable, int index, int recI
                 } 
                 newT->name[l] = '\0'; 
                 newT->typeId = 3; 
-                newT->fInd = -1; 
+                // newT->fInd = -1; 
                 insertType(newT, sTable); 
                 child = child->next; 
 
@@ -186,7 +202,7 @@ void handleNT(astNode* root, grammar G, symbolTable* sTable, int index, int recI
                 } 
                 newT->name[l] = '\0'; 
                 newT->typeId = 4; 
-                newT->fInd = -1; 
+                // newT->fInd = -1; 
                 insertType(newT, sTable); 
                 child = child->next; 
 
@@ -209,7 +225,7 @@ void handleNT(astNode* root, grammar G, symbolTable* sTable, int index, int recI
                     newT->name[i] = child->elem->lex.lexemeStr[i];
                 } 
                 newT->name[l] = '\0'; 
-                newT->fInd = -1; 
+                // newT->fInd = -1; 
                 // newT->typeId; // TypeId not known, could be union or record 
                 insertType(newT, sTable); 
                 child = child->next; 
@@ -246,7 +262,7 @@ void handleNT(astNode* root, grammar G, symbolTable* sTable, int index, int recI
         out->isPrim = 0; 
         out->numFields = 0; 
         out->name = "outPar"; 
-        out->fInd = index; 
+        // out->fInd = index; 
 
         while(child != NULL) { 
             if (child->elem->isLeaf == 1 && strcmp(G.terminals[child->elem->curr], "TK_INT") == 0) { 
@@ -285,7 +301,7 @@ void handleNT(astNode* root, grammar G, symbolTable* sTable, int index, int recI
                 } 
                 newT->name[l] = '\0'; 
                 newT->typeId = 3; 
-                newT->fInd = -1; 
+                // newT->fInd = -1; 
                 insertType(newT, sTable); 
                 child = child->next; 
 
@@ -309,7 +325,7 @@ void handleNT(astNode* root, grammar G, symbolTable* sTable, int index, int recI
                 } 
                 newT->name[l] = '\0'; 
                 newT->typeId = 4; 
-                newT->fInd = -1; 
+                // newT->fInd = -1; 
                 insertType(newT, sTable); 
                 child = child->next; 
 
@@ -332,7 +348,7 @@ void handleNT(astNode* root, grammar G, symbolTable* sTable, int index, int recI
                     newT->name[i] = child->elem->lex.lexemeStr[i];
                 } 
                 newT->name[l] = '\0'; 
-                newT->fInd = -1; 
+                // newT->fInd = -1; 
                 // newT->typeId; // TypeId not known, could be union or record 
                 insertType(newT, sTable); 
                 child = child->next; 
@@ -430,7 +446,7 @@ void handleNT(astNode* root, grammar G, symbolTable* sTable, int index, int recI
                     } 
                     newT->name[l] = '\0'; 
                     newT->typeId = 3; 
-                    newT->fInd = -1; 
+                    // newT->fInd = -1; 
                     insertType(newT, sTable); 
                     ind = sTable->numTypes - 1; 
                 } 
@@ -483,7 +499,7 @@ void handleNT(astNode* root, grammar G, symbolTable* sTable, int index, int recI
                     } 
                     newT->name[l] = '\0'; 
                     newT->typeId = 4; 
-                    newT->fInd = -1; 
+                    // newT->fInd = -1; 
                     insertType(newT, sTable); 
                     ind = sTable->numTypes - 1; 
                 } 
@@ -532,7 +548,7 @@ void handleNT(astNode* root, grammar G, symbolTable* sTable, int index, int recI
                         newT->name[i] = child->elem->lex.lexemeStr[i];
                     } 
                     newT->name[l] = '\0'; 
-                    newT->fInd = -1; 
+                    // newT->fInd = -1; 
                     // newT->typeId; // TypeId not known, could be union or record 
                     insertType(newT, sTable); 
                     ind = sTable->numTypes - 1; 
@@ -699,7 +715,7 @@ void handleNT(astNode* root, grammar G, symbolTable* sTable, int index, int recI
                         newT->name[i] = child->elem->lex.lexemeStr[i];
                     } 
                     newT->name[l] = '\0'; 
-                    newT->fInd = -1; 
+                    // newT->fInd = -1; 
                     // newT->typeId; // TypeId not known, could be union or record 
                     insertType(newT, sTable); 
                     ind = sTable->numTypes - 1; 
@@ -722,12 +738,12 @@ void handleNT(astNode* root, grammar G, symbolTable* sTable, int index, int recI
     } 
     else if (strcmp(G.nonTerminals[root->elem->curr], "definetypestmt") == 0) { 
         
-        printf("In definetypestmt \n"); 
+        // printf("In definetypestmt \n"); 
         astNode* child = root->child; 
         int typeId; 
         int typeInd; 
         int flag = 0; 
-        printf("done \n"); 
+        // printf("done \n"); 
         while (child != NULL) { 
             if (child->elem->isLeaf == 1 && strcmp(G.terminals[child->elem->curr], "TK_DEFINETYPE") == 0) { 
                 // skip 
@@ -744,9 +760,9 @@ void handleNT(astNode* root, grammar G, symbolTable* sTable, int index, int recI
             } 
             else if (child->elem->isLeaf == 1 && strcmp(G.terminals[child->elem->curr], "TK_RUID") == 0) { 
                 if (flag == 0) { 
-                    printf("%s \n", child->elem->lex.lexemeStr); 
+                    // printf("%s \n", child->elem->lex.lexemeStr); 
                     typeInd = searchTypes(child->elem->lex.lexemeStr, sTable); 
-                    printf("done %d \n", typeInd); 
+                    // printf("done %d \n", typeInd); 
                     if (typeInd == -1) { 
                         printf("This record has not been defined \n"); 
                         break; 
@@ -756,7 +772,7 @@ void handleNT(astNode* root, grammar G, symbolTable* sTable, int index, int recI
                     if (sTable->allTypes[typeInd]->numAl == 0) { 
                         sTable->allTypes[typeInd]->aliases = (char**) malloc(sizeof(char*)); 
                     } 
-                    printf("done \n"); 
+                    // printf("done \n"); 
                     sTable->allTypes[typeInd]->numAl += 1; 
                     int l = strlen(child->elem->lex.lexemeStr); 
                     sTable->allTypes[typeInd]->aliases[0] = (char*) malloc(sizeof(char) * (l + 1)); 
@@ -879,7 +895,6 @@ symbolTable* constructST(astNode* root, grammar G) {
         return NULL; 
     } 
     // printf("done \n"); 
-    int funInd = findIndex(G.terminals, G.numTerminals, "TK_FUNID"); 
     int varInd = findIndex(G.terminals, G.numTerminals, "TK_ID"); 
     int ruInd = findIndex(G.terminals, G.numTerminals, "TK_RUID"); 
     int fieldInd = findIndex(G.terminals, G.numTerminals, "TK_FIELDID"); 
@@ -936,21 +951,41 @@ symbolTable* constructST(astNode* root, grammar G) {
 
 void main() { 
 
+    // int numEntries = 0; 
+    // int hashSize = 0; 
     // entry** hashT = initialiseS(); 
-    // // entry* new1 = (entry*) malloc(sizeof(entry)); 
+    // hashSize = size; 
+    // entry* new1 = (entry*) malloc(sizeof(entry)); 
     // // printf("done \n"); 
-    // entry* new1 = makeEntry("c453",  0, 4, 0, 1); 
+    // // entry* new1 = makeEntry("c453", 0, 0, 1); 
     
-    // // new1->varName = "c453"; 
-    // // new1->offset = 4; 
+    // new1->varName = "c453"; 
+    // new1->offset = 4; 
     // entry* new2 = (entry*) malloc(sizeof(entry)); 
     // new2->varName = "kfjuw"; 
     // new2->offset = 8; 
-    // // printf("done \n"); 
-    // // initialiseS(hashT); 
-    // // printf("done \n"); 
+    // printf("done \n"); 
+    // initialiseS(hashT); 
+    // printf("done \n"); 
+    // int ins1 = insertSRez(new1, hashT, numEntries, hashSize); 
+    // if (ins1 >= hashSize) { 
+    //     printf("Insert 1 (Doubled): %d \n", ins1 - hashSize); 
+    //     hashSize *= 2; 
+    // } 
+    // else { 
+    //     printf("Insert 1 (Not doubled): %d \n", ins1); 
+    // } 
+    // int ins2 = insertSRez(new2, hashT, numEntries, hashSize); 
+    // if (ins2 >= hashSize) { 
+    //     printf("Insert 1 (Doubled): %d \n", ins2 - hashSize); 
+    //     hashSize *= 2; 
+    // } 
+    // else { 
+    //     printf("Insert 1 (Not doubled): %d \n", ins2); 
+    // } 
+
     // printf("%d \n", insertS(new1, hashT)); 
-    // // printf("done \n"); 
+    // printf("done \n"); 
     // printf("%d \n", insertS(new2, hashT)); 
     // int ind = searchS(new1->varName, hashT); 
     // printf("%d \n", ind); 
@@ -1026,7 +1061,8 @@ void main() {
     //     curr = curr->next;
     // }
     printf("Root : %d %d %s \n", astroot->elem->isLeaf, astroot->elem->curr, C.nonTerminals[astroot->elem->curr]); 
-    astNode* curr = astroot->child->next->next->child->child->next->child; 
+    astNode* curr = astroot->child->child->next->next->next->next->next->next->next->child; 
+    // astNode* curr = astroot->child->child; 
     while (curr != NULL) { 
         printf("%d %d ", curr->elem->isLeaf, curr->elem->curr); 
         if (curr->elem->isLeaf == 1) { 
@@ -1063,10 +1099,10 @@ void main() {
     // printf("%d \n", sTable->allTypes[3]->width); 
     // printf("%s %d %s %d %d \n", sTable->allTypes[2]->name, sTable->allTypes[2]->numFields, sTable->allTypes[2]->fields[ind2]->varName, sTable->allTypes[2]->fields[ind2]->type, sTable->allTypes[2]->fields[ind2]->offset); 
     
-    int ind4 = searchTypes("#four", sTable); 
-    printf("%d %s \n", sTable->allTypes[ind4]->numAl, sTable->allTypes[ind4]->aliases[0]); 
-    int ind5 = searchTypes("#shape", sTable); 
-    printf("%d %d \n", ind4, ind5); 
+    // int ind4 = searchTypes("#four", sTable); 
+    // printf("%d %s \n", sTable->allTypes[ind4]->numAl, sTable->allTypes[ind4]->aliases[0]); 
+    // int ind5 = searchTypes("#shape", sTable); 
+    // printf("%d %d \n", ind4, ind5); 
     // printf("First child of function : %d %d %s %s \n", astroot->child->child->child->elem->isLeaf, astroot->child->child->child->elem->curr, C.terminals[astroot->child->child->child->elem->curr], astroot->child->child->child->elem->lex.lexemeStr); 
     // printf("rule number %d LHS %s RHS %s\n",getRuleNumber(52,1,C),C.nonTerminals[C.allRules[52].LHS],C.terminals[C.allRules[52].RHS[1].symbols[0].symbol]);
 } 

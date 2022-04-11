@@ -1276,76 +1276,76 @@ void printAST(astNode *root, grammar G){
         return;
     }
 }
-int main(){
-    char* file; 
-    file = "grammar.txt"; 
-    grammar C; 
-    C = readGrammar(file); 
-    printf("Grammar read and saved \n"); 
-    printf("%d %d %d %d \n", C.totalNumRules, C.allRules[36].numOrs, C.allRules[31].epsilon, C.allRules[28].epsilon); 
+// int main(){
+//     char* file; 
+//     file = "grammar.txt"; 
+//     grammar C; 
+//     C = readGrammar(file); 
+//     printf("Grammar read and saved \n"); 
+//     printf("%d %d %d %d \n", C.totalNumRules, C.allRules[36].numOrs, C.allRules[31].epsilon, C.allRules[28].epsilon); 
     
-    // printf("'%s' %d %d \n", C.nonTerminals[23], C.allRules[23].numOrs, C.allRules[23].epsilon); 
-    // printf("%d %d '%s' '%s' \n", C.allRules[23].RHS[0].symbols[0].symbol, C.allRules[23].RHS[1].symbols[0].symbol, C.nonTerminals[C.allRules[23].RHS[0].symbols[0].symbol], C.terminals[C.allRules[23].RHS[1].symbols[0].symbol]); 
+//     // printf("'%s' %d %d \n", C.nonTerminals[23], C.allRules[23].numOrs, C.allRules[23].epsilon); 
+//     // printf("%d %d '%s' '%s' \n", C.allRules[23].RHS[0].symbols[0].symbol, C.allRules[23].RHS[1].symbols[0].symbol, C.nonTerminals[C.allRules[23].RHS[0].symbols[0].symbol], C.terminals[C.allRules[23].RHS[1].symbols[0].symbol]); 
 
-    // prettyPrintGrammar(C);
+//     // prettyPrintGrammar(C);
     
-    C.ff = ComputeFirstAndFollowSets(C); 
-    printf("First and Follow computed \n"); 
-    printf("\n***** \n"); 
-    // int n = 48; 
-    // printf("C.ff[n].numFirst %d  C.ff[n].numFollow %d \n", C.ff[n].numFirst[0], C.ff[n].numFollow); 
-    // for (int i = 0; i < C.ff[n].numFollow; i++) { 
-    //     printf("%d '%s' \n", C.ff[n].follow[i], C.terminals[C.ff[n].follow[i]]); 
-    // } 
+//     C.ff = ComputeFirstAndFollowSets(C); 
+//     printf("First and Follow computed \n"); 
+//     printf("\n***** \n"); 
+//     // int n = 48; 
+//     // printf("C.ff[n].numFirst %d  C.ff[n].numFollow %d \n", C.ff[n].numFirst[0], C.ff[n].numFollow); 
+//     // for (int i = 0; i < C.ff[n].numFollow; i++) { 
+//     //     printf("%d '%s' \n", C.ff[n].follow[i], C.terminals[C.ff[n].follow[i]]); 
+//     // } 
     
-    printf("\n***** \n"); 
+//     printf("\n***** \n"); 
 
-    // int trial = 10; 
-    // // printf("%d %d %d %d %d %d \n", C.allRules[23].numOrs, C.ff[24].numFirst[0], C.ff[24].numFirst[1], C.ff[24].numFirst[2], C.ff[24].numFirst[3], C.ff[24].numFirst[4]); 
-    // printf("C.allRules[trial].numOrs %d ", C.allRules[trial].numOrs); 
-    // for (int i = 0; i < C.allRules[trial].numOrs; i++) { 
-    //     printf("C.ff[trial].numFirst[i] %d ", C.ff[trial].numFirst[i]); 
-    // } 
+//     // int trial = 10; 
+//     // // printf("%d %d %d %d %d %d \n", C.allRules[23].numOrs, C.ff[24].numFirst[0], C.ff[24].numFirst[1], C.ff[24].numFirst[2], C.ff[24].numFirst[3], C.ff[24].numFirst[4]); 
+//     // printf("C.allRules[trial].numOrs %d ", C.allRules[trial].numOrs); 
+//     // for (int i = 0; i < C.allRules[trial].numOrs; i++) { 
+//     //     printf("C.ff[trial].numFirst[i] %d ", C.ff[trial].numFirst[i]); 
+//     // } 
 
-    // printRule(C,trial,-1);
+//     // printRule(C,trial,-1);
     
-    parseTable* T = intializeParseTable(C.numNonTerminals,C.numTerminals);
-    createParseTable(C,C.ff,T);
-    // printParseTable(C,T);
-    printf("Parse Table created \n"); 
+//     parseTable* T = intializeParseTable(C.numNonTerminals,C.numTerminals);
+//     createParseTable(C,C.ff,T);
+//     // printParseTable(C,T);
+//     printf("Parse Table created \n"); 
 
-    // printf("%d %d %d '%s' '%s' \n", C.allRules[2].numOrs, C.ff[2].numFirst[0], C.ff[2].numFirst[1], C.terminals[C.ff[2].first[0][0]], C.terminals[C.ff[2].first[1][0]]); 
-    // printf("%d %d %d \n", C.allRules[0].numOrs, C.allRules[0].RHS[0].numSyms, C.allRules[0].RHS[0].symbols[1].type); 
-    // printf("%d %d %d %d %d %d '%s' '%s' '%s' '%s' \n", C.ff[23].numFirst, C.ff[23].numFollow, C.ff[23].follow[0], C.ff[23].follow[1], C.ff[23].follow[2], C.ff[23].follow[3], C.terminals[C.ff[23].follow[0]], C.terminals[C.ff[23].follow[1]], C.terminals[C.ff[23].follow[2]], C.terminals[C.ff[23].follow[3]]); 
+//     // printf("%d %d %d '%s' '%s' \n", C.allRules[2].numOrs, C.ff[2].numFirst[0], C.ff[2].numFirst[1], C.terminals[C.ff[2].first[0][0]], C.terminals[C.ff[2].first[1][0]]); 
+//     // printf("%d %d %d \n", C.allRules[0].numOrs, C.allRules[0].RHS[0].numSyms, C.allRules[0].RHS[0].symbols[1].type); 
+//     // printf("%d %d %d %d %d %d '%s' '%s' '%s' '%s' \n", C.ff[23].numFirst, C.ff[23].numFollow, C.ff[23].follow[0], C.ff[23].follow[1], C.ff[23].follow[2], C.ff[23].follow[3], C.terminals[C.ff[23].follow[0]], C.terminals[C.ff[23].follow[1]], C.terminals[C.ff[23].follow[2]], C.terminals[C.ff[23].follow[3]]); 
 
-    char* testCaseFile = "./testcases_stage1/t5.txt"; 
-    // FILE *fp = fopen("./testcases_stage1/t2.txt","r"); 
-    // initialize();
-    // fp = getStream(fp, 0);
-    // tokenInfo currToken = getNextToken(fp); 
-    // printf("%d '%s' \n", findIndex(C.terminals, C.numTerminals, enumToStringP[currToken.tkn_name]), enumToStringP[currToken.tkn_name]); 
-    treeN rootNode; 
-    rootNode = parseInputSourceCode(testCaseFile, C, T); 
-    // printf("%u %d %d %d %d %d \n", &rootNode, rootNode.elem.curr, rootNode.numChild, rootNode.elem.lineNo, rootNode.elem.isLeaf, rootNode.elem.parentNodeSymbolID); 
-    // printf("%u %u \n", rootNode.children[0], rootNode.children[1]); 
-    // printf("%u %u \n", rootNode.children[1]->children[1], rootNode.children[1]->children[1]->children[5]); 
-    // printf("%d '%s' %d '%s' \n", rootNode.children[1]->children[1], C.nonTerminals[rootNode.children[1]->children[1]->elem.curr], rootNode.children[1]->children[1]->children[5], C.terminals[rootNode.children[1]->children[1]->children[5]->elem.curr]); 
-    // printParseTree(&rootNode,"op.txt",C);
-    int *insertPrev = (int *)malloc(sizeof(int));
-    *insertPrev = 0;
-    astNode *astroot = mknode(rootNode.elem,C);
-    constructAst(astroot, &rootNode,C,insertPrev,astroot);
-    printf("*************************************************************************************************\n\n");
-    printf("Printing Abstract Syntax Tree\n");
-    printAST(astroot,C);
-    printf("*************************************************************************************************\n\n");
-    printf("Level 1 printing\n");
-    printf("Root : isLeaf: %d curr: %d name: %s Line: %d \n",astroot->elem->isLeaf,astroot->elem->curr,astroot->elem->isLeaf?C.terminals[astroot->elem->curr]:C.nonTerminals[astroot->elem->curr],astroot->elem->lineNo);
-    astNode *curr = astroot->child;
-    while(curr!=NULL){
-        printf("isLeaf: %d curr: %d name:%s Line:%d\n",curr->elem->isLeaf,curr->elem->curr,curr->elem->isLeaf?C.terminals[curr->elem->curr]:C.nonTerminals[curr->elem->curr],curr->elem->lineNo);
-        curr = curr->next;
-    }
-    // printf("isLeaf: %d curr: %d name: %s\n",astroot->child->elem->isLeaf,astroot->child->elem->curr,astroot->child->elem->isLeaf?C.terminals[astroot->child->elem->curr]:C.nonTerminals[astroot->child->elem->curr]);
-    // printf("rule number %d LHS %s RHS %s\n",getRuleNumber(52,1,C),C.nonTerminals[C.allRules[52].LHS],C.terminals[C.allRules[52].RHS[1].symbols[0].symbol]);
-}
+//     char* testCaseFile = "./testcases_stage1/t5.txt"; 
+//     // FILE *fp = fopen("./testcases_stage1/t2.txt","r"); 
+//     // initialize();
+//     // fp = getStream(fp, 0);
+//     // tokenInfo currToken = getNextToken(fp); 
+//     // printf("%d '%s' \n", findIndex(C.terminals, C.numTerminals, enumToStringP[currToken.tkn_name]), enumToStringP[currToken.tkn_name]); 
+//     treeN rootNode; 
+//     rootNode = parseInputSourceCode(testCaseFile, C, T); 
+//     // printf("%u %d %d %d %d %d \n", &rootNode, rootNode.elem.curr, rootNode.numChild, rootNode.elem.lineNo, rootNode.elem.isLeaf, rootNode.elem.parentNodeSymbolID); 
+//     // printf("%u %u \n", rootNode.children[0], rootNode.children[1]); 
+//     // printf("%u %u \n", rootNode.children[1]->children[1], rootNode.children[1]->children[1]->children[5]); 
+//     // printf("%d '%s' %d '%s' \n", rootNode.children[1]->children[1], C.nonTerminals[rootNode.children[1]->children[1]->elem.curr], rootNode.children[1]->children[1]->children[5], C.terminals[rootNode.children[1]->children[1]->children[5]->elem.curr]); 
+//     // printParseTree(&rootNode,"op.txt",C);
+//     int *insertPrev = (int *)malloc(sizeof(int));
+//     *insertPrev = 0;
+//     astNode *astroot = mknode(rootNode.elem,C);
+//     constructAst(astroot, &rootNode,C,insertPrev,astroot);
+//     printf("*************************************************************************************************\n\n");
+//     printf("Printing Abstract Syntax Tree\n");
+//     printAST(astroot,C);
+//     printf("*************************************************************************************************\n\n");
+//     printf("Level 1 printing\n");
+//     printf("Root : isLeaf: %d curr: %d name: %s Line: %d \n",astroot->elem->isLeaf,astroot->elem->curr,astroot->elem->isLeaf?C.terminals[astroot->elem->curr]:C.nonTerminals[astroot->elem->curr],astroot->elem->lineNo);
+//     astNode *curr = astroot->child;
+//     while(curr!=NULL){
+//         printf("isLeaf: %d curr: %d name:%s Line:%d\n",curr->elem->isLeaf,curr->elem->curr,curr->elem->isLeaf?C.terminals[curr->elem->curr]:C.nonTerminals[curr->elem->curr],curr->elem->lineNo);
+//         curr = curr->next;
+//     }
+//     // printf("isLeaf: %d curr: %d name: %s\n",astroot->child->elem->isLeaf,astroot->child->elem->curr,astroot->child->elem->isLeaf?C.terminals[astroot->child->elem->curr]:C.nonTerminals[astroot->child->elem->curr]);
+//     // printf("rule number %d LHS %s RHS %s\n",getRuleNumber(52,1,C),C.nonTerminals[C.allRules[52].LHS],C.terminals[C.allRules[52].RHS[1].symbols[0].symbol]);
+// }
