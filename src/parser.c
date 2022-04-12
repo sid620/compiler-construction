@@ -818,7 +818,7 @@ treeN parseInputSourceCode(char* testCaseFile, grammar G, parseTable* T) {
     return root; 
 } 
 
-void inorder(treeN* n,FILE *f, grammar G)
+void inorder(treeN* n,FILE *f, grammar G, int *count)
 {   
     char *str;
     char *nt;
@@ -853,11 +853,12 @@ void inorder(treeN* n,FILE *f, grammar G)
             else{
                 fprintf(f,"%s\t%d\t%s\tNOT_NUM\t%s\tROOT\t%s\n",eps_lex,n->elem.lineNo,terminal_tok,str,nt);
             }
-        }      
+        } 
+        (*count)++;     
         return;  
     }
     if(n->numChild==1){
-        inorder(n->children[0],f,G);
+        inorder(n->children[0],f,G,count);
             if(strcmp(G.terminals[n->elem.curr],"TK_NUM")==0)
                 fprintf(f,"%d\t%d\t%s\t%d\t%s\t%s\t%s\n",n->elem.lex.numVal,n->elem.lineNo,terminal_tok,n->elem.lex.numVal,G.nonTerminals[n->elem.parentNodeSymbolID],str,nt);
             else if(strcmp(G.terminals[n->elem.curr],"TK_RNUM")==0)
@@ -870,11 +871,11 @@ void inorder(treeN* n,FILE *f, grammar G)
                     fprintf(f,"%s\t%d\t%s\tNOT_NUM\t%s\tROOT\t%s\n",eps_lex,n->elem.lineNo,terminal_tok,str,nt);
                 }
             }
-
+       (*count)++;
        return;  
     }
 
-    inorder(n->children[n->numChild-1],f,G);
+    inorder(n->children[n->numChild-1],f,G,count);
 
     if(strcmp(G.terminals[n->elem.curr],"TK_NUM")==0)
         fprintf(f,"%d\t%d\t%s\t%d\t%s\t%s\t%s\n",n->elem.lex.numVal,n->elem.lineNo,terminal_tok,n->elem.lex.numVal,G.nonTerminals[n->elem.parentNodeSymbolID],str,nt);
@@ -890,15 +891,15 @@ void inorder(treeN* n,FILE *f, grammar G)
     }
 
     for(int i=n->numChild-2;i>=0;i--){
-        inorder(n->children[i],f,G);
+        inorder(n->children[i],f,G,count);
     }
-
+    (*count)++;
     return;
 
 
 }
 
-void printParseTree(treeN* rootNode, char *outfile,grammar G){
+void printParseTree(treeN* rootNode, char *outfile,grammar G, int *count){
     printf("Printing the parse tree inorder------\n");
     if(rootNode==NULL){
     printf("null root");
@@ -913,7 +914,7 @@ void printParseTree(treeN* rootNode, char *outfile,grammar G){
         return;
     }
 
-    inorder(rootNode,f,G);    
+    inorder(rootNode,f,G,count);    
     fclose(f);
 } 
 int getRuleNumber(int ruleId, int rhsId, grammar G){

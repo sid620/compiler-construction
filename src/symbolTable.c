@@ -1051,7 +1051,8 @@ void main() {
     constructAst(astroot, &rootNode,C,insertPrev,astroot);
     printf("*************************************************************************************************\n\n");
     printf("Printing Abstract Syntax Tree\n");
-    printAST(astroot,C);
+    int *count = (int *)malloc(sizeof(int));
+    printAST(astroot,C, count);
     printf("*************************************************************************************************\n\n");
     // printf("Level 1 printing\n");
     // printf("Root : isLeaf: %d curr: %d name: %s Line: %d \n",astroot->elem->isLeaf,astroot->elem->curr,astroot->elem->isLeaf?C.terminals[astroot->elem->curr]:C.nonTerminals[astroot->elem->curr],astroot->elem->lineNo);
@@ -1060,19 +1061,19 @@ void main() {
     //     printf("isLeaf: %d curr: %d name:%s Line:%d\n",curr->elem->isLeaf,curr->elem->curr,curr->elem->isLeaf?C.terminals[curr->elem->curr]:C.nonTerminals[curr->elem->curr],curr->elem->lineNo);
     //     curr = curr->next;
     // }
-    printf("Root : %d %d %s \n", astroot->elem->isLeaf, astroot->elem->curr, C.nonTerminals[astroot->elem->curr]); 
-    astNode* curr = astroot->child->child->next->next->next->next->next->next->next->child; 
-    // astNode* curr = astroot->child->child; 
-    while (curr != NULL) { 
-        printf("%d %d ", curr->elem->isLeaf, curr->elem->curr); 
-        if (curr->elem->isLeaf == 1) { 
-            printf("'%s' \n", C.terminals[curr->elem->curr]); 
-        } 
-        else { 
-            printf("'%s' \n", C.nonTerminals[curr->elem->curr]); 
-        } 
-        curr = curr->next; 
-    } 
+    // printf("Root : %d %d %s \n", astroot->elem->isLeaf, astroot->elem->curr, C.nonTerminals[astroot->elem->curr]); 
+    // astNode* curr = astroot->child->child->next->next->next->next->next->next->next->child; 
+    // // astNode* curr = astroot->child->child; 
+    // while (curr != NULL) { 
+    //     printf("%d %d ", curr->elem->isLeaf, curr->elem->curr); 
+    //     if (curr->elem->isLeaf == 1) { 
+    //         printf("'%s' \n", C.terminals[curr->elem->curr]); 
+    //     } 
+    //     else { 
+    //         printf("'%s' \n", C.nonTerminals[curr->elem->curr]); 
+    //     } 
+    //     curr = curr->next; 
+    // } 
 
     // printf("%d \n", findIndex(C.terminals, C.numTerminals, "TK_GLOBAL")); 
     symbolTable* sTable = constructST(astroot, C); 
