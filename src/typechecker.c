@@ -29,18 +29,19 @@ bool isRelOp(astNode *root, grammar G){
         case TK_NE:
         return true;
         default:
-            false;
+        return false;
         }
     }
 }
 int findNestedType(astNode *root, grammar G, symbolTable *sTable, int index){   // used for <var>
     while(!(root->next->elem->isLeaf && strcmp(G.terminals[root->next->elem->curr],"eps"))){
         astNode *fieldNode = root->next;
+        // find index where record corresponding to root is defined
         int t1 = searchTypes(root->elem->lex.lexemeStr,sTable);
         // check whether field name is present
         bool isPresent = false;
         for(int i = 0;i < sTable->allTypes[t1]->numFields;i++){
-            if(strcmp(root->elem->lex.lexemeStr,sTable->entries[i])==0)
+            if(strcmp(fieldNode->elem->lex.lexemeStr,sTable->entries[i]->varName)==0)
                 isPresent = true;
         }
         if(isPresent){
@@ -52,6 +53,22 @@ int findNestedType(astNode *root, grammar G, symbolTable *sTable, int index){   
         }
     }
     return typeCheck(root,G,sTable,index);
+}
+int matchReturnParams(astNode *temp, symbolTable *sTable, int index, grammar G){
+    int numOutputs = sTable->tables[index]->function->numOut;
+    int outputParamsIndex = sTable->tables[index]->function->outId;
+    int i = 0;
+    int t1 = -2;
+    while(i < numOutputs){
+        if(strcmp(sTable->allTypes[outputParamsIndex]->fields[i],temp->child->elem->lex.lexemeStr)!=0){
+            return -1;
+        }
+        else{
+            temp = findChild(temp,1,false,0);
+            i++;
+        }
+    }
+    return t1;
 }
 int fIndex(char* fName, symbolTable* sTable) { 
 
@@ -231,7 +248,28 @@ int typeCheck(astNode* root, grammar G, symbolTable* sTable, int index) {
             } 
             
         }
+        else if (strcmp(G.nonTerminals[root->elem->curr], "returnStmt") == 0) { 
+            astNode *temp = findChild(root,1,false,0);
+            // If function is main
+            if(index == sTable->numF){
+                if(!(root->child->next->elem->isLeaf && strcmp(G.terminals[root->child->next->elem->curr],"eps"))){
+                    printf("Main function cannot return values at line %d\n",root->child->elem->lineNo);
+                    return -1;
+                }
+                else{
+                    return -2;
+                }
+            }
+            int t1 = matchReturnParams(temp,sTable,index,G);
+            if (t1!=-2){
+                printf("Return parameters at line %d do not match with the function definition\n",root->child->elem->lineNo);
+                return -1;
+            }
+            return -2;
+
+        }
         else if (strcmp(G.nonTerminals[root->elem->curr], "arithmeticExpression") == 0) { 
+            
 
         }
     } 
