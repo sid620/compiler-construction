@@ -33,26 +33,33 @@ bool isRelOp(astNode *root, grammar G){
         }
     }
 }
-int findNestedType(astNode *root, grammar G, symbolTable *sTable, int index){   // used for <var>
-    while(!(root->next->elem->isLeaf && strcmp(G.terminals[root->next->elem->curr],"eps"))){
+int findNestedType(astNode *root, grammar G, symbolTable *sTable, int index){   // used for <singleOrRecId>
+    
+    int tret = -1; 
+    while (!(root->next->elem->isLeaf && strcmp(G.terminals[root->next->elem->curr],"eps"))){
         astNode *fieldNode = root->next;
-        // find index where record corresponding to root is defined
-        int t1 = searchTypes(root->elem->lex.lexemeStr,sTable);
+        int ind = searchS(root->elem->lex.lexemeStr, sTable->tables[index]->entries); 
+        int t1 = sTable->tables[index]->entries[ind]->type; 
         // check whether field name is present
         bool isPresent = false;
-        for(int i = 0;i < sTable->allTypes[t1]->numFields;i++){
-            if(strcmp(fieldNode->elem->lex.lexemeStr,sTable->entries[i]->varName)==0)
-                isPresent = true;
+        for(int i = 0; i < size; i++){
+            if(sTable->allTypes[t1]->fields[i]->present == 1 && (strcmp(fieldNode->elem->lex.lexemeStr, sTable->allTypes[t1]->fields[i]->varName)==0)) { 
+                isPresent = true; 
+                tret = sTable->allTypes[t1]->fields[i]->type; 
+                break; 
+            } 
         }
         if(isPresent){
-            root = fieldNode;
+            root = fieldNode; 
         }
         else{
             printf("The field %s is not present in %s \n",fieldNode->elem->lex.lexemeStr,root->elem->lex.lexemeStr);
             return -1;
-        }
+        } 
     }
-    return typeCheck(root,G,sTable,index);
+    // Last TK_FIELDID node reached i.e. return its type 
+    return tret; 
+    // return typeCheck(root,G,sTable,index);
 }
 int matchReturnParams(astNode *temp, symbolTable *sTable, int index, grammar G){
     int numOutputs = sTable->tables[index]->function->numOut;
@@ -181,12 +188,29 @@ int typeCheck(astNode* root, grammar G, symbolTable* sTable, int index) {
                 // case
                 // <booleanExpression> ===> <var> <relationalOp> <var1>
                 astNode *temp = root->child;
-                while(!(root->elem->isLeaf && strcmp(G.terminals[root->elem->curr],"eps"))){
-                    temp = temp->next;
+                // if <var> => TK_NUM | TK_RNUM
+                int t1 = -1, t2 = -1;
+                if(temp->elem->isLeaf){
+                    if(strcmp(G.terminals[temp->elem->curr],"TK_NUM")==0) t1 =0;
+                    if(strcmp(G.terminals[temp->elem->curr],"TK_RNUM")==0) t1 =1;                    
+                }
+                else{
+                    while(!(root->elem->isLeaf && strcmp(G.terminals[root->elem->curr],"eps"))){
+                        temp = temp->next;
+                    }
+                    // <var> => <singleOrRecId>
+                    t1 = findNestedType(root->child, G, sTable, index);
+                }
+                // if <var> => TK_NUM | TK_RNUM
+                if(temp->next->next->elem->isLeaf){
+                    if(strcmp(G.terminals[temp->next->next->elem->curr],"TK_NUM")==0) t1 =0;
+                    if(strcmp(G.terminals[temp->next->next->elem->curr],"TK_RNUM")==0) t1 =1;                    
+                }
+                else{
+                    // <var1> => <singleOrRecId>
+                    t2 = findNestedType(temp->next->next, G, sTable, index);
                 }
                 // Now temp is pointing to the node before logical Operator
-                int t1 = findNestedType(root->child, G, sTable, index);
-                int t2 = findNestedType(temp->next->next, G, sTable, index);
                 if(isRelOp(temp->next,G) && (t1==0 || t1 == 1) && (t2 == 0 || t2 == 1))
                     return -3;
                 else{
