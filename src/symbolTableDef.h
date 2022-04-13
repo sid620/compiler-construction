@@ -3,7 +3,7 @@
 #include <stdbool.h> 
 #include "ast.h"
 
-char* types[] = {"int", "real", "boolean", "rec", "union", "error", "fine"}; 
+// char* types[] = {"int", "real", "boolean", "rec", "union"}; 
 
 typedef struct entry { 
     char* varName; 
@@ -23,6 +23,7 @@ typedef struct typeInfo {
     int numFields; 
     char** aliases; 
     int numAl; 
+    int ref; 
 } typeInfo;
 
 typedef struct fInfo { 
@@ -31,12 +32,13 @@ typedef struct fInfo {
     int numOut; 
     int inId; 
     int outId; 
+    int* inOrder; 
+    int* outOrder; 
 } fInfo; 
 
 typedef struct table { 
     entry** entries; // Array of pointers to entries 
     int numEntries; 
-    int hashSize; 
     fInfo* function; 
     int currWidth; 
 } table; 

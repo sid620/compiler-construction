@@ -11,6 +11,7 @@ entry** initialiseS();
 entry* makeEntry(char* lexeme, int type, int offset, int lineNo); 
 void insertType(typeInfo* new, symbolTable* sTable); 
 int searchTypes(char* name, symbolTable* sTable); 
+void updateWidth(int ind, symbolTable* sTable, int width); 
 void handleNT(astNode* root, grammar G, symbolTable* sTable, int index, int recInd); 
 void handleF(astNode* root, grammar G, symbolTable* sTable, int index); 
 void handleM(astNode* root, grammar G, symbolTable* sTable, int index); 
