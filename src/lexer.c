@@ -176,11 +176,11 @@ char next_char(FILE *fp, bool isComment, bool isLengthExceeded){
     twin_buffer->forward++;
     // printf("%s lexeme\n",twin_buffer->lexeme);
     if(twin_buffer->buffer[twin_buffer->forward]==EOF){
-        if(twin_buffer->forward==BUFFER_SIZE){
+        if(twin_buffer->forward==BUFFER_SIZE-1){
             fp = getStream(fp,1);
             twin_buffer->forward=BUFFER_SIZE;
         }
-        else if(twin_buffer->forward==2*BUFFER_SIZE){
+        else if(twin_buffer->forward==2*BUFFER_SIZE-1){
             fp=getStream(fp,0);
             twin_buffer->forward=0;
         }
@@ -208,7 +208,7 @@ FILE *getStream(FILE *fp, int bufferNumber){
     }
     else{
         if(!bufferNumber) fread(&twin_buffer->buffer[0],1,BUFFER_SIZE-1,fp);
-        else fread(&twin_buffer[BUFFER_SIZE],1,BUFFER_SIZE-1,fp);
+        else fread(&twin_buffer->buffer[BUFFER_SIZE],1,BUFFER_SIZE-1,fp);
     }
     return fp;
 }
@@ -799,7 +799,8 @@ tokenInfo getNextToken(FILE *fp){
 
             case 34: {
                 c = next_char(fp,false,false);
-                if(char_match(c,'E')){
+                if(char_match(c,'E') || char_match(c,'e')){
+                    if(char_match(c,'e'))twin_buffer->lexeme[twin_buffer->pos]='E';
                     dfa_state = 35;
                 }
                 else{
