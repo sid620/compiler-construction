@@ -11,7 +11,7 @@ typedef struct entry {
     int lineNo; 
     int offset; 
     int type; // Index of array allTypes 
-    int count;  // keeps track of number of times an identifier is defined in a line
+    
 } entry; 
 
 typedef struct typeInfo { 
@@ -34,14 +34,13 @@ typedef struct fInfo {
     int inId; 
     int outId; 
     int* inOrder; 
-    int* outOrder;
-    int line_fn;  // store line number where function is defined
+    int* outOrder; 
 } fInfo; 
 
 typedef struct table { 
     entry** entries; // Array of pointers to entries 
     int numEntries; 
-    fInfo* function;
+    fInfo* function; 
     int currWidth; 
 } table; 
 
