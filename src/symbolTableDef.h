@@ -11,6 +11,7 @@ typedef struct entry {
     int lineNo; 
     int offset; 
     int type; // Index of array allTypes 
+    int count;  // keeps track of number of times an identifier is defined in a line
 } entry; 
 
 typedef struct typeInfo { 

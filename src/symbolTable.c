@@ -54,9 +54,14 @@ int insertS(entry* new, entry** hashT){
             hashT[j]->lineNo = new->lineNo; 
             hashT[j]->offset = new->offset; 
             hashT[j]->type = new->type; 
+            hashT[j]->count = 1;
             // hashT[j]->width = new->width; 
             return j;
         }
+        else if(hashT[j]->present == 1 && hashT[j]->lineNo == new->lineNo){
+            hashT[j]->count++;
+        }
+            
         i++;
     }
 } 
@@ -81,6 +86,7 @@ entry** initialiseS() {
     for (int i = 0; i < size; i++) { 
         hashT[i] = (entry*) malloc(sizeof(entry) * 1); 
         hashT[i]->present = 0; 
+        hashT[i]->count = 0;
         // printf("%d \n", hashT[i]->present); 
     } 
     return hashT; 
