@@ -34,13 +34,14 @@ typedef struct fInfo {
     int inId; 
     int outId; 
     int* inOrder; 
-    int* outOrder; 
+    int* outOrder;
+    int line_fn;  // store line number where function is defined
 } fInfo; 
 
 typedef struct table { 
     entry** entries; // Array of pointers to entries 
     int numEntries; 
-    fInfo* function; 
+    fInfo* function;
     int currWidth; 
 } table; 
 

@@ -1243,7 +1243,8 @@ void handleF(astNode* root, grammar G, symbolTable* sTable, int index) {
             // printf("done \n");
             for(int i = 0; i < l; i++){
                 sTable->tables[index]->function->fId[i] = child->elem->lex.lexemeStr[i];
-            } 
+            }
+            sTable->tables[index]->function->line_fn = child->elem->lineNo;
             sTable->tables[index]->function->fId[l] = '\0'; 
             // printf("done '%s' \n", sTable->tables[index]->function->fId); 
             sTable->tables[index]->currWidth = 0; 
@@ -1421,171 +1422,194 @@ symbolTable* constructST(astNode* root, grammar G) {
 
 } 
 
-// void main() { 
+void checkOverloading (astNode *root, symbolTable *sTable, grammar G){
+    int num_entries = sTable->numEntries;
+    int line[num_entries];
+    for(int i=0;i<num_entries;i++)  line[i]=0;
+    int i = 0;
+    int j, k;
+    k = 0;
+    printf("OVERLOADING CHECK FN CALLED\n");
+    while(k < num_entries){ // && i < HASH_SIZE?
+        j = hash(sTable->tables[k]->function->fId, i);
+        if(line[j] == 0 || line[j] == sTable->tables[k]->function->line_fn)
+            line[j] = sTable->tables[k]->function->line_fn;
+        else if (line[j] != sTable->tables[k]->function->line_fn){
+            printf("ERROR: Functions overloading occuring at line %d and %d. Function name: %s\n", line[j], sTable->tables[k]->function->line_fn, sTable->tables[k]->function->fId);
+        }
+        i++;
+        k++;
+    }
+}
 
-//     // int numEntries = 0; 
-//     // int hashSize = 0; 
-//     // entry** hashT = initialiseS(); 
-//     // hashSize = size; 
-//     // entry* new1 = (entry*) malloc(sizeof(entry)); 
-//     // // printf("done \n"); 
-//     // // entry* new1 = makeEntry("c453", 0, 0, 1); 
+void main() { 
+
+    // int numEntries = 0; 
+    // int hashSize = 0; 
+    // entry** hashT = initialiseS(); 
+    // hashSize = size; 
+    // entry* new1 = (entry*) malloc(sizeof(entry)); 
+    // // printf("done \n"); 
+    // // entry* new1 = makeEntry("c453", 0, 0, 1); 
     
-//     // new1->varName = "c453"; 
-//     // new1->offset = 4; 
-//     // entry* new2 = (entry*) malloc(sizeof(entry)); 
-//     // new2->varName = "kfjuw"; 
-//     // new2->offset = 8; 
-//     // printf("done \n"); 
-//     // initialiseS(hashT); 
-//     // printf("done \n"); 
-//     // int ins1 = insertSRez(new1, hashT, numEntries, hashSize); 
-//     // if (ins1 >= hashSize) { 
-//     //     printf("Insert 1 (Doubled): %d \n", ins1 - hashSize); 
-//     //     hashSize *= 2; 
-//     // } 
-//     // else { 
-//     //     printf("Insert 1 (Not doubled): %d \n", ins1); 
-//     // } 
-//     // int ins2 = insertSRez(new2, hashT, numEntries, hashSize); 
-//     // if (ins2 >= hashSize) { 
-//     //     printf("Insert 1 (Doubled): %d \n", ins2 - hashSize); 
-//     //     hashSize *= 2; 
-//     // } 
-//     // else { 
-//     //     printf("Insert 1 (Not doubled): %d \n", ins2); 
-//     // } 
+    // new1->varName = "c453"; 
+    // new1->offset = 4; 
+    // entry* new2 = (entry*) malloc(sizeof(entry)); 
+    // new2->varName = "kfjuw"; 
+    // new2->offset = 8; 
+    // printf("done \n"); 
+    // initialiseS(hashT); 
+    // printf("done \n"); 
+    // int ins1 = insertSRez(new1, hashT, numEntries, hashSize); 
+    // if (ins1 >= hashSize) { 
+    //     printf("Insert 1 (Doubled): %d \n", ins1 - hashSize); 
+    //     hashSize *= 2; 
+    // } 
+    // else { 
+    //     printf("Insert 1 (Not doubled): %d \n", ins1); 
+    // } 
+    // int ins2 = insertSRez(new2, hashT, numEntries, hashSize); 
+    // if (ins2 >= hashSize) { 
+    //     printf("Insert 1 (Doubled): %d \n", ins2 - hashSize); 
+    //     hashSize *= 2; 
+    // } 
+    // else { 
+    //     printf("Insert 1 (Not doubled): %d \n", ins2); 
+    // } 
 
-//     // printf("%d \n", insertS(new1, hashT)); 
-//     // printf("done \n"); 
-//     // printf("%d \n", insertS(new2, hashT)); 
-//     // int ind = searchS(new1->varName, hashT); 
-//     // printf("%d \n", ind); 
-//     // printf("%s %d %d %d %d %d \n", hashT[ind]->varName, hashT[ind]->offset, hashT[ind]->present, hashT[ind]->type, hashT[ind]->lineNo, hashT[ind]->width); 
+    // printf("%d \n", insertS(new1, hashT)); 
+    // printf("done \n"); 
+    // printf("%d \n", insertS(new2, hashT)); 
+    // int ind = searchS(new1->varName, hashT); 
+    // printf("%d \n", ind); 
+    // printf("%s %d %d %d %d %d \n", hashT[ind]->varName, hashT[ind]->offset, hashT[ind]->present, hashT[ind]->type, hashT[ind]->lineNo, hashT[ind]->width); 
 
-//     char* file; 
-//     file = "grammar.txt"; 
-//     grammar C; 
-//     C = readGrammar(file); 
-//     printf("Grammar read and saved \n"); 
-//     printf("%d %d %d %d \n", C.totalNumRules, C.allRules[36].numOrs, C.allRules[31].epsilon, C.allRules[28].epsilon); 
+    char* file; 
+    file = "grammar.txt"; 
+    grammar C; 
+    C = readGrammar(file); 
+    printf("Grammar read and saved \n"); 
+    printf("%d %d %d %d \n", C.totalNumRules, C.allRules[36].numOrs, C.allRules[31].epsilon, C.allRules[28].epsilon); 
     
-//     // printf("'%s' %d %d \n", C.nonTerminals[23], C.allRules[23].numOrs, C.allRules[23].epsilon); 
-//     // printf("%d %d '%s' '%s' \n", C.allRules[23].RHS[0].symbols[0].symbol, C.allRules[23].RHS[1].symbols[0].symbol, C.nonTerminals[C.allRules[23].RHS[0].symbols[0].symbol], C.terminals[C.allRules[23].RHS[1].symbols[0].symbol]); 
+    // printf("'%s' %d %d \n", C.nonTerminals[23], C.allRules[23].numOrs, C.allRules[23].epsilon); 
+    // printf("%d %d '%s' '%s' \n", C.allRules[23].RHS[0].symbols[0].symbol, C.allRules[23].RHS[1].symbols[0].symbol, C.nonTerminals[C.allRules[23].RHS[0].symbols[0].symbol], C.terminals[C.allRules[23].RHS[1].symbols[0].symbol]); 
 
-//     // prettyPrintGrammar(C);
+    // prettyPrintGrammar(C);
     
-//     C.ff = ComputeFirstAndFollowSets(C); 
-//     printf("First and Follow computed \n"); 
-//     printf("\n***** \n"); 
-//     // int n = 48; 
-//     // printf("C.ff[n].numFirst %d  C.ff[n].numFollow %d \n", C.ff[n].numFirst[0], C.ff[n].numFollow); 
-//     // for (int i = 0; i < C.ff[n].numFollow; i++) { 
-//     //     printf("%d '%s' \n", C.ff[n].follow[i], C.terminals[C.ff[n].follow[i]]); 
-//     // } 
+    C.ff = ComputeFirstAndFollowSets(C); 
+    printf("First and Follow computed \n"); 
+    printf("\n***** \n"); 
+    // int n = 48; 
+    // printf("C.ff[n].numFirst %d  C.ff[n].numFollow %d \n", C.ff[n].numFirst[0], C.ff[n].numFollow); 
+    // for (int i = 0; i < C.ff[n].numFollow; i++) { 
+    //     printf("%d '%s' \n", C.ff[n].follow[i], C.terminals[C.ff[n].follow[i]]); 
+    // } 
     
-//     printf("\n***** \n"); 
+    printf("\n***** \n"); 
 
-//     // int trial = 10; 
-//     // // printf("%d %d %d %d %d %d \n", C.allRules[23].numOrs, C.ff[24].numFirst[0], C.ff[24].numFirst[1], C.ff[24].numFirst[2], C.ff[24].numFirst[3], C.ff[24].numFirst[4]); 
-//     // printf("C.allRules[trial].numOrs %d ", C.allRules[trial].numOrs); 
-//     // for (int i = 0; i < C.allRules[trial].numOrs; i++) { 
-//     //     printf("C.ff[trial].numFirst[i] %d ", C.ff[trial].numFirst[i]); 
-//     // } 
+    // int trial = 10; 
+    // // printf("%d %d %d %d %d %d \n", C.allRules[23].numOrs, C.ff[24].numFirst[0], C.ff[24].numFirst[1], C.ff[24].numFirst[2], C.ff[24].numFirst[3], C.ff[24].numFirst[4]); 
+    // printf("C.allRules[trial].numOrs %d ", C.allRules[trial].numOrs); 
+    // for (int i = 0; i < C.allRules[trial].numOrs; i++) { 
+    //     printf("C.ff[trial].numFirst[i] %d ", C.ff[trial].numFirst[i]); 
+    // } 
 
-//     // printRule(C,trial,-1);
+    // printRule(C,trial,-1);
     
-//     parseTable* T = intializeParseTable(C.numNonTerminals,C.numTerminals);
-//     createParseTable(C,C.ff,T);
-//     // printParseTable(C,T);
-//     printf("Parse Table created \n"); 
+    parseTable* T = intializeParseTable(C.numNonTerminals,C.numTerminals);
+    createParseTable(C,C.ff,T);
+    // printParseTable(C,T);
+    printf("Parse Table created \n"); 
 
-//     // printf("%d %d %d '%s' '%s' \n", C.allRules[2].numOrs, C.ff[2].numFirst[0], C.ff[2].numFirst[1], C.terminals[C.ff[2].first[0][0]], C.terminals[C.ff[2].first[1][0]]); 
-//     // printf("%d %d %d \n", C.allRules[0].numOrs, C.allRules[0].RHS[0].numSyms, C.allRules[0].RHS[0].symbols[1].type); 
-//     // printf("%d %d %d %d %d %d '%s' '%s' '%s' '%s' \n", C.ff[23].numFirst, C.ff[23].numFollow, C.ff[23].follow[0], C.ff[23].follow[1], C.ff[23].follow[2], C.ff[23].follow[3], C.terminals[C.ff[23].follow[0]], C.terminals[C.ff[23].follow[1]], C.terminals[C.ff[23].follow[2]], C.terminals[C.ff[23].follow[3]]); 
+    // printf("%d %d %d '%s' '%s' \n", C.allRules[2].numOrs, C.ff[2].numFirst[0], C.ff[2].numFirst[1], C.terminals[C.ff[2].first[0][0]], C.terminals[C.ff[2].first[1][0]]); 
+    // printf("%d %d %d \n", C.allRules[0].numOrs, C.allRules[0].RHS[0].numSyms, C.allRules[0].RHS[0].symbols[1].type); 
+    // printf("%d %d %d %d %d %d '%s' '%s' '%s' '%s' \n", C.ff[23].numFirst, C.ff[23].numFollow, C.ff[23].follow[0], C.ff[23].follow[1], C.ff[23].follow[2], C.ff[23].follow[3], C.terminals[C.ff[23].follow[0]], C.terminals[C.ff[23].follow[1]], C.terminals[C.ff[23].follow[2]], C.terminals[C.ff[23].follow[3]]); 
 
-//     char* testCaseFile = "./testcases_stage1/t5.txt"; 
-//     // FILE *fp = fopen("./testcases_stage1/t2.txt","r"); 
-//     // initialize();
-//     // fp = getStream(fp, 0);
-//     // tokenInfo currToken = getNextToken(fp); 
-//     // printf("%d '%s' \n", findIndex(C.terminals, C.numTerminals, enumToStringP[currToken.tkn_name]), enumToStringP[currToken.tkn_name]); 
-//     treeN rootNode; 
-//     rootNode = parseInputSourceCode(testCaseFile, C, T); 
-//     // printf("%u %d %d %d %d %d \n", &rootNode, rootNode.elem.curr, rootNode.numChild, rootNode.elem.lineNo, rootNode.elem.isLeaf, rootNode.elem.parentNodeSymbolID); 
-//     // printf("%u %u \n", rootNode.children[0], rootNode.children[1]); 
-//     // printf("%u %u \n", rootNode.children[1]->children[1], rootNode.children[1]->children[1]->children[5]); 
-//     // printf("%d '%s' %d '%s' \n", rootNode.children[1]->children[1], C.nonTerminals[rootNode.children[1]->children[1]->elem.curr], rootNode.children[1]->children[1]->children[5], C.terminals[rootNode.children[1]->children[1]->children[5]->elem.curr]); 
-//     // printParseTree(&rootNode,"op.txt",C);
-//     int *insertPrev = (int *)malloc(sizeof(int));
-//     *insertPrev = 0;
-//     astNode *astroot = mknode(rootNode.elem,C);
-//     constructAst(astroot, &rootNode,C,insertPrev,astroot);
-//     printf("*************************************************************************************************\n\n");
-//     printf("Printing Abstract Syntax Tree\n");
-//     printAST(astroot,C);
-//     printf("*************************************************************************************************\n\n");
-//     // printf("Level 1 printing\n");
-//     // printf("Root : isLeaf: %d curr: %d name: %s Line: %d \n",astroot->elem->isLeaf,astroot->elem->curr,astroot->elem->isLeaf?C.terminals[astroot->elem->curr]:C.nonTerminals[astroot->elem->curr],astroot->elem->lineNo);
-//     // astNode *curr = astroot->child;
-//     // while(curr!=NULL){
-//     //     printf("isLeaf: %d curr: %d name:%s Line:%d\n",curr->elem->isLeaf,curr->elem->curr,curr->elem->isLeaf?C.terminals[curr->elem->curr]:C.nonTerminals[curr->elem->curr],curr->elem->lineNo);
-//     //     curr = curr->next;
-//     // }
-//     printf("Root : %d %d %s \n", astroot->elem->isLeaf, astroot->elem->curr, C.nonTerminals[astroot->elem->curr]); 
-//     astNode* curr = astroot->child->child; 
-//     // astNode* curr = astroot->child->child; 
-//     while (curr != NULL) { 
-//         printf("%d %d ", curr->elem->isLeaf, curr->elem->curr); 
-//         if (curr->elem->isLeaf == 1) { 
-//             printf("'%s' \n", C.terminals[curr->elem->curr]); 
-//         } 
-//         else { 
-//             printf("'%s' \n", C.nonTerminals[curr->elem->curr]); 
-//         } 
-//         curr = curr->next; 
-//     } 
+    char* testCaseFile = "./testcases_stage1/t6.txt"; 
+    // FILE *fp = fopen("./testcases_stage1/t2.txt","r"); 
+    // initialize();
+    // fp = getStream(fp, 0);
+    // tokenInfo currToken = getNextToken(fp); 
+    // printf("%d '%s' \n", findIndex(C.terminals, C.numTerminals, enumToStringP[currToken.tkn_name]), enumToStringP[currToken.tkn_name]); 
+    treeN rootNode; 
+    rootNode = parseInputSourceCode(testCaseFile, C, T); 
+    // printf("%u %d %d %d %d %d \n", &rootNode, rootNode.elem.curr, rootNode.numChild, rootNode.elem.lineNo, rootNode.elem.isLeaf, rootNode.elem.parentNodeSymbolID); 
+    // printf("%u %u \n", rootNode.children[0], rootNode.children[1]); 
+    // printf("%u %u \n", rootNode.children[1]->children[1], rootNode.children[1]->children[1]->children[5]); 
+    // printf("%d '%s' %d '%s' \n", rootNode.children[1]->children[1], C.nonTerminals[rootNode.children[1]->children[1]->elem.curr], rootNode.children[1]->children[1]->children[5], C.terminals[rootNode.children[1]->children[1]->children[5]->elem.curr]); 
+    // printParseTree(&rootNode,"op.txt",C);
+    int *insertPrev = (int *)malloc(sizeof(int));
+    *insertPrev = 0;
+    astNode *astroot = mknode(rootNode.elem,C);
+    constructAst(astroot, &rootNode,C,insertPrev,astroot);
+    printf("*************************************************************************************************\n\n");
+    printf("Printing Abstract Syntax Tree\n");
+    // printAST(astroot,C);
+    printf("*************************************************************************************************\n\n");
+    // printf("Level 1 printing\n");
+    // printf("Root : isLeaf: %d curr: %d name: %s Line: %d \n",astroot->elem->isLeaf,astroot->elem->curr,astroot->elem->isLeaf?C.terminals[astroot->elem->curr]:C.nonTerminals[astroot->elem->curr],astroot->elem->lineNo);
+    // astNode *curr = astroot->child;
+    // while(curr!=NULL){
+    //     printf("isLeaf: %d curr: %d name:%s Line:%d\n",curr->elem->isLeaf,curr->elem->curr,curr->elem->isLeaf?C.terminals[curr->elem->curr]:C.nonTerminals[curr->elem->curr],curr->elem->lineNo);
+    //     curr = curr->next;
+    // }
+    printf("Root : %d %d %s \n", astroot->elem->isLeaf, astroot->elem->curr, C.nonTerminals[astroot->elem->curr]); 
+    astNode* curr = astroot->child->child; 
+    // astNode* curr = astroot->child->child; 
+    while (curr != NULL) { 
+        printf("%d %d ", curr->elem->isLeaf, curr->elem->curr); 
+        if (curr->elem->isLeaf == 1) { 
+            printf("'%s' \n", C.terminals[curr->elem->curr]); 
+        } 
+        else { 
+            printf("'%s' \n", C.nonTerminals[curr->elem->curr]); 
+        } 
+        curr = curr->next; 
+    } 
 
-//     // printf("%d \n", findIndex(C.terminals, C.numTerminals, "TK_GLOBAL")); 
-//     symbolTable* sTable = constructST(astroot, C); 
+    // printf("%d \n", findIndex(C.terminals, C.numTerminals, "TK_GLOBAL")); 
+    printf("lol1\n");
+    symbolTable* sTable = constructST(astroot, C); 
+    printf("lol2\n");
+    checkOverloading(astroot, sTable, C);
     
-//     // printf("%d %d \n", sTable->numTypes, sTable->numEntries); 
-//     // int ind1 = searchS("b3b444", sTable->entries); 
-//     // printf("%d %d %d %s \n", sTable->entries[ind1]->lineNo, sTable->entries[ind1]->offset, sTable->entries[ind1]->type, sTable->entries[ind1]->varName); 
-//     // printf("%d %d %d \n", sTable->tables[0]->currWidth, sTable->tables[1]->currWidth, sTable->mainOffset); 
+    // printf("%d %d \n", sTable->numTypes, sTable->numEntries); 
+    // int ind1 = searchS("b3b444", sTable->entries); 
+    // printf("%d %d %d %s \n", sTable->entries[ind1]->lineNo, sTable->entries[ind1]->offset, sTable->entries[ind1]->type, sTable->entries[ind1]->varName); 
+    // printf("%d %d %d \n", sTable->tables[0]->currWidth, sTable->tables[1]->currWidth, sTable->mainOffset); 
     
-//     // printf("%d %d %d %d %d \n", sTable->numF, sTable->numTypes, sTable->tables[0]->currWidth, sTable->tables[0]->numEntries, sTable->tables[0]->function->inId); 
-//     // printf("%d %d \n", sTable->allTypes[0]->typeId, sTable->allTypes[1]->typeId); 
-//     // printf("%s %s \n", sTable->allTypes[2]->name, sTable->allTypes[3]->name); 
-//     // int ind1 = searchS("d5cc34", sTable->allTypes[4]->fields); 
-//     // int ind2 = searchS("b5c6", sTable->allTypes[4]->fields); 
-//     // printf("%d %d %d \n", sTable->allTypes[4]->numFields, sTable->allTypes[4]->fields[ind1]->type, sTable->allTypes[4]->fields[ind2]->type); 
-//     // int ind3 = searchTypes("#two", sTable); 
-//     // printf("%s \n", sTable->allTypes[ind3]->name); 
-//     // ind1 = searchS("b5b567", sTable->tables[0]->entries); 
-//     // ind2 = searchS("b3", sTable->tables[0]->entries); 
-//     // ind3 = searchS("d5", sTable->tables[0]->entries); 
-//     // printf("%d %d %d %d \n", sTable->tables[0]->numEntries, sTable->tables[0]->entries[ind1]->type, sTable->tables[0]->entries[ind2]->type, sTable->tables[0]->entries[ind3]->type); 
-//     // ind1 = searchS("beginpoint", sTable->allTypes[2]->fields); 
-//     // ind2 = searchS("endpoint", sTable->allTypes[2]->fields); 
-//     // printf("%d \n", sTable->allTypes[3]->width); 
-//     // printf("%s %d %s %d %d \n", sTable->allTypes[2]->name, sTable->allTypes[2]->numFields, sTable->allTypes[2]->fields[ind2]->varName, sTable->allTypes[2]->fields[ind2]->type, sTable->allTypes[2]->fields[ind2]->offset); 
+    // printf("%d %d %d %d %d \n", sTable->numF, sTable->numTypes, sTable->tables[0]->currWidth, sTable->tables[0]->numEntries, sTable->tables[0]->function->inId); 
+    // printf("%d %d \n", sTable->allTypes[0]->typeId, sTable->allTypes[1]->typeId); 
+    // printf("%s %s \n", sTable->allTypes[2]->name, sTable->allTypes[3]->name); 
+    // int ind1 = searchS("d5cc34", sTable->allTypes[4]->fields); 
+    // int ind2 = searchS("b5c6", sTable->allTypes[4]->fields); 
+    // printf("%d %d %d \n", sTable->allTypes[4]->numFields, sTable->allTypes[4]->fields[ind1]->type, sTable->allTypes[4]->fields[ind2]->type); 
+    // int ind3 = searchTypes("#two", sTable); 
+    // printf("%s \n", sTable->allTypes[ind3]->name); 
+    // ind1 = searchS("b5b567", sTable->tables[0]->entries); 
+    // ind2 = searchS("b3", sTable->tables[0]->entries); 
+    // ind3 = searchS("d5", sTable->tables[0]->entries); 
+    // printf("%d %d %d %d \n", sTable->tables[0]->numEntries, sTable->tables[0]->entries[ind1]->type, sTable->tables[0]->entries[ind2]->type, sTable->tables[0]->entries[ind3]->type); 
+    // ind1 = searchS("beginpoint", sTable->allTypes[2]->fields); 
+    // ind2 = searchS("endpoint", sTable->allTypes[2]->fields); 
+    // printf("%d \n", sTable->allTypes[3]->width); 
+    // printf("%s %d %s %d %d \n", sTable->allTypes[2]->name, sTable->allTypes[2]->numFields, sTable->allTypes[2]->fields[ind2]->varName, sTable->allTypes[2]->fields[ind2]->type, sTable->allTypes[2]->fields[ind2]->offset); 
     
-//     // int ind4 = searchTypes("#two", sTable); 
-//     // printf("%d %s \n", sTable->allTypes[ind4]->numAl, sTable->allTypes[ind4]->aliases[0]); 
-//     // int ind5 = searchTypes("#point", sTable); 
-//     // printf("%d %d \n", ind4, sTable->allTypes[ind5]->ref); 
-//     // int ind6 = searchTypes("#variantrecord", sTable); 
-//     // printf("%d %d \n", sTable->allTypes[ind6]->width, ind6); 
-//     // int ind7 = searchS("b5c6", sTable->allTypes[4]->fields); 
-//     // printf("%s %d \n", sTable->allTypes[4]->fields[ind7]->varName, sTable->allTypes[4]->fields[ind7]->type); 
-//     // ind7 = searchS("beginpoint", sTable->allTypes[ind4]->fields); 
-//     // printf("%s \n", sTable->allTypes[ind4]->fields[ind7]->varName); 
-//     // printf("Number of functions: %d \n", sTable->numF); 
-//     // int ind8 = searchS("b3b444", sTable->entries); 
-//     // printf("%s %d %d \n", sTable->entries[ind8]->varName, sTable->entries[ind8]->type, sTable->entries[ind8]->offset); 
-//     // printf("%d %d %d \n", sTable->tables[0]->function->inOrder[0], sTable->tables[0]->function->inOrder[1], sTable->tables[0]->function->inOrder[2]); 
-//     // printf("%s %s %s \n", sTable->allTypes[sTable->tables[0]->function->inId]->fields[sTable->tables[0]->function->inOrder[0]]->varName, sTable->allTypes[sTable->tables[0]->function->inId]->fields[sTable->tables[0]->function->inOrder[1]]->varName, sTable->allTypes[sTable->tables[0]->function->inId]->fields[sTable->tables[0]->function->inOrder[2]]->varName); 
-//     // printf("First child of function : %d %d %s %s \n", astroot->child->child->child->elem->isLeaf, astroot->child->child->child->elem->curr, C.terminals[astroot->child->child->child->elem->curr], astroot->child->child->child->elem->lex.lexemeStr); 
-//     // printf("rule number %d LHS %s RHS %s\n",getRuleNumber(52,1,C),C.nonTerminals[C.allRules[52].LHS],C.terminals[C.allRules[52].RHS[1].symbols[0].symbol]);
-// } 
+    // int ind4 = searchTypes("#two", sTable); 
+    // printf("%d %s \n", sTable->allTypes[ind4]->numAl, sTable->allTypes[ind4]->aliases[0]); 
+    // int ind5 = searchTypes("#point", sTable); 
+    // printf("%d %d \n", ind4, sTable->allTypes[ind5]->ref); 
+    // int ind6 = searchTypes("#variantrecord", sTable); 
+    // printf("%d %d \n", sTable->allTypes[ind6]->width, ind6); 
+    // int ind7 = searchS("b5c6", sTable->allTypes[4]->fields); 
+    // printf("%s %d \n", sTable->allTypes[4]->fields[ind7]->varName, sTable->allTypes[4]->fields[ind7]->type); 
+    // ind7 = searchS("beginpoint", sTable->allTypes[ind4]->fields); 
+    // printf("%s \n", sTable->allTypes[ind4]->fields[ind7]->varName); 
+    // printf("Number of functions: %d \n", sTable->numF); 
+    // int ind8 = searchS("b3b444", sTable->entries); 
+    // printf("%s %d %d \n", sTable->entries[ind8]->varName, sTable->entries[ind8]->type, sTable->entries[ind8]->offset); 
+    // printf("%d %d %d \n", sTable->tables[0]->function->inOrder[0], sTable->tables[0]->function->inOrder[1], sTable->tables[0]->function->inOrder[2]); 
+    // printf("%s %s %s \n", sTable->allTypes[sTable->tables[0]->function->inId]->fields[sTable->tables[0]->function->inOrder[0]]->varName, sTable->allTypes[sTable->tables[0]->function->inId]->fields[sTable->tables[0]->function->inOrder[1]]->varName, sTable->allTypes[sTable->tables[0]->function->inId]->fields[sTable->tables[0]->function->inOrder[2]]->varName); 
+    // printf("First child of function : %d %d %s %s \n", astroot->child->child->child->elem->isLeaf, astroot->child->child->child->elem->curr, C.terminals[astroot->child->child->child->elem->curr], astroot->child->child->child->elem->lex.lexemeStr); 
+    // printf("rule number %d LHS %s RHS %s\n",getRuleNumber(52,1,C),C.nonTerminals[C.allRules[52].LHS],C.terminals[C.allRules[52].RHS[1].symbols[0].symbol]);
+} 
