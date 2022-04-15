@@ -1,3 +1,3 @@
 # Group 40
   all:
-	gcc -g -o stage1exe lexer.c parser.c lookuptable.c utils.c tree.c driver.c 
+	gcc -o stage2exe lexer.c parser.c lookuptable.c utils.c tree.c symbolTable.c ast.c stage2_driver.c 

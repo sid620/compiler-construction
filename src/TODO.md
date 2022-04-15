@@ -1,3 +1,2 @@
-1. Store string reps of TK_RNUM in parser.c
-2. FIELDID and RUID do not have length contraints -- maam
-3. Terminals do not match at the end
+1. Add temporaries field in symbolTableDef
+2. In function overload check (semantic analyzer function), change numEntires to numF in the loop variable)
