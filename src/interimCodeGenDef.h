@@ -21,4 +21,9 @@ struct ThreeAddrCode {
     // astNode* node;
 };
 
+
+typedef struct temporaries{
+    
+};
+
 // TODO:temporaries
