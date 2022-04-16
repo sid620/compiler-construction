@@ -95,7 +95,7 @@ void getVarName(char **name, astNode *root, grammar G, symbolTable *sTable, int 
     while(!(temp->elem->isLeaf && strcmp(G.terminals[temp->elem->curr],"eps")==0)){
         l+=strlen(temp->elem->lex.lexemeStr);
         temp = temp->next;
-        if(strcmp(G.terminals[temp->elem->curr],"eps")!=0)l++;
+        if(strcmp(G.terminals[temp->elem->curr],"eps")!=0)l++;  // adding character for dot
     }
     char str[l+1];
     int k = 0;
@@ -488,7 +488,7 @@ bool isOutputParams(char *str, symbolTable *sTable, int index, grammar G){
 */
 void checkDeclarationsSemantics(astNode *root, symbolTable *sTable, int index, grammar G){
     astNode *temp = findChild(root,1,false,0);  // finds child corresponding to TK_ID
-    astNode *temp1 = findChild(root,2,false,0);
+    astNode *temp1 = findChild(root,2,false,0); // child corresponding to global    
     bool isGlobal = strcmp(G.terminals[temp1->elem->curr],"eps")==0? false: true;
     if(isGlobal)
     printf(" Is global\n");
@@ -731,9 +731,10 @@ void checkFunction(astNode *root, symbolTable *sTable, grammar G, int index){
     printf("%d outputParams %d\n",index,sTable->tables[index]->function->numOut);
     *isOutAssigned = (int *)calloc(sTable->tables[index]->function->numOut,sizeof(int));
     astNode *temp=NULL;
-    /*Reach first child which is stmts*/
+    /*Reach first child which is stmts when root is <function>*/
     if(index!=sTable->numF-1)
     temp = findChild(root,3,false,0); 
+    /*Reach first child which is stmts when root is mainProgram*/
     else
     temp = findChild(root,0,false,0);
     /* Traverse till return statement is reached */
@@ -1045,7 +1046,7 @@ void main() {
     // printParseTable(C,T);
     printf("Parse Table created \n"); 
 
-    char* testCaseFile = "./testcases/p4.txt"; 
+    char* testCaseFile = "./testcases/s5.txt"; 
 
     treeN rootNode; 
     rootNode = parseInputSourceCode(testCaseFile, C, T); 
@@ -1063,5 +1064,6 @@ void main() {
     printf("Constructing symbol table and performing type checking \n"); 
     symbolTable* sTable = constructST(astroot, C); 
     printf("%s\n",C.nonTerminals[astroot->elem->curr]);
+    typeCheck(astroot,C,sTable,-1);
     semanticCheck(astroot,sTable,C);
 } 

@@ -36,7 +36,8 @@ typedef struct fInfo {
     int outId; 
     int* inOrder; 
     int* outOrder; 
-    int line;  // line at which a function is defined
+    int line;  // line at which a function is defined 
+    int lastLine; 
 } fInfo; 
 
 typedef struct table { 
