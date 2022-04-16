@@ -1,5 +1,8 @@
 #include "utils.h"
 
+/*
+    Finds index of str in char array arr
+*/
 int findIndex(char** arr, int lim, char* str) { 
     for (int i = 0; i < lim; i++) { 
         if (strcmp(str, arr[i]) == 0) { 
@@ -9,14 +12,18 @@ int findIndex(char** arr, int lim, char* str) {
     return -1; 
 } 
 
-
+/*
+    Prints a chararcter array from index 0 to lim
+*/
 void printArr(char** arr, int lim) { 
     for (int i = 0; i < lim; i++) { 
         printf("%s \n", arr[i]); 
     }
 }
 
-
+/*
+    Checks if num is in array arr  
+*/
 int isInArr(int* arr, int num, int lim) { 
     for (int i = 0; i < lim; i++) { 
         if (num == arr[i]) { 
@@ -26,10 +33,11 @@ int isInArr(int* arr, int num, int lim) {
     return 0; 
 } 
 
-
+/* 
+    print entire rule
+*/
 void printRule(grammar G, int ruleNum, int rhsInd){
 
-    // print entire rule
     printf("\n\nprinting ruleNumber: %d\n",G.allRules[ruleNum].ruleNumber);
     printf("LHS: %s\n",G.nonTerminals[G.allRules[ruleNum].LHS]);
     printf("RHS: ");
@@ -58,7 +66,9 @@ void printRule(grammar G, int ruleNum, int rhsInd){
     }
 }
 
-
+/*
+    Prints the grammar rule by rule
+*/
 void prettyPrintGrammar(grammar G){
     for (int i=0;i<G.totalNumRules;i++){
         printf("Rule Num: %d ",i);

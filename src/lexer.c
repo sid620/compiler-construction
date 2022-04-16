@@ -176,11 +176,11 @@ char next_char(FILE *fp, bool isComment, bool isLengthExceeded){
     twin_buffer->forward++;
     // printf("%s lexeme\n",twin_buffer->lexeme);
     if(twin_buffer->buffer[twin_buffer->forward]==EOF){
-        if(twin_buffer->forward==BUFFER_SIZE){
+        if(twin_buffer->forward==BUFFER_SIZE-1){
             fp = getStream(fp,1);
             twin_buffer->forward=BUFFER_SIZE;
         }
-        else if(twin_buffer->forward==2*BUFFER_SIZE){
+        else if(twin_buffer->forward==2*BUFFER_SIZE-1){
             fp=getStream(fp,0);
             twin_buffer->forward=0;
         }
@@ -208,7 +208,7 @@ FILE *getStream(FILE *fp, int bufferNumber){
     }
     else{
         if(!bufferNumber) fread(&twin_buffer->buffer[0],1,BUFFER_SIZE-1,fp);
-        else fread(&twin_buffer[BUFFER_SIZE],1,BUFFER_SIZE-1,fp);
+        else fread(&twin_buffer->buffer[BUFFER_SIZE],1,BUFFER_SIZE-1,fp);
     }
     return fp;
 }
@@ -340,7 +340,7 @@ tokenInfo getNextToken(FILE *fp){
                 }
                 else {
                     // Other new characters are reported as error
-                    printf("Line No %d: Error: Unknown symbol <%c>\n" ,lineNo,c);
+                    printf("Line No: %d - ERROR: Unknown symbol <%c>\n" ,lineNo,c);
                     // Throw lexical error!
                     // printf("y\n");
                     // This is the only case where accept(true) is used to report error since the lexeme only has one useful character
@@ -377,7 +377,7 @@ tokenInfo getNextToken(FILE *fp){
                     // Throw lexical error.
                     reset(1);
                     char* pattern = reject();
-                    printf("Line no: %d : Error : Unknown pattern <%s>\n" ,lineNo,pattern);
+                    printf("Line No: %d - ERROR: Unknown pattern <%s>\n" ,lineNo,pattern);
                     free(pattern);
                     lexError = 2;
                 }
@@ -392,7 +392,7 @@ tokenInfo getNextToken(FILE *fp){
                     // Throw lexical error
                     reset(1);
                     char* pattern = reject();
-                    printf("Line no: %d : Error: Unknown pattern <%s>\n" ,lineNo,pattern);
+                    printf("Line No: %d - ERROR: Unknown pattern <%s>\n" ,lineNo,pattern);
                     free(pattern);
                     lexError=2;
                     dfa_state=0;
@@ -469,7 +469,7 @@ tokenInfo getNextToken(FILE *fp){
                 else {
                     reset(1);
                     char *pattern = reject();
-                    printf("Line no: %d : Error :Unknown pattern <%s>\n" ,lineNo,pattern);
+                    printf("Line No: %d - ERROR: Unknown pattern <%s>\n" ,lineNo,pattern);
                     populateToken(TOK,ERROR,pattern,lineNo);
                     free(pattern);
                     lexError=2;
@@ -494,7 +494,7 @@ tokenInfo getNextToken(FILE *fp){
                     // Throw Lexical error
                     reset(1);
                     char* pattern = reject();
-                    printf("Line no: %d : Error : Unknown pattern <%s>\n" ,lineNo,pattern);
+                    printf("Line No: %d - ERROR: Unknown pattern <%s>\n" ,lineNo,pattern);
                     populateToken(TOK,ERROR,pattern,lineNo);
                     free(pattern);
                     lexError = 2;
@@ -615,7 +615,7 @@ tokenInfo getNextToken(FILE *fp){
                 else {
                     reset(1);
                     char* lex = reject();
-                    printf("Line no: %d : Error : Unknown pattern <%s>\n" ,lineNo,lex);
+                    printf("Line No: %d - ERROR: Unknown pattern <%s>\n" ,lineNo,lex);
                     free(lex);
                     lexError = 2;
                     populateToken(TOK, ERROR, lex, lineNo);
@@ -675,7 +675,7 @@ tokenInfo getNextToken(FILE *fp){
                     // Throw lexical error
                     reset(1);
                     char* pattern = reject();
-                    printf("Line no: %d : Error : Unknown pattern <%s>\n" ,lineNo,pattern);
+                    printf("Line No: %d - ERROR: Unknown pattern <%s>\n" ,lineNo,pattern);
                     free(pattern);
                     lexError = 2;
                     populateToken(TOK,ERROR,pattern,lineNo);
@@ -763,7 +763,7 @@ tokenInfo getNextToken(FILE *fp){
                 else {
                     reset(1);
                     char *lex = reject();
-                    printf("Line no: %d : Error : Unknown pattern <%s>\n" ,lineNo, lex);
+                    printf("Line No: %d - ERROR: Unknown pattern <%s>\n" ,lineNo, lex);
                     lexError = 3;
                     populateToken(TOK,ERROR,lex,lineNo);
                     free(lex);
@@ -780,7 +780,7 @@ tokenInfo getNextToken(FILE *fp){
                     // Throw lexical
                     reset(1);
                     char* lex = reject();
-                    printf("Line no: %d : Error : Unknown pattern <%s>\n" ,lineNo,lex);
+                    printf("Line No: %d - ERROR: Unknown pattern <%s>\n" ,lineNo,lex);
                     lexError = 3;
                     populateToken(TOK,ERROR,lex,lineNo);
                     free(lex);
@@ -800,6 +800,7 @@ tokenInfo getNextToken(FILE *fp){
             case 34: {
                 c = next_char(fp,false,false);
                 if(char_match(c,'E')){
+                    if(char_match(c,'e'))twin_buffer->lexeme[twin_buffer->pos]='E';
                     dfa_state = 35;
                 }
                 else{
@@ -818,7 +819,7 @@ tokenInfo getNextToken(FILE *fp){
                 else{
                     reset(1);
                     char *lex = reject();
-                    printf("Line no: %d : Error : Unknown pattern <%s>\n" ,lineNo,lex);
+                    printf("Line No: %d - ERROR: Unknown pattern <%s>\n" ,lineNo,lex);
                     populateToken(TOK,ERROR,lex,lineNo);
                     free(lex);
                     return *TOK;
@@ -833,7 +834,7 @@ tokenInfo getNextToken(FILE *fp){
                 else{
                     reset(1);
                     char *lex = reject();
-                    printf("Line no: %d : Error : Unknown pattern <%s>\n",lineNo,lex);
+                    printf("Line No: %d - ERROR: Unknown pattern <%s>\n",lineNo,lex);
                     populateToken(TOK,ERROR,lex,lineNo);
                     lexError = 2;
                     return *TOK;
@@ -849,7 +850,7 @@ tokenInfo getNextToken(FILE *fp){
                 else{
                     reset(1);
                     char *lex = reject();
-                    printf("Line no: %d : Error : Unknown pattern <%s>\n",lineNo,lex);
+                    printf("Line No: %d - ERROR: Unknown pattern <%s>\n",lineNo,lex);
                     populateToken(TOK,ERROR,lex,lineNo);
                     lexError = 2;
                     return *TOK;
@@ -870,7 +871,7 @@ tokenInfo getNextToken(FILE *fp){
                 else {
                     reset(1);
                     char* lex = reject();
-                    printf("Line no: %d : Error : Unknown pattern <%s>\n" ,lineNo,lex);
+                    printf("Line No: %d - ERROR: Unknown pattern <%s>\n" ,lineNo,lex);
                     lexError= 3;
                     dfa_state = 0;
                     populateToken(TOK,ERROR,lex,lineNo);
@@ -888,7 +889,7 @@ tokenInfo getNextToken(FILE *fp){
                     // Throw lexical error
                     reset(1);
                     char* lex = reject();
-                    printf("Line no: %d : Error : Unknown pattern <%s>\n" ,lineNo,lex);
+                    printf("Line No: %d - ERROR: Unknown pattern <%s>\n" ,lineNo,lex);
                     lexError = 3;
                     dfa_state = 0;
                     populateToken(TOK,ERROR,lex,lineNo);
@@ -922,7 +923,7 @@ tokenInfo getNextToken(FILE *fp){
                     // Throw lexical error
                     reset(1);
                     char* lex = reject();
-                    printf("Line no: %d : Error : Unknown pattern <%s>\n" ,lineNo,lex);
+                    printf("Line No: %d - ERROR: Unknown pattern <%s>\n" ,lineNo,lex);
                     lexError = 3;
                     dfa_state = 0;
                     populateToken(TOK,ERROR,lex,lineNo);
@@ -940,7 +941,7 @@ tokenInfo getNextToken(FILE *fp){
                     // Throw lexical
                     reset(1);
                     char* lex = reject();
-                    printf("Line no: %d : Error : Unknown pattern <%s>\n" ,lineNo,lex);
+                    printf("Line No: %d - ERROR: Unknown pattern <%s>\n" ,lineNo,lex);
                     lexError = 3;
                     dfa_state = 0;
                     populateToken(TOK,ERROR,lex,lineNo);
@@ -1055,7 +1056,7 @@ tokenInfo getNextToken(FILE *fp){
                 char *lex=accept(false);
                 token_name t = actualToken(ERROR,lex);
                 if(t==ERROR){
-                    printf("Line no: %d : Error : Unknown pattern <%s>\n",lineNo,lex);
+                    printf("Line No: %d - ERROR: Unknown pattern <%s>\n",lineNo,lex);
                 }
                 populateToken(TOK,t,lex,lineNo);
                 return *TOK;
