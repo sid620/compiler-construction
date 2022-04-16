@@ -11,7 +11,7 @@ typedef struct entry {
     int lineNo; 
     int offset; 
     int type; // Index of array allTypes 
-    
+    int count; // number of times a variable has been declared on the same line
 } entry; 
 
 typedef struct typeInfo { 
@@ -25,6 +25,7 @@ typedef struct typeInfo {
     char** aliases; 
     int numAl; 
     int ref; 
+    int* fOrder; 
 } typeInfo;
 
 typedef struct fInfo { 
@@ -35,6 +36,7 @@ typedef struct fInfo {
     int outId; 
     int* inOrder; 
     int* outOrder; 
+    int line;  // line at which a function is defined
 } fInfo; 
 
 typedef struct table { 

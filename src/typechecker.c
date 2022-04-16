@@ -2,8 +2,9 @@
 #include <stdio.h> 
 #include <stdbool.h> 
 #include "string.h" 
-#include "symbolTable.h" 
-#include "ast.h" 
+#include "typechecker.h" 
+#include <stdlib.h>
+// #include "ast.c" 
 
 // TK_NUM: 0
 // TK_RNUM: 1
@@ -104,7 +105,7 @@ int findIDtype(astNode* root, grammar G, symbolTable* sTable, int index) {
         if (t2 == -1) { 
             if (t3 == -1) { 
                 if (t4 == -1) { 
-                    printf("Variable %s not defined at line %d ERROR \n", root->elem->lex.lexemeStr, root->elem->lineNo); 
+                    printf("Line No: %d - ERROR: Variable %s not defined\n", root->elem->lineNo, root->elem->lex.lexemeStr); 
                     return -1; 
                 } 
                 else { 
@@ -173,7 +174,7 @@ int findNestedType(astNode *root, grammar G, symbolTable *sTable, int index) {  
         // printf("%s \n", fieldNode->elem->lex.lexemeStr); 
         bool isPresent = false;
         if (sTable->allTypes[t1]->numFields == 0) { 
-            printf("The field %s is not present in %s at line %d ERROR \n",fieldNode->elem->lex.lexemeStr,root->elem->lex.lexemeStr, root->elem->lineNo);
+            printf("Line No: %d - ERROR: The field %s is not present in %s\n", root->elem->lineNo, fieldNode->elem->lex.lexemeStr,root->elem->lex.lexemeStr);
             return -1;
         }
         for(int i = 0; i < HASH_SIZE; i++){
@@ -191,7 +192,7 @@ int findNestedType(astNode *root, grammar G, symbolTable *sTable, int index) {  
             root = fieldNode; 
         }
         else{
-            printf("The field %s is not present in %s at line %d ERROR \n",fieldNode->elem->lex.lexemeStr,root->elem->lex.lexemeStr, root->elem->lineNo);
+            printf("Line No: %d - ERROR: The field %s is not present in %s\n", root->elem->lineNo, fieldNode->elem->lex.lexemeStr,root->elem->lex.lexemeStr);
             return -1;
         } 
     }
@@ -226,7 +227,8 @@ int matchReturnParams(astNode *temp, grammar G, symbolTable *sTable, int index) 
     for (int i = 0; i < numOutputs; i++) { 
         
         if (temp == NULL) { 
-            printf("Return statement incomplete ERROR \n"); 
+            // printf("Return statement incomplete ERROR \n"); 
+            printf("Line No: %d - ERROR: Return statement incomplete ERROR \n",  temp->elem->lineNo); 
             return -1; 
         }
         
@@ -235,7 +237,7 @@ int matchReturnParams(astNode *temp, grammar G, symbolTable *sTable, int index) 
             // Fine 
         } 
         else { 
-            printf("Variable %s in return statement does not match output parameter at line %d ERROR \n", temp->elem->lex.lexemeStr, temp->elem->lineNo); 
+            printf("Line No: %d - ERROR: Variable %s in return statement does not match output parameter\n", temp->elem->lineNo, temp->elem->lex.lexemeStr); 
             return -1; 
         } 
         temp = temp->next; 
@@ -244,7 +246,7 @@ int matchReturnParams(astNode *temp, grammar G, symbolTable *sTable, int index) 
     printf("%s \n", G.terminals[temp->elem->curr]); 
     if (temp != NULL) { 
         if (!(temp->elem->isLeaf == 1 && temp->elem->curr == 0)) { 
-            printf("Extra return statement parameters at line %d ERROR \n", temp->elem->lineNo); 
+            printf("Line No: %d - ERROR: Extra return statement parameters\n", temp->elem->lineNo); 
             return -1; 
         } 
         else { 
@@ -258,18 +260,6 @@ int matchReturnParams(astNode *temp, grammar G, symbolTable *sTable, int index) 
     } 
 }
 
-int fIndex(char* fName, symbolTable* sTable) { 
-
-    if (strcmp(fName, "main") == 0) { 
-        return sTable->numF - 1; 
-    }
-    for (int i = 0; i < sTable->numF; i++) { 
-        if (strcmp(sTable->tables[i]->function->fId, fName) == 0) { 
-            return i; 
-        }
-    } 
-    return -1; 
-}
 
 int typeCheck(astNode* root, grammar G, symbolTable* sTable, int index) { 
 
@@ -307,7 +297,7 @@ int typeCheck(astNode* root, grammar G, symbolTable* sTable, int index) {
                 // printf("done %d \n", index); 
             } 
             else { 
-                printf("First child of <function> is not TK_FUNID at line %d ERROR \n", line); 
+                printf("Line No: %d - ERROR: First child of <function> is not TK_FUNID\n", line); 
                 return -1; 
             } 
             // index = fInd; 
@@ -405,7 +395,7 @@ int typeCheck(astNode* root, grammar G, symbolTable* sTable, int index) {
                     return -1; 
                 } 
                 else { 
-                    printf("Both sides of = do not have the same type at line %d ERROR \n", line); 
+                    printf("Line No: %d - ERROR: Both sides of = do not have the same type\n", line); 
                     return -1; 
                 }
             } 
@@ -436,7 +426,7 @@ int typeCheck(astNode* root, grammar G, symbolTable* sTable, int index) {
             // MINUS : 3 if record x record (returns record) 
             
             
-            int* types; 
+            int* types = (int*) malloc(sizeof(int)); 
             // int* startNodeNo; 
             
             // printf("ARITHMETIC \n"); 
@@ -464,7 +454,7 @@ int typeCheck(astNode* root, grammar G, symbolTable* sTable, int index) {
                     // printf("AE \n"); 
                     count += 1; 
                     if (count == 1) { 
-                        types = (int*) malloc(sizeof(int)); 
+                        // types = (int*) malloc(sizeof(int)); 
                     } 
                     else { 
                         types = realloc(types, (sizeof(int) * count)); 
@@ -484,7 +474,7 @@ int typeCheck(astNode* root, grammar G, symbolTable* sTable, int index) {
                         // line = temp->elem->lineNo; 
                         count += 1; 
                         if (count == 1) { 
-                            types = (int*) malloc(sizeof(int)); 
+                            // types = (int*) malloc(sizeof(int)); 
                         } 
                         else { 
                             types = realloc(types, (sizeof(int) * count)); 
@@ -507,7 +497,7 @@ int typeCheck(astNode* root, grammar G, symbolTable* sTable, int index) {
                         if (strcmp(G.terminals[temp->elem->curr], "TK_MUL") == 0) { 
                             count += 1; 
                             if (count == 1) { 
-                                types = (int*) malloc(sizeof(int)); 
+                                // types = (int*) malloc(sizeof(int)); 
                             } 
                             else { 
                                 types = realloc(types, (sizeof(int) * count)); 
@@ -518,7 +508,7 @@ int typeCheck(astNode* root, grammar G, symbolTable* sTable, int index) {
                         else if (strcmp(G.terminals[temp->elem->curr], "TK_DIV") == 0) { 
                             count += 1; 
                             if (count == 1) { 
-                                types = (int*) malloc(sizeof(int)); 
+                                // types = (int*) malloc(sizeof(int)); 
                             } 
                             else { 
                                 types = realloc(types, (sizeof(int) * count)); 
@@ -529,7 +519,7 @@ int typeCheck(astNode* root, grammar G, symbolTable* sTable, int index) {
                         else if (strcmp(G.terminals[temp->elem->curr], "TK_PLUS") == 0) { 
                             count += 1; 
                             if (count == 1) { 
-                                types = (int*) malloc(sizeof(int)); 
+                                // types = (int*) malloc(sizeof(int)); 
                             } 
                             else { 
                                 types = realloc(types, (sizeof(int) * count)); 
@@ -540,7 +530,7 @@ int typeCheck(astNode* root, grammar G, symbolTable* sTable, int index) {
                         else if (strcmp(G.terminals[temp->elem->curr], "TK_MINUS") == 0) { 
                             count += 1; 
                             if (count == 1) { 
-                                types = (int*) malloc(sizeof(int)); 
+                                // types = (int*) malloc(sizeof(int)); 
                             } 
                             else { 
                                 types = realloc(types, (sizeof(int) * count)); 
@@ -566,7 +556,7 @@ int typeCheck(astNode* root, grammar G, symbolTable* sTable, int index) {
             // printf("Done printing \n"); 
             
             int count2 = 0; 
-            int* inds; 
+            int* inds = (int*) malloc(sizeof(int)); 
             int cInd = 0; 
             temp = root->child; 
             while (count2 < count) { // For multiplication and division 
@@ -584,7 +574,7 @@ int typeCheck(astNode* root, grammar G, symbolTable* sTable, int index) {
                         if (types[count2] == -4) { 
                             
                             if (cInd == 0) { 
-                                inds = (int*) malloc(sizeof(int)); 
+                                // inds = (int*) malloc(sizeof(int)); 
                             } 
                             else { 
                                 inds = realloc(inds, sizeof(int) * (cInd + 1)); 
@@ -611,7 +601,7 @@ int typeCheck(astNode* root, grammar G, symbolTable* sTable, int index) {
                                     types[count2] = -1; 
                                     types[count2 - 1] = -1; 
                                     types[count2 + 1] = -1; 
-                                    printf("Wrong types of matching operands for TK_MUL at line %d ERROR \n", line ); 
+                                    printf("Line No: %d - ERROR: Wrong types of matching operands for TK_MUL\n", line ); 
                                     return -1; 
                                 }
                             } 
@@ -644,7 +634,7 @@ int typeCheck(astNode* root, grammar G, symbolTable* sTable, int index) {
                                     types[count2] == -1; 
                                     types[count2 - 1] = -1; 
                                     types[count2 + 1] = -1; 
-                                    printf("Operand types do not match for TK_MUL at line %d ERROR \n", line); 
+                                    printf("Line No: %d - ERROR: Operand types do not match for TK_MUL\n", line); 
                                     return -1; 
                                 } 
                             }
@@ -652,7 +642,7 @@ int typeCheck(astNode* root, grammar G, symbolTable* sTable, int index) {
                         else if (types[count2] == -5) { 
                             
                             if (cInd == 0) { 
-                                inds = (int*) malloc(sizeof(int)); 
+                                // inds = (int*) malloc(sizeof(int)); 
                             } 
                             else { 
                                 inds = realloc(inds, sizeof(int) * (cInd + 1)); 
@@ -673,7 +663,7 @@ int typeCheck(astNode* root, grammar G, symbolTable* sTable, int index) {
                                     types[count2] = -1; 
                                     types[count2 - 1] = -1; 
                                     types[count2 + 1] = -1; 
-                                    printf("Wrong types of matching operands for TK_DIV at line %d ERROR \n", line); 
+                                    printf("Line No: %d - ERROR: Wrong types of matching operands for TK_DIV\n", line); 
                                     return -1; 
                                 }
                             } 
@@ -700,7 +690,7 @@ int typeCheck(astNode* root, grammar G, symbolTable* sTable, int index) {
                                     types[count2] = -1; 
                                     types[count2 - 1] = -1; 
                                     types[count2 + 1] = -1; 
-                                    printf("Operand types do not match for TK_DIV at line %d ERROR \n", line); 
+                                    printf("Line No: %d - ERROR: Operand types do not match for TK_DIV\n", line); 
                                     return -1; 
                                 }
                             }
@@ -726,7 +716,8 @@ int typeCheck(astNode* root, grammar G, symbolTable* sTable, int index) {
 
             // printf("First pass in arithmetic done \n"); 
 
-            int* newT = (int*) malloc(sizeof(int) * (count - (cInd * 3) + cInd)); 
+            // int* newT = (int*) malloc(sizeof(int) * (count - (cInd * 3) + cInd)); 
+            int newT[count - (cInd * 3) + cInd]; 
             int j = 0; 
             int i = 0; 
             int k = 0; 
@@ -758,6 +749,14 @@ int typeCheck(astNode* root, grammar G, symbolTable* sTable, int index) {
             //     printf("newT[%d] = %d \n", i, newT[i]); 
             // } 
 
+            if (types != NULL) { 
+                free(types); 
+                // printf("types freed \n"); 
+            } 
+            if (inds != NULL) { 
+                free(inds); 
+                // printf("inds freed \n"); 
+            }
             for (int i = 0; i < count; i++) { 
                 if (newT[i] == -1) { 
                     return -1; 
@@ -766,7 +765,7 @@ int typeCheck(astNode* root, grammar G, symbolTable* sTable, int index) {
 
             count2 = 0; 
             temp = root->child; 
-            int* inds2; 
+            int* inds2 = (int*) malloc(sizeof(int)); 
             int cInd2 = 0; 
             while (temp != NULL) { // For addition and subtraction 
                 if (temp->elem->isLeaf == 0) { 
@@ -805,10 +804,10 @@ int typeCheck(astNode* root, grammar G, symbolTable* sTable, int index) {
                     } 
                     else if (strcmp(G.terminals[temp->elem->curr], "TK_PLUS") == 0 || strcmp(G.terminals[temp->elem->curr], "TK_MINUS") == 0) { 
                         
-                        // printf("count2 : %d \n", count2); 
+                        printf("Line number %d count2 : %d\n", temp->elem->lineNo, count2); 
                         if (newT[count2] == -6 || newT[count2] == -7) { 
                             if (cInd2 == 0) { 
-                                inds2 = (int*) malloc(sizeof(int)); 
+                                // inds2 = (int*) malloc(sizeof(int)*2); 
                             } 
                             else { 
                                 inds2 = realloc(inds2, sizeof(int) * (cInd2 + 1)); 
@@ -841,7 +840,7 @@ int typeCheck(astNode* root, grammar G, symbolTable* sTable, int index) {
                                     newT[count2] = -1; 
                                     newT[count2 - 1] = -1; 
                                     newT[count2 + 1] = -1; 
-                                    printf("Wrong types of matching operands for TK_PLUS/TK_MINUS at line %d ERROR \n", line); 
+                                    printf("Line No: %d - ERROR: Wrong types of matching operands for TK_PLUS/TK_MINUS\n", line); 
                                     return -1; 
                                 } 
                             } 
@@ -868,7 +867,7 @@ int typeCheck(astNode* root, grammar G, symbolTable* sTable, int index) {
                                 newT[count2] = -1; 
                                 newT[count2 - 1] = -1; 
                                 newT[count2 + 1] = -1; 
-                                printf("Operand types do not match for TK_PLUS/TK_MINUS at line %d ERROR \n", line); 
+                                printf("Line No: %d - ERROR: Operand types do not match for TK_PLUS/TK_MINUS\n", line); 
                                 return -1; 
                             }
                         } 
@@ -924,15 +923,11 @@ int typeCheck(astNode* root, grammar G, symbolTable* sTable, int index) {
             //     printf("newT[%d] = %d \n", i, newT[i]); 
             // }
             
-            int* fT = (int*) malloc(sizeof(int) * (count - (cInd2 * 3) + cInd2)); 
+            // int* fT = (int*) malloc(sizeof(int) * (count - (cInd2 * 3) + cInd2)); 
+            int fT[count - (cInd2 * 3) + cInd2]; 
             j = 0; 
             i = 0; 
             k = 0; 
-            // for (int l = 0; l < count; l++) { 
-            //     if (newT[l] == -1) { 
-            //         return -1; 
-            //     }
-            // }
             if (cInd2 != 0) { 
                 while (i < count) { 
                     if (inds2[j] == i + 1) { 
@@ -962,8 +957,12 @@ int typeCheck(astNode* root, grammar G, symbolTable* sTable, int index) {
             //     printf("fT[%d] = %d \n", i, fT[i]); 
             // }
             
+            if (inds2 != NULL) { 
+                free(inds2); 
+                // printf("inds2 freed \n"); 
+            }
             if (count != 1) { 
-                printf("Check arithmetic expression for correctness at line %d ERROR \n", line); 
+                printf("Line No: %d - ERROR: Check arithmetic expression for correctness\n", line); 
                 return -1; 
             } 
             else { 
@@ -992,7 +991,7 @@ int typeCheck(astNode* root, grammar G, symbolTable* sTable, int index) {
             int fInd = fIndex(fName, sTable); 
             int line = root->child->next->elem->lineNo; 
             if (fInd == -1) { 
-                printf("Function %s not defined at line %d ERROR \n", fName, line); 
+                printf("Line No: %d - ERROR: Function %s not defined\n", line, fName); 
                 return -1; 
             }
             // printf("The function is %s %d \n", fName, fInd); 
@@ -1024,7 +1023,7 @@ int typeCheck(astNode* root, grammar G, symbolTable* sTable, int index) {
                 for (int i = 0; i < sTable->tables[fInd]->function->numIn; i++) { 
                     
                     if (inP->elem->isLeaf == 1 && inP->elem->curr == 0) { 
-                        printf("Input parameters for function call incomplete at line %d ERROR \n", line); 
+                        printf("Line No: %d - ERROR: Input parameters for function call incomplete\n", line); 
                         return -1; 
                     } 
 
@@ -1036,7 +1035,7 @@ int typeCheck(astNode* root, grammar G, symbolTable* sTable, int index) {
                         // Fine 
                     } 
                     else { 
-                        printf("Variable %s of input parameter list does not match at line %d ERROR \n", inP->elem->lex.lexemeStr, line); 
+                        printf("Line No: %d - ERROR: Variable %s of input parameter list does not match\n", line, inP->elem->lex.lexemeStr); 
                         return -1; 
                     } 
                     inP = inP->next; 
@@ -1044,7 +1043,7 @@ int typeCheck(astNode* root, grammar G, symbolTable* sTable, int index) {
                 } 
 
                 if (!(inP->elem->isLeaf == 1 && inP->elem->curr == 0)) { 
-                    printf("Extra input parameters at line %d ERROR \n", line); 
+                    printf("Line No: %d - ERROR: Extra input parameters\n", line); 
                     return -1; 
                 }
             } 
@@ -1073,7 +1072,7 @@ int typeCheck(astNode* root, grammar G, symbolTable* sTable, int index) {
                 for (int i = 0; i < sTable->tables[fInd]->function->numOut; i++) { 
                 
                     if (outP->elem->isLeaf == 1 && outP->elem->curr == 0) { 
-                        printf("Output parameters for function call incomplete at line %d ERROR \n", line); 
+                        printf("Line No: %d - ERROR: Output parameters for function call incomplete\n", line); 
                         return -1; 
                     }
                 
@@ -1082,14 +1081,14 @@ int typeCheck(astNode* root, grammar G, symbolTable* sTable, int index) {
                         // Fine 
                     } 
                     else { 
-                        printf("Variable %s of output parameter list does not match at line %d ERROR \n", outP->elem->lex.lexemeStr, outP->elem->lineNo); 
+                        printf("Line No: %d - ERROR: Variable %s of output parameter list does not match\n", outP->elem->lineNo, outP->elem->lex.lexemeStr); 
                         return -1; 
                     }
                     outP = outP->next; 
                 } 
 
                 if (!(outP->next->elem->isLeaf == 1 && strcmp(G.terminals[outP->next->elem->curr], "TK_ASSIGNOP") == 0)) { 
-                    printf("Extra output parameters at line %d ERROR \n", outP->elem->lineNo); 
+                    printf("Line No: %d - ERROR: Extra output parameters\n", outP->elem->lineNo); 
                     return -1; 
                 }
             } 
@@ -1165,7 +1164,7 @@ int typeCheck(astNode* root, grammar G, symbolTable* sTable, int index) {
                     return -3; 
                 } 
                 else{
-                    printf("Invalid operands for boolean expression on line %d ERROR \n", line); 
+                    printf("Line No: %d - ERROR: Invalid operands for boolean expression\n", line); 
                     return -1; 
                 }
             }
@@ -1179,7 +1178,7 @@ int typeCheck(astNode* root, grammar G, symbolTable* sTable, int index) {
                     return -3; 
                 } 
                 else { 
-                    printf("Invalid operands for boolean expression on line %d ERROR \n", line); 
+                    printf("Line No: %d - ERROR: Invalid operands for boolean expression\n", line); 
                     return -1; 
                 }
                 
@@ -1205,7 +1204,7 @@ int typeCheck(astNode* root, grammar G, symbolTable* sTable, int index) {
                     return -3;
                 } 
                 else{
-                    printf("Invalid operands for boolean expression on line %d ERROR \n", line);
+                    printf("Line No: %d - ERROR: Invalid operands for boolean expression\n", line);
                     return -1;
                 }
                 
@@ -1230,7 +1229,7 @@ int typeCheck(astNode* root, grammar G, symbolTable* sTable, int index) {
                 return -2; 
             } 
             else{
-                printf("Cannot perform io operation on line %d ERROR \n", line);
+                printf("Line No: %d - ERROR: Cannot perform io operation\n", line);
                 return -1;
             }
         }
@@ -1266,10 +1265,10 @@ int typeCheck(astNode* root, grammar G, symbolTable* sTable, int index) {
             // printf("%d %d \n", t1, t2); 
 
             if(t1 != -3){
-                printf("Condition for if is incorrect at line %d ERROR \n",line);
+                printf("Line No: %d - ERROR: Condition for if is incorrect\n",line);
             }
             else if(t2 != -2){
-                printf("Incorrect stmts inside if block at line %d ERROR \n", line);
+                printf("Line No: %d - ERROR: Incorrect stmts inside if block\n", line);
             }
             else{ 
                 // temp = findChild(root,5,false,0);
@@ -1288,7 +1287,7 @@ int typeCheck(astNode* root, grammar G, symbolTable* sTable, int index) {
             }
             if(t1 == -2 && temp->next->elem->isLeaf && strcmp(G.terminals[temp->next->elem->curr],"TK_ENDIF")==0) return -2;
             else{
-                printf("There is error in else part at line %d ERROR \n",temp->next->elem->lineNo);
+                printf("Line No: %d - ERROR: There is error in else part\n",temp->next->elem->lineNo);
                 return -1;
             } 
             
@@ -1314,7 +1313,7 @@ int typeCheck(astNode* root, grammar G, symbolTable* sTable, int index) {
             // If function is main
             if(strcmp(sTable->tables[index]->function->fId, "main") == 0){
                 if(!(root->child->next->child->elem->isLeaf && root->child->next->child->elem->curr == 0)){
-                    printf("Main function cannot return values at line %d ERROR \n", line);
+                    printf("Line No: %d - ERROR: Main function cannot return values\n", line);
                     return -1;
                 }
                 else{
@@ -1330,14 +1329,14 @@ int typeCheck(astNode* root, grammar G, symbolTable* sTable, int index) {
                     return -2; 
                 } 
                 else { 
-                    printf("Return paramters not included at line %d ERROR\n", line); 
+                    printf("Line No: %d - ERROR: Return paramters not included\n", line); 
                     return -1; 
                 }
             } 
             
             int t1 = matchReturnParams(root->child->next->child, G, sTable, index);
             if (t1!=-2){
-                printf("Return parameters at line %d do not match with the function definition ERROR \n", line);
+                printf("Line No: %d - ERROR: Return parameters do not match with the function definition\n", line);
                 return -1;
             }
             // printf("Function %s done \n", sTable->tables[index]->function->fId); 
@@ -1346,7 +1345,7 @@ int typeCheck(astNode* root, grammar G, symbolTable* sTable, int index) {
         } 
         else if (strcmp(G.nonTerminals[root->elem->curr], "declaration") == 0) { 
             if (root->child->elem->isLeaf == 1 && strcmp(G.terminals[root->child->elem->curr], "TK_UNION") == 0) { 
-                printf("Variable of union type declared at line %d ERROR \n", root->child->elem->lineNo); 
+                printf("Line No: %d - ERROR: Variable of union type declared\n", root->child->elem->lineNo); 
                 return -1; 
             } 
             else if (root->child->elem->isLeaf == 1 && strcmp(G.terminals[root->child->elem->curr], "TK_RUID") == 0) { 
@@ -1355,7 +1354,7 @@ int typeCheck(astNode* root, grammar G, symbolTable* sTable, int index) {
                     ruid = sTable->allTypes[ruid]->ref; 
                 } 
                 if (sTable->allTypes[ruid]->typeId == 4) { 
-                    printf("Variable of union type declared at line %d ERROR \n", root->child->elem->lineNo); 
+                    printf("Line No: %d - ERROR: Variable of union type declared\n", root->child->elem->lineNo); 
                     return -1;
                 }
             }
@@ -1374,196 +1373,195 @@ int typeCheck(astNode* root, grammar G, symbolTable* sTable, int index) {
     }
 } 
 
-void main() { 
+// void main() { 
     
-    // int numEntries = 0; 
-    // int hashSize = 0; 
-    // entry** hashT = initialiseS(); 
-    // hashSize = size; 
-    // entry* new1 = (entry*) malloc(sizeof(entry)); 
-    // // printf("done \n"); 
-    // // entry* new1 = makeEntry("c453", 0, 0, 1); 
+//     // int numEntries = 0; 
+//     // int hashSize = 0; 
+//     // entry** hashT = initialiseS(); 
+//     // hashSize = size; 
+//     // entry* new1 = (entry*) malloc(sizeof(entry)); 
+//     // // printf("done \n"); 
+//     // // entry* new1 = makeEntry("c453", 0, 0, 1); 
     
-    // new1->varName = "c453"; 
-    // new1->offset = 4; 
-    // entry* new2 = (entry*) malloc(sizeof(entry)); 
-    // new2->varName = "kfjuw"; 
-    // new2->offset = 8; 
-    // printf("done \n"); 
-    // initialiseS(hashT); 
-    // printf("done \n"); 
-    // int ins1 = insertSRez(new1, hashT, numEntries, hashSize); 
-    // if (ins1 >= hashSize) { 
-    //     printf("Insert 1 (Doubled): %d \n", ins1 - hashSize); 
-    //     hashSize *= 2; 
-    // } 
-    // else { 
-    //     printf("Insert 1 (Not doubled): %d \n", ins1); 
-    // } 
-    // int ins2 = insertSRez(new2, hashT, numEntries, hashSize); 
-    // if (ins2 >= hashSize) { 
-    //     printf("Insert 1 (Doubled): %d \n", ins2 - hashSize); 
-    //     hashSize *= 2; 
-    // } 
-    // else { 
-    //     printf("Insert 1 (Not doubled): %d \n", ins2); 
-    // } 
+//     // new1->varName = "c453"; 
+//     // new1->offset = 4; 
+//     // entry* new2 = (entry*) malloc(sizeof(entry)); 
+//     // new2->varName = "kfjuw"; 
+//     // new2->offset = 8; 
+//     // printf("done \n"); 
+//     // initialiseS(hashT); 
+//     // printf("done \n"); 
+//     // int ins1 = insertSRez(new1, hashT, numEntries, hashSize); 
+//     // if (ins1 >= hashSize) { 
+//     //     printf("Insert 1 (Doubled): %d \n", ins1 - hashSize); 
+//     //     hashSize *= 2; 
+//     // } 
+//     // else { 
+//     //     printf("Insert 1 (Not doubled): %d \n", ins1); 
+//     // } 
+//     // int ins2 = insertSRez(new2, hashT, numEntries, hashSize); 
+//     // if (ins2 >= hashSize) { 
+//     //     printf("Insert 1 (Doubled): %d \n", ins2 - hashSize); 
+//     //     hashSize *= 2; 
+//     // } 
+//     // else { 
+//     //     printf("Insert 1 (Not doubled): %d \n", ins2); 
+//     // } 
 
-    // printf("%d \n", insertS(new1, hashT)); 
-    // printf("done \n"); 
-    // printf("%d \n", insertS(new2, hashT)); 
-    // int ind = searchS(new1->varName, hashT); 
-    // printf("%d \n", ind); 
-    // printf("%s %d %d %d %d %d \n", hashT[ind]->varName, hashT[ind]->offset, hashT[ind]->present, hashT[ind]->type, hashT[ind]->lineNo, hashT[ind]->width); 
+//     // printf("%d \n", insertS(new1, hashT)); 
+//     // printf("done \n"); 
+//     // printf("%d \n", insertS(new2, hashT)); 
+//     // int ind = searchS(new1->varName, hashT); 
+//     // printf("%d \n", ind); 
+//     // printf("%s %d %d %d %d %d \n", hashT[ind]->varName, hashT[ind]->offset, hashT[ind]->present, hashT[ind]->type, hashT[ind]->lineNo, hashT[ind]->width); 
 
-    char* file; 
-    file = "grammar.txt"; 
-    grammar C; 
-    C = readGrammar(file); 
-    printf("Grammar read and saved \n"); 
-    printf("%d %d %d %d \n", C.totalNumRules, C.allRules[36].numOrs, C.allRules[31].epsilon, C.allRules[28].epsilon); 
+//     char* file; 
+//     file = "grammar.txt"; 
+//     grammar C; 
+//     C = readGrammar(file); 
+//     printf("Grammar read and saved \n"); 
+//     printf("%d %d %d %d \n", C.totalNumRules, C.allRules[36].numOrs, C.allRules[31].epsilon, C.allRules[28].epsilon); 
     
-    // printf("'%s' %d %d \n", C.nonTerminals[23], C.allRules[23].numOrs, C.allRules[23].epsilon); 
-    // printf("%d %d '%s' '%s' \n", C.allRules[23].RHS[0].symbols[0].symbol, C.allRules[23].RHS[1].symbols[0].symbol, C.nonTerminals[C.allRules[23].RHS[0].symbols[0].symbol], C.terminals[C.allRules[23].RHS[1].symbols[0].symbol]); 
+//     // printf("'%s' %d %d \n", C.nonTerminals[23], C.allRules[23].numOrs, C.allRules[23].epsilon); 
+//     // printf("%d %d '%s' '%s' \n", C.allRules[23].RHS[0].symbols[0].symbol, C.allRules[23].RHS[1].symbols[0].symbol, C.nonTerminals[C.allRules[23].RHS[0].symbols[0].symbol], C.terminals[C.allRules[23].RHS[1].symbols[0].symbol]); 
 
-    // prettyPrintGrammar(C);
+//     // prettyPrintGrammar(C);
     
-    C.ff = ComputeFirstAndFollowSets(C); 
-    printf("First and Follow computed \n"); 
-    printf("\n***** \n"); 
-    // int n = 48; 
-    // printf("C.ff[n].numFirst %d  C.ff[n].numFollow %d \n", C.ff[n].numFirst[0], C.ff[n].numFollow); 
-    // for (int i = 0; i < C.ff[n].numFollow; i++) { 
-    //     printf("%d '%s' \n", C.ff[n].follow[i], C.terminals[C.ff[n].follow[i]]); 
-    // } 
+//     C.ff = ComputeFirstAndFollowSets(C); 
+//     printf("First and Follow computed \n"); 
+//     printf("\n***** \n"); 
+//     // int n = 48; 
+//     // printf("C.ff[n].numFirst %d  C.ff[n].numFollow %d \n", C.ff[n].numFirst[0], C.ff[n].numFollow); 
+//     // for (int i = 0; i < C.ff[n].numFollow; i++) { 
+//     //     printf("%d '%s' \n", C.ff[n].follow[i], C.terminals[C.ff[n].follow[i]]); 
+//     // } 
     
-    printf("\n***** \n"); 
+//     printf("\n***** \n"); 
 
-    // int trial = 10; 
-    // // printf("%d %d %d %d %d %d \n", C.allRules[23].numOrs, C.ff[24].numFirst[0], C.ff[24].numFirst[1], C.ff[24].numFirst[2], C.ff[24].numFirst[3], C.ff[24].numFirst[4]); 
-    // printf("C.allRules[trial].numOrs %d ", C.allRules[trial].numOrs); 
-    // for (int i = 0; i < C.allRules[trial].numOrs; i++) { 
-    //     printf("C.ff[trial].numFirst[i] %d ", C.ff[trial].numFirst[i]); 
-    // } 
+//     // int trial = 10; 
+//     // // printf("%d %d %d %d %d %d \n", C.allRules[23].numOrs, C.ff[24].numFirst[0], C.ff[24].numFirst[1], C.ff[24].numFirst[2], C.ff[24].numFirst[3], C.ff[24].numFirst[4]); 
+//     // printf("C.allRules[trial].numOrs %d ", C.allRules[trial].numOrs); 
+//     // for (int i = 0; i < C.allRules[trial].numOrs; i++) { 
+//     //     printf("C.ff[trial].numFirst[i] %d ", C.ff[trial].numFirst[i]); 
+//     // } 
 
-    // printRule(C,trial,-1);
+//     // printRule(C,trial,-1);
     
-    parseTable* T = intializeParseTable(C.numNonTerminals,C.numTerminals);
-    createParseTable(C,C.ff,T);
-    // printParseTable(C,T);
-    printf("Parse Table created \n"); 
+//     parseTable* T = intializeParseTable(C.numNonTerminals,C.numTerminals);
+//     createParseTable(C,C.ff,T);
+//     // printParseTable(C,T);
+//     printf("Parse Table created \n"); 
 
-    // printf("%d %d %d '%s' '%s' \n", C.allRules[2].numOrs, C.ff[2].numFirst[0], C.ff[2].numFirst[1], C.terminals[C.ff[2].first[0][0]], C.terminals[C.ff[2].first[1][0]]); 
-    // printf("%d %d %d \n", C.allRules[0].numOrs, C.allRules[0].RHS[0].numSyms, C.allRules[0].RHS[0].symbols[1].type); 
-    // printf("%d %d %d %d %d %d '%s' '%s' '%s' '%s' \n", C.ff[23].numFirst, C.ff[23].numFollow, C.ff[23].follow[0], C.ff[23].follow[1], C.ff[23].follow[2], C.ff[23].follow[3], C.terminals[C.ff[23].follow[0]], C.terminals[C.ff[23].follow[1]], C.terminals[C.ff[23].follow[2]], C.terminals[C.ff[23].follow[3]]); 
+//     // printf("%d %d %d '%s' '%s' \n", C.allRules[2].numOrs, C.ff[2].numFirst[0], C.ff[2].numFirst[1], C.terminals[C.ff[2].first[0][0]], C.terminals[C.ff[2].first[1][0]]); 
+//     // printf("%d %d %d \n", C.allRules[0].numOrs, C.allRules[0].RHS[0].numSyms, C.allRules[0].RHS[0].symbols[1].type); 
+//     // printf("%d %d %d %d %d %d '%s' '%s' '%s' '%s' \n", C.ff[23].numFirst, C.ff[23].numFollow, C.ff[23].follow[0], C.ff[23].follow[1], C.ff[23].follow[2], C.ff[23].follow[3], C.terminals[C.ff[23].follow[0]], C.terminals[C.ff[23].follow[1]], C.terminals[C.ff[23].follow[2]], C.terminals[C.ff[23].follow[3]]); 
 
-    char* testCaseFile = "./testcases_stage1/t5.txt"; 
-    // FILE *fp = fopen("./testcases_stage1/t2.txt","r"); 
-    // initialize();
-    // fp = getStream(fp, 0);
-    // tokenInfo currToken = getNextToken(fp); 
-    // printf("%d '%s' \n", findIndex(C.terminals, C.numTerminals, enumToStringP[currToken.tkn_name]), enumToStringP[currToken.tkn_name]); 
-    treeN rootNode; 
-    rootNode = parseInputSourceCode(testCaseFile, C, T); 
-    // printf("%u %d %d %d %d %d \n", &rootNode, rootNode.elem.curr, rootNode.numChild, rootNode.elem.lineNo, rootNode.elem.isLeaf, rootNode.elem.parentNodeSymbolID); 
-    // printf("%u %u \n", rootNode.children[0], rootNode.children[1]); 
-    // printf("%u %u \n", rootNode.children[1]->children[1], rootNode.children[1]->children[1]->children[5]); 
-    // printf("%d '%s' %d '%s' \n", rootNode.children[1]->children[1], C.nonTerminals[rootNode.children[1]->children[1]->elem.curr], rootNode.children[1]->children[1]->children[5], C.terminals[rootNode.children[1]->children[1]->children[5]->elem.curr]); 
-    // printParseTree(&rootNode,"op.txt",C);
-    int *insertPrev = (int *)malloc(sizeof(int));
-    *insertPrev = 0;
-    int *count = (int *)malloc(sizeof(int));
-    *count = 0;
-    astNode *astroot = mknode(rootNode.elem,C);
-    constructAst(astroot, &rootNode,C,insertPrev,astroot);
-    printf("*************************************************************************************************\n\n");
-    printf("Printing Abstract Syntax Tree\n");
-    printAST(astroot,C, count);
-    printf("*************************************************************************************************\n\n");
-    // printf("Level 1 printing\n");
-    // printf("Root : isLeaf: %d curr: %d name: %s Line: %d \n",astroot->elem->isLeaf,astroot->elem->curr,astroot->elem->isLeaf?C.terminals[astroot->elem->curr]:C.nonTerminals[astroot->elem->curr],astroot->elem->lineNo);
-    // astNode *curr = astroot->child;
-    // while(curr!=NULL){
-    //     printf("isLeaf: %d curr: %d name:%s Line:%d\n",curr->elem->isLeaf,curr->elem->curr,curr->elem->isLeaf?C.terminals[curr->elem->curr]:C.nonTerminals[curr->elem->curr],curr->elem->lineNo);
-    //     curr = curr->next;
-    // }
-    // printf("Root : %d %d %s \n", astroot->elem->isLeaf, astroot->elem->curr, C.nonTerminals[astroot->elem->curr]); 
-    // astNode* curr = astroot->child; 
-    // // astNode* curr = astroot->child->child; 
-    // // printf("%s \n", curr->elem->lex.lexemeStr); 
-    // while (curr != NULL) { 
-    //     printf("%d %d ", curr->elem->isLeaf, curr->elem->curr); 
-    //     if (curr->elem->isLeaf == 1) { 
-    //         printf("'%s' \n", C.terminals[curr->elem->curr]); 
-    //     } 
-    //     else { 
-    //         printf("'%s' \n", C.nonTerminals[curr->elem->curr]); 
-    //     } 
-    //     curr = curr->next; 
-    // } 
+//     char* testCaseFile = "./stage 2 (typechecking testcases for expressions)/p4.txt"; 
+//     // FILE *fp = fopen("./testcases_stage1/t2.txt","r"); 
+//     // initialize();
+//     // fp = getStream(fp, 0);
+//     // tokenInfo currToken = getNextToken(fp); 
+//     // printf("%d '%s' \n", findIndex(C.terminals, C.numTerminals, enumToStringP[currToken.tkn_name]), enumToStringP[currToken.tkn_name]); 
+//     treeN rootNode; 
+//     rootNode = parseInputSourceCode(testCaseFile, C, T); 
+//     // printf("%u %d %d %d %d %d \n", &rootNode, rootNode.elem.curr, rootNode.numChild, rootNode.elem.lineNo, rootNode.elem.isLeaf, rootNode.elem.parentNodeSymbolID); 
+//     // printf("%u %u \n", rootNode.children[0], rootNode.children[1]); 
+//     // printf("%u %u \n", rootNode.children[1]->children[1], rootNode.children[1]->children[1]->children[5]); 
+//     // printf("%d '%s' %d '%s' \n", rootNode.children[1]->children[1], C.nonTerminals[rootNode.children[1]->children[1]->elem.curr], rootNode.children[1]->children[1]->children[5], C.terminals[rootNode.children[1]->children[1]->children[5]->elem.curr]); 
+//     // printParseTree(&rootNode,"op.txt",C);
+//     int *insertPrev = (int *)malloc(sizeof(int));
+//     *insertPrev = 0;
+//     int *count = (int *)malloc(sizeof(int));
+//     astNode *astroot = mknode(rootNode.elem,C);
+//     constructAst(astroot, &rootNode,C,insertPrev,astroot);
+//     printf("*************************************************************************************************\n\n");
+//     printf("Printing Abstract Syntax Tree\n");
+//     printAST(astroot,C,count);
+//     printf("*************************************************************************************************\n\n");
+//     // printf("Level 1 printing\n");
+//     // printf("Root : isLeaf: %d curr: %d name: %s Line: %d \n",astroot->elem->isLeaf,astroot->elem->curr,astroot->elem->isLeaf?C.terminals[astroot->elem->curr]:C.nonTerminals[astroot->elem->curr],astroot->elem->lineNo);
+//     // astNode *curr = astroot->child;
+//     // while(curr!=NULL){
+//     //     printf("isLeaf: %d curr: %d name:%s Line:%d\n",curr->elem->isLeaf,curr->elem->curr,curr->elem->isLeaf?C.terminals[curr->elem->curr]:C.nonTerminals[curr->elem->curr],curr->elem->lineNo);
+//     //     curr = curr->next;
+//     // }
+//     // printf("Root : %d %d %s \n", astroot->elem->isLeaf, astroot->elem->curr, C.nonTerminals[astroot->elem->curr]); 
+//     // astNode* curr = astroot->child; 
+//     // // astNode* curr = astroot->child->child; 
+//     // // printf("%s \n", curr->elem->lex.lexemeStr); 
+//     // while (curr != NULL) { 
+//     //     printf("%d %d ", curr->elem->isLeaf, curr->elem->curr); 
+//     //     if (curr->elem->isLeaf == 1) { 
+//     //         printf("'%s' \n", C.terminals[curr->elem->curr]); 
+//     //     } 
+//     //     else { 
+//     //         printf("'%s' \n", C.nonTerminals[curr->elem->curr]); 
+//     //     } 
+//     //     curr = curr->next; 
+//     // } 
 
-    // printf("%d \n", findIndex(C.terminals, C.numTerminals, "TK_GLOBAL")); 
-    printf("Constructing symbol table and performing type checking \n"); 
-    symbolTable* sTable = constructST(astroot, C); 
+//     // printf("%d \n", findIndex(C.terminals, C.numTerminals, "TK_GLOBAL")); 
+//     printf("Constructing symbol table and performing type checking \n"); 
+//     symbolTable* sTable = constructST(astroot, C); 
 
-    // int ind13 = searchTypes("#four", sTable); 
-    // printf("%s %d \n", sTable->allTypes[ind13]->name, sTable->allTypes[ind13]->numFields); 
-    // int ind14 = searchS("tr", sTable->allTypes[ind13]->fields); 
-    // printf("%s %s \n", sTable->allTypes[sTable->allTypes[ind13]->fields[ind14]->type]->name, sTable->allTypes[sTable->allTypes[sTable->allTypes[ind13]->fields[ind14]->type]->ref]->name); 
-    // int ind9 = searchS("b5c6", sTable->tables[1]->entries); 
-    // printf("%s %d Fields : %d \n", sTable->tables[1]->entries[ind9]->varName, sTable->tables[1]->entries[ind9]->type, sTable->allTypes[sTable->tables[1]->entries[ind9]->type]->numFields); 
-    // int ind10 = searchS("maths", sTable->allTypes[sTable->tables[1]->entries[ind9]->type]->fields); 
-    // int ind11 = searchS("physics", sTable->allTypes[sTable->tables[1]->entries[ind9]->type]->fields); 
-    // int ind12 = searchS("chemistry", sTable->allTypes[sTable->tables[1]->entries[ind9]->type]->fields); 
-    // printf("%s \n", sTable->allTypes[sTable->tables[1]->entries[ind9]->type]->fields[ind10]->varName); 
-    // printf("%d \n", strcmp("maths", sTable->allTypes[sTable->tables[1]->entries[ind9]->type]->fields[ind10]->varName)); 
-    // printf("%d %d %d \n", ind10, ind11, ind12); 
-    // printf("%d %d \n", sTable->numTypes, sTable->numEntries); 
-    // int ind1 = searchS("b3b444", sTable->entries); 
-    // printf("%d %d %d %s \n", sTable->entries[ind1]->lineNo, sTable->entries[ind1]->offset, sTable->entries[ind1]->type, sTable->entries[ind1]->varName); 
-    // printf("%d %d %d \n", sTable->tables[0]->currWidth, sTable->tables[1]->currWidth, sTable->mainOffset); 
+//     // int ind13 = searchTypes("#four", sTable); 
+//     // printf("%s %d \n", sTable->allTypes[ind13]->name, sTable->allTypes[ind13]->numFields); 
+//     // int ind14 = searchS("tr", sTable->allTypes[ind13]->fields); 
+//     // printf("%s %s \n", sTable->allTypes[sTable->allTypes[ind13]->fields[ind14]->type]->name, sTable->allTypes[sTable->allTypes[sTable->allTypes[ind13]->fields[ind14]->type]->ref]->name); 
+//     // int ind9 = searchS("b5c6", sTable->tables[1]->entries); 
+//     // printf("%s %d Fields : %d \n", sTable->tables[1]->entries[ind9]->varName, sTable->tables[1]->entries[ind9]->type, sTable->allTypes[sTable->tables[1]->entries[ind9]->type]->numFields); 
+//     // int ind10 = searchS("maths", sTable->allTypes[sTable->tables[1]->entries[ind9]->type]->fields); 
+//     // int ind11 = searchS("physics", sTable->allTypes[sTable->tables[1]->entries[ind9]->type]->fields); 
+//     // int ind12 = searchS("chemistry", sTable->allTypes[sTable->tables[1]->entries[ind9]->type]->fields); 
+//     // printf("%s \n", sTable->allTypes[sTable->tables[1]->entries[ind9]->type]->fields[ind10]->varName); 
+//     // printf("%d \n", strcmp("maths", sTable->allTypes[sTable->tables[1]->entries[ind9]->type]->fields[ind10]->varName)); 
+//     // printf("%d %d %d \n", ind10, ind11, ind12); 
+//     // printf("%d %d \n", sTable->numTypes, sTable->numEntries); 
+//     // int ind1 = searchS("b3b444", sTable->entries); 
+//     // printf("%d %d %d %s \n", sTable->entries[ind1]->lineNo, sTable->entries[ind1]->offset, sTable->entries[ind1]->type, sTable->entries[ind1]->varName); 
+//     // printf("%d %d %d \n", sTable->tables[0]->currWidth, sTable->tables[1]->currWidth, sTable->mainOffset); 
     
-    // printf("%d %d %d %d %d \n", sTable->numF, sTable->numTypes, sTable->tables[0]->currWidth, sTable->tables[0]->numEntries, sTable->tables[0]->function->inId); 
-    // printf("%d %d \n", sTable->allTypes[0]->typeId, sTable->allTypes[1]->typeId); 
-    // printf("%s %s \n", sTable->allTypes[2]->name, sTable->allTypes[3]->name); 
-    // int ind1 = searchS("d5cc34", sTable->allTypes[4]->fields); 
-    // int ind2 = searchS("b5c6", sTable->allTypes[4]->fields); 
-    // printf("%d %d %d \n", sTable->allTypes[4]->numFields, sTable->allTypes[4]->fields[ind1]->type, sTable->allTypes[4]->fields[ind2]->type); 
-    // int ind3 = searchTypes("#two", sTable); 
-    // printf("%s \n", sTable->allTypes[ind3]->name); 
-    // ind1 = searchS("b5b567", sTable->tables[0]->entries); 
-    // ind2 = searchS("b3", sTable->tables[0]->entries); 
-    // ind3 = searchS("d5", sTable->tables[0]->entries); 
-    // printf("%d %d %d %d \n", sTable->tables[0]->numEntries, sTable->tables[0]->entries[ind1]->type, sTable->tables[0]->entries[ind2]->type, sTable->tables[0]->entries[ind3]->type); 
-    // ind1 = searchS("beginpoint", sTable->allTypes[2]->fields); 
-    // ind2 = searchS("endpoint", sTable->allTypes[2]->fields); 
-    // printf("%d \n", sTable->allTypes[3]->width); 
-    // printf("%s %d %s %d %d \n", sTable->allTypes[2]->name, sTable->allTypes[2]->numFields, sTable->allTypes[2]->fields[ind2]->varName, sTable->allTypes[2]->fields[ind2]->type, sTable->allTypes[2]->fields[ind2]->offset); 
+//     // printf("%d %d %d %d %d \n", sTable->numF, sTable->numTypes, sTable->tables[0]->currWidth, sTable->tables[0]->numEntries, sTable->tables[0]->function->inId); 
+//     // printf("%d %d \n", sTable->allTypes[0]->typeId, sTable->allTypes[1]->typeId); 
+//     // printf("%s %s \n", sTable->allTypes[2]->name, sTable->allTypes[3]->name); 
+//     // int ind1 = searchS("d5cc34", sTable->allTypes[4]->fields); 
+//     // int ind2 = searchS("b5c6", sTable->allTypes[4]->fields); 
+//     // printf("%d %d %d \n", sTable->allTypes[4]->numFields, sTable->allTypes[4]->fields[ind1]->type, sTable->allTypes[4]->fields[ind2]->type); 
+//     // int ind3 = searchTypes("#two", sTable); 
+//     // printf("%s \n", sTable->allTypes[ind3]->name); 
+//     // ind1 = searchS("b5b567", sTable->tables[0]->entries); 
+//     // ind2 = searchS("b3", sTable->tables[0]->entries); 
+//     // ind3 = searchS("d5", sTable->tables[0]->entries); 
+//     // printf("%d %d %d %d \n", sTable->tables[0]->numEntries, sTable->tables[0]->entries[ind1]->type, sTable->tables[0]->entries[ind2]->type, sTable->tables[0]->entries[ind3]->type); 
+//     // ind1 = searchS("beginpoint", sTable->allTypes[2]->fields); 
+//     // ind2 = searchS("endpoint", sTable->allTypes[2]->fields); 
+//     // printf("%d \n", sTable->allTypes[3]->width); 
+//     // printf("%s %d %s %d %d \n", sTable->allTypes[2]->name, sTable->allTypes[2]->numFields, sTable->allTypes[2]->fields[ind2]->varName, sTable->allTypes[2]->fields[ind2]->type, sTable->allTypes[2]->fields[ind2]->offset); 
     
-    // int ind4 = searchTypes("#two", sTable); 
-    // printf("%d %s \n", sTable->allTypes[ind4]->numAl, sTable->allTypes[ind4]->aliases[0]); 
-    // int ind5 = searchTypes("#point", sTable); 
-    // printf("%d %d \n", ind4, sTable->allTypes[ind5]->ref); 
-    // int ind6 = searchTypes("#variantrecord", sTable); 
-    // printf("%d %d \n", sTable->allTypes[ind6]->width, ind6); 
-    // int ind7 = searchS("b5c6", sTable->allTypes[4]->fields); 
-    // printf("%s %d \n", sTable->allTypes[4]->fields[ind7]->varName, sTable->allTypes[4]->fields[ind7]->type); 
-    // ind7 = searchS("beginpoint", sTable->allTypes[ind4]->fields); 
-    // printf("%s \n", sTable->allTypes[ind4]->fields[ind7]->varName); 
-    // printf("Number of functions: %d \n", sTable->numF); 
-    // int ind8 = searchS("b3b444", sTable->entries); 
-    // printf("%s %d %d \n", sTable->entries[ind8]->varName, sTable->entries[ind8]->type, sTable->entries[ind8]->offset); 
-    // printf("%d %d %d \n", sTable->tables[0]->function->inOrder[0], sTable->tables[0]->function->inOrder[1], sTable->tables[0]->function->inOrder[2]); 
-    // printf("%s %s %s \n", sTable->allTypes[sTable->tables[0]->function->inId]->fields[sTable->tables[0]->function->inOrder[0]]->varName, sTable->allTypes[sTable->tables[0]->function->inId]->fields[sTable->tables[0]->function->inOrder[1]]->varName, sTable->allTypes[sTable->tables[0]->function->inId]->fields[sTable->tables[0]->function->inOrder[2]]->varName); 
+//     // int ind4 = searchTypes("#two", sTable); 
+//     // printf("%d %s \n", sTable->allTypes[ind4]->numAl, sTable->allTypes[ind4]->aliases[0]); 
+//     // int ind5 = searchTypes("#point", sTable); 
+//     // printf("%d %d \n", ind4, sTable->allTypes[ind5]->ref); 
+//     // int ind6 = searchTypes("#variantrecord", sTable); 
+//     // printf("%d %d \n", sTable->allTypes[ind6]->width, ind6); 
+//     // int ind7 = searchS("b5c6", sTable->allTypes[4]->fields); 
+//     // printf("%s %d \n", sTable->allTypes[4]->fields[ind7]->varName, sTable->allTypes[4]->fields[ind7]->type); 
+//     // ind7 = searchS("beginpoint", sTable->allTypes[ind4]->fields); 
+//     // printf("%s \n", sTable->allTypes[ind4]->fields[ind7]->varName); 
+//     // printf("Number of functions: %d \n", sTable->numF); 
+//     // int ind8 = searchS("b3b444", sTable->entries); 
+//     // printf("%s %d %d \n", sTable->entries[ind8]->varName, sTable->entries[ind8]->type, sTable->entries[ind8]->offset); 
+//     // printf("%d %d %d \n", sTable->tables[0]->function->inOrder[0], sTable->tables[0]->function->inOrder[1], sTable->tables[0]->function->inOrder[2]); 
+//     // printf("%s %s %s \n", sTable->allTypes[sTable->tables[0]->function->inId]->fields[sTable->tables[0]->function->inOrder[0]]->varName, sTable->allTypes[sTable->tables[0]->function->inId]->fields[sTable->tables[0]->function->inOrder[1]]->varName, sTable->allTypes[sTable->tables[0]->function->inId]->fields[sTable->tables[0]->function->inOrder[2]]->varName); 
     
-    // printf("*************************************************************************************************\n\n"); 
-    // printf("Type Checking \n"); 
-    int tc = typeCheck(astroot, C, sTable, -1); 
-    // int ind9 = searchS("b5c6", sTable->tables[1]->entries); 
-    // printf("%s %d Fields : %d \n", sTable->tables[1]->entries[ind9]->varName, sTable->tables[1]->entries[ind9]->type, sTable->allTypes[sTable->tables[1]->entries[ind9]->type]->numFields); 
-    // int ind10 = searchS("maths", sTable->allTypes[sTable->tables[1]->entries[ind9]->type]->fields); 
-    // printf("%s \n", sTable->allTypes[sTable->tables[1]->entries[ind9]->type]->fields[ind10]->varName); 
-    // printf("%d \n", strcmp("maths", sTable->allTypes[sTable->tables[1]->entries[ind9]->type]->fields[ind10]->varName)); 
-    // printf("First child of function : %d %d %s %s \n", astroot->child->child->child->elem->isLeaf, astroot->child->child->child->elem->curr, C.terminals[astroot->child->child->child->elem->curr], astroot->child->child->child->elem->lex.lexemeStr); 
-    // printf("rule number %d LHS %s RHS %s\n",getRuleNumber(52,1,C),C.nonTerminals[C.allRules[52].LHS],C.terminals[C.allRules[52].RHS[1].symbols[0].symbol]);
-} 
+//     // printf("*************************************************************************************************\n\n"); 
+//     // printf("Type Checking \n"); 
+//     int tc = typeCheck(astroot, C, sTable, -1); 
+//     // int ind9 = searchS("b5c6", sTable->tables[1]->entries); 
+//     // printf("%s %d Fields : %d \n", sTable->tables[1]->entries[ind9]->varName, sTable->tables[1]->entries[ind9]->type, sTable->allTypes[sTable->tables[1]->entries[ind9]->type]->numFields); 
+//     // int ind10 = searchS("maths", sTable->allTypes[sTable->tables[1]->entries[ind9]->type]->fields); 
+//     // printf("%s \n", sTable->allTypes[sTable->tables[1]->entries[ind9]->type]->fields[ind10]->varName); 
+//     // printf("%d \n", strcmp("maths", sTable->allTypes[sTable->tables[1]->entries[ind9]->type]->fields[ind10]->varName)); 
+//     // printf("First child of function : %d %d %s %s \n", astroot->child->child->child->elem->isLeaf, astroot->child->child->child->elem->curr, C.terminals[astroot->child->child->child->elem->curr], astroot->child->child->child->elem->lex.lexemeStr); 
+//     // printf("rule number %d LHS %s RHS %s\n",getRuleNumber(52,1,C),C.nonTerminals[C.allRules[52].LHS],C.terminals[C.allRules[52].RHS[1].symbols[0].symbol]);
+// } 

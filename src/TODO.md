@@ -17,3 +17,4 @@
 
 8. The parameters being returned by a function must be assigned a value. If a parameter does not get a value assigned within the function definition, it  should be reported as an error.
 18. A while statement must redefine the variable that participates in the iterations. As an instance, consider the following example
+19. The errors need to be identified in order so that in case of lexical errors AST isn't evaluated

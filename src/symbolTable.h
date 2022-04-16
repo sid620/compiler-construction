@@ -16,3 +16,8 @@ void handleNT(astNode* root, grammar G, symbolTable* sTable, int index, int recI
 void handleF(astNode* root, grammar G, symbolTable* sTable, int index); 
 void handleM(astNode* root, grammar G, symbolTable* sTable, int index); 
 symbolTable* constructST(astNode* root, grammar G); 
+int fIndex(char* fName, symbolTable* sTable);
+// char* getGlobalFName(int lineNo, symbolTable* sTable);
+// void printGlobals(symbolTable* sTable);
+// void printAllVars(astNode* root, grammar G, symbolTable* sTable);
+// void printSymbolTable(astNode* root, grammar G, symbolTable* sTable);

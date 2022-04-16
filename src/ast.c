@@ -2,6 +2,10 @@
 #include "ast.h"
 #include<stdio.h>
 #include<stdlib.h>
+
+/*
+    Creates a new node for the AST
+*/
 astNode *mknode(node elem, grammar G){
     astNode *new = (astNode *)malloc(sizeof(astNode));
     new->child  = (astNode *)malloc(sizeof(astNode));
@@ -27,6 +31,10 @@ astNode *mknode(node elem, grammar G){
         new->elem->lex.lexemeStr = elem.lex.lexemeStr;
     return new;
 }
+
+/*
+    Adds the node:child to the node:parent at the end of the linked list
+*/
 void addChildAST(astNode *parent, astNode *child){
     if(parent->child==NULL){
 
@@ -42,12 +50,20 @@ void addChildAST(astNode *parent, astNode *child){
         // parent->numChildren++;
     }
 }
+
+/*
+    Adds the node:sibling after node:curr in the linked list of AST level
+*/
 void insertAST(astNode *curr, astNode *sibling){
     // astNode *temp = curr->next;
     sibling->next = curr->next;
     curr->next = sibling;
     // sibling->next = temp;
 }
+
+/*
+    Checks if the terminal is to be kept in the AST as a node  
+*/
 bool isUseful(int tokenID){
     switch(tokenID-1){
         case TK_FIELDID:
@@ -94,6 +110,7 @@ bool isUseful(int tokenID){
         }
     }
 }
+
 astNode *findChild(astNode *node, int position, bool insertUsed, int insertCount){
     
     astNode * temp = insertUsed? node:node->child;
@@ -105,6 +122,10 @@ astNode *findChild(astNode *node, int position, bool insertUsed, int insertCount
     }
     return temp;
 }
+
+/*
+    Constructs the AST by recursively traversing the Parse Tree 
+*/
 void constructAst(astNode *node, treeN *root, grammar G, int *insertPrev, astNode *mainRoot){
     // printf("Here %s\n",G.nonTerminals[node->elem->curr]);
     bool *insertUsed = (bool *)malloc(sizeof(bool));
@@ -157,6 +178,10 @@ void constructAst(astNode *node, treeN *root, grammar G, int *insertPrev, astNod
     // printf("\n\n**************************************************************************************\n\n");
     // printf("Recurse back to parent of %s\n",node->elem->isLeaf?G.terminals[node->elem->curr]:G.nonTerminals[node->elem->curr]);
 }
+
+/*
+    Applies the appropriate semantic rules and creates the necessary nodes for the corresponding rule
+*/
 void performAction(int ruleNumber, astNode *node, treeN *root, grammar G, bool *insertUsed, int *insertCount){
     switch (ruleNumber){
     case 1:{
@@ -1239,7 +1264,9 @@ void performAction(int ruleNumber, astNode *node, treeN *root, grammar G, bool *
     }
 }
 
-// Inorder traversal
+/*
+    Traverses the AST inorder and prints the nodes
+*/
 void printAST(astNode *root, grammar G, int *count){
     if(root==NULL)return;
     if(root->child==NULL){
