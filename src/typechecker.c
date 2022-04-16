@@ -15,8 +15,9 @@
 bool isLogOp(astNode *root, grammar G) {
     if(root->elem->isLeaf){
         int curr = root->elem->curr;
-        curr--;
-        if(curr == TK_AND || curr == TK_OR) return true;
+        // curr--;
+        if(strcmp(G.terminals[curr],"TK_AND")==0 || strcmp(G.terminals[curr],"TK_OR")==0) return true;
+        return false;
     }
     else return false;
 } 
