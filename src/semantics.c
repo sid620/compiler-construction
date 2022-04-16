@@ -6,6 +6,7 @@ void checkIdListScope(astNode *root,symbolTable *sTable, int index, grammar G){
         root = root->next;
     }
 }
+/*root is arithmeticExpression*/
 void checkArithExprScope(astNode *root,symbolTable *sTable, int index, grammar G){
     root = root->child;
     while(root!=NULL){
@@ -31,15 +32,16 @@ void checkArithExprScope(astNode *root,symbolTable *sTable, int index, grammar G
         root = root->next;
     }
 }
+/*root is boolExpression*/
 void checkBoolExprScope(astNode *root, symbolTable *sTable,int index,grammar G){
     astNode *temp = findChild(root,0,false,0);
-    printf("bool expression %s rule number %d\n",G.nonTerminals[root->elem->curr],root->elem->ruleNumber);
+    // printf("bool expression %s rule number %d\n",G.nonTerminals[root->elem->curr],root->elem->ruleNumber);
     // printf("Entered boolExpr Scope %s \n",G.terminals[temp->next->next->elem->curr]);
     if(temp->elem->isLeaf && strcmp(G.terminals[temp->elem->curr],"TK_NOT")==0){
         temp = temp->next;
         checkBoolExprScope(temp,sTable,index,G);
     }
-    else if(isLogOp(temp->next,G)){
+    else if(temp->next->elem->isLeaf && isLogOp(temp->next,G)){
         checkBoolExprScope(temp,sTable,index,G);
         checkBoolExprScope(temp->next->next,sTable,index,G);
     }
@@ -50,7 +52,8 @@ void checkBoolExprScope(astNode *root, symbolTable *sTable,int index,grammar G){
             temp = temp->next;
         }
         /*node corresponding to second <var>*/
-        printf("BoolExprScope terminal %s at line %d\n",G.terminals[temp->next->elem->curr],temp->next->elem->lineNo);
+        // printf("BoolExprScope terminal %s at line %d\n",G.terminals[temp->next->elem->curr],temp->next->elem->lineNo);
+        /*corresponds to second <var>*/
         temp = temp->next->next;
         checkIdentifierScope(temp,G,sTable,index);
     }
@@ -73,14 +76,17 @@ void checkIdentifierScope(astNode *root,grammar G,symbolTable *sTable, int index
             // }
         }
         if(j==-1){
+            /*check in input params of function*/
             if(numIn>0)
             j = searchS(root->elem->lex.lexemeStr,sTable->allTypes[inId]->fields);
         }
         if(j==-1){
+            /*check in output params of function*/
             if(numOut>0)
             j = searchS(root->elem->lex.lexemeStr,sTable->allTypes[outId]->fields);
         }
         if(j==-1){
+            /*check in global*/
             if(sTable->numEntries!=0)
             j = searchS(root->elem->lex.lexemeStr,sTable->entries);
             if(j==-1)
@@ -89,6 +95,7 @@ void checkIdentifierScope(astNode *root,grammar G,symbolTable *sTable, int index
     }
     
 }
+/*root corresponds to <singleOrRecId>*/
 void getVarName(char **name, astNode *root, grammar G, symbolTable *sTable, int index){
     int l = 0;
     astNode *temp = root;
@@ -114,17 +121,22 @@ void getVarName(char **name, astNode *root, grammar G, symbolTable *sTable, int 
     str[l]='\0';
     *name = (char *)malloc((l+1)*sizeof(char));
     strcpy(*name,str);
-    printf("getVarName %s\n",*name);
+    // printf("getVarName %s\n",*name);
 }
+/*root corresponds to <boolExpression>*/
 void loadBooleanExpressionVariables(astNode *root,grammar G,char ***boolExpVariables,int *numberOfBoolExpVariables){
     astNode *temp = findChild(root,0,false,0);
-    printf("loadBoolExpr node %s\n",G.nonTerminals[root->elem->curr]);
+    // printf("loadBoolExpr node %s\n",G.terminals[temp->elem->curr]);
+    // printf("loadBoolExpr node %s\n",G.nonTerminals[temp->elem->curr]);
     if(temp->elem->isLeaf && strcmp(G.terminals[temp->elem->curr],"TK_NOT")==0){
-        loadBooleanExpressionVariables(findChild(root,1,false,0),G,boolExpVariables,numberOfBoolExpVariables);
-    }
-    else if(isLogOp(temp->next,G)){
+        // printf("Hello\n");
+        temp = temp->next;
         loadBooleanExpressionVariables(temp,G,boolExpVariables,numberOfBoolExpVariables);
-        loadBooleanExpressionVariables(findChild(root,2,false,0),G,boolExpVariables,numberOfBoolExpVariables);
+    }
+    else if(temp->next->elem->isLeaf && isLogOp(temp->next,G)){
+        printf("Line number %d",temp->elem->lineNo);
+        loadBooleanExpressionVariables(temp,G,boolExpVariables,numberOfBoolExpVariables);
+        loadBooleanExpressionVariables(temp->next->next,G,boolExpVariables,numberOfBoolExpVariables);
     }
     else {
         // astNode *temp1 = findChild(root,2,false,0);
@@ -165,7 +177,7 @@ void loadBooleanExpressionVariables(astNode *root,grammar G,char ***boolExpVaria
                 str[l]='\0';
                 strcpy((*boolExpVariables)[*numberOfBoolExpVariables],str);
                 (*numberOfBoolExpVariables)++;
-                printf("String generated %s booleanVariablesCount %d\n",(*boolExpVariables)[(*numberOfBoolExpVariables)-1],*numberOfBoolExpVariables);
+                // printf("String generated %s booleanVariablesCount %d\n",(*boolExpVariables)[(*numberOfBoolExpVariables)-1],*numberOfBoolExpVariables);
             } 
             else{
                 temp = findChild(root,0,false,0);
@@ -188,7 +200,7 @@ void loadBooleanExpressionVariables(astNode *root,grammar G,char ***boolExpVaria
                 str[l]='\0';
                 strcpy((*boolExpVariables)[*numberOfBoolExpVariables],str);
                 (*numberOfBoolExpVariables)++;
-                printf("String generated %s booleanVariablesCount %d\n",(*boolExpVariables)[(*numberOfBoolExpVariables)-1],*numberOfBoolExpVariables);
+                // printf("String generated %s booleanVariablesCount %d\n",(*boolExpVariables)[(*numberOfBoolExpVariables)-1],*numberOfBoolExpVariables);
             }
             temp = temp->next;
         }
@@ -197,9 +209,9 @@ void loadBooleanExpressionVariables(astNode *root,grammar G,char ***boolExpVaria
         /*Now pointing to second var*/
         astNode *temp1 = temp;
         l = 0;
-        printf("identifier of second <var> %s at line %d\n",G.terminals[temp->elem->curr],temp->elem->lineNo);
+        // printf("identifier of second <var> %s at line %d\n",G.terminals[temp->elem->curr],temp->elem->lineNo);
         if(temp->elem->isLeaf && (strcmp(G.terminals[temp->elem->curr],"TK_NUM")==0 || strcmp(G.terminals[temp->elem->curr],"TK_RNUM")==0)){
-            printf("Yes is num/rnum\n");
+            // printf("Yes is num/rnum\n");
         }
         else{
             while(!(temp->elem->isLeaf && strcmp(G.terminals[temp->elem->curr],"eps")==0)){
@@ -230,7 +242,7 @@ void loadBooleanExpressionVariables(astNode *root,grammar G,char ***boolExpVaria
                 str[l]='\0';
                 strcpy((*boolExpVariables)[*numberOfBoolExpVariables],str);
                 (*numberOfBoolExpVariables)++;
-                printf("String generated %s booleanVariablesCount %d\n",(*boolExpVariables)[(*numberOfBoolExpVariables)-1],*numberOfBoolExpVariables);
+                // printf("String generated %s booleanVariablesCount %d\n",(*boolExpVariables)[(*numberOfBoolExpVariables)-1],*numberOfBoolExpVariables);
             } 
             else{
                 temp = temp1;
@@ -253,16 +265,17 @@ void loadBooleanExpressionVariables(astNode *root,grammar G,char ***boolExpVaria
                 str[l]='\0';
                 strcpy((*boolExpVariables)[*numberOfBoolExpVariables],str);
                 (*numberOfBoolExpVariables)++;
-                printf("String generated %s booleanVariablesCount %d\n",(*boolExpVariables)[(*numberOfBoolExpVariables)-1],*numberOfBoolExpVariables);
+                // printf("String generated %s booleanVariablesCount %d\n",(*boolExpVariables)[(*numberOfBoolExpVariables)-1],*numberOfBoolExpVariables);
             }
             /*completed reading second <var>*/
         }
     }
 }
+/*root corresponds to conditional*/
 void checkConditionalInIterative(astNode *root,symbolTable *sTable,int index,grammar G,int **isOutAssigned,char ***boolExpVariables,int *numberOfBoolExpVariables, bool **isChanged){
     /*Check scope corresponding to boolExpr*/
     astNode *temp = findChild(root,1,false,0);
-    printf("non-terminal before boolExprScope %s\n",G.nonTerminals[temp->elem->curr]);
+    // printf("non-terminal before boolExprScope %s\n",G.nonTerminals[temp->elem->curr]);
     checkBoolExprScope(temp,sTable,index,G);
     /*Node corresponding to first stmt*/
     temp = findChild(root,3,false,0);
@@ -279,6 +292,15 @@ void checkConditionalInIterative(astNode *root,symbolTable *sTable,int index,gra
                         (*isChanged)[k]=true;
                     }
                 }
+                /*checking if outputs are assigned*/
+                int outId = sTable->tables[index]->function->outId;
+                int outNum = sTable->tables[index]->function->numOut;
+                for(int k=0;k<outNum;k++){
+                    int outFieldNumber = sTable->tables[index]->function->outOrder[k];
+                    if(strcmp(sTable->allTypes[outId]->fields[outFieldNumber]->varName,temp1->elem->lex.lexemeStr)==0){
+                        (*isOutAssigned)[k]=1;
+                    }
+                }
             }
             /*Check identifier scope*/
             astNode *temp1 = findChild(temp,1,false,0);
@@ -292,6 +314,14 @@ void checkConditionalInIterative(astNode *root,symbolTable *sTable,int index,gra
             for(int k = 0;k<(*numberOfBoolExpVariables);k++){
                 if(strcmp(*name,(*boolExpVariables)[k])==0){
                     (*isChanged)[k]=true;
+                }
+            }
+            int outId = sTable->tables[index]->function->outId;
+            int outNum = sTable->tables[index]->function->numOut;
+            for(int k=0;k<outNum;k++){
+                int outFieldNumber = sTable->tables[index]->function->outOrder[k];
+                if(strcmp(sTable->allTypes[outId]->fields[outFieldNumber]->varName,temp1->elem->lex.lexemeStr)==0){
+                    (*isOutAssigned)[k]=1;
                 }
             }
             checkIdentifierScope(temp1,G,sTable,index);
@@ -313,6 +343,15 @@ void checkConditionalInIterative(astNode *root,symbolTable *sTable,int index,gra
                 for(int k = 0;k<*numberOfBoolExpVariables;k++){
                     if(strcmp(temp1->elem->lex.lexemeStr,(*boolExpVariables)[k])==0){
                         (*isChanged)[k] = true;
+                    }
+                }
+                /*Check if output is assigned*/
+                int outId = sTable->tables[index]->function->outId;
+                int outNum = sTable->tables[index]->function->numOut;
+                for(int k=0;k<outNum;k++){
+                    int outFieldNumber = sTable->tables[index]->function->outOrder[k];
+                    if(strcmp(sTable->allTypes[outId]->fields[outFieldNumber]->varName,temp1->elem->lex.lexemeStr)==0){
+                        (*isOutAssigned)[k]=1;
                     }
                 }
                 temp1 = temp1->next;
@@ -348,6 +387,14 @@ void checkConditionalInIterative(astNode *root,symbolTable *sTable,int index,gra
                         (*isChanged)[k]=true;
                     }
                 }
+                int outId = sTable->tables[index]->function->outId;
+                int outNum = sTable->tables[index]->function->numOut;
+                for(int k=0;k<outNum;k++){
+                    int outFieldNumber = sTable->tables[index]->function->outOrder[k];
+                    if(strcmp(sTable->allTypes[outId]->fields[outFieldNumber]->varName,temp1->elem->lex.lexemeStr)==0){
+                        (*isOutAssigned)[k]=1;
+                    }
+                }
             }
             /*Check identifier scope*/
             astNode *temp1 = findChild(temp,1,false,0);
@@ -361,6 +408,14 @@ void checkConditionalInIterative(astNode *root,symbolTable *sTable,int index,gra
             for(int k = 0;k<(*numberOfBoolExpVariables);k++){
                 if(strcmp(*name,(*boolExpVariables)[k])==0){
                     (*isChanged)[k]=true;
+                }
+            }
+            int outId = sTable->tables[index]->function->outId;
+            int outNum = sTable->tables[index]->function->numOut;
+            for(int k=0;k<outNum;k++){
+                int outFieldNumber = sTable->tables[index]->function->outOrder[k];
+                if(strcmp(sTable->allTypes[outId]->fields[outFieldNumber]->varName,temp1->elem->lex.lexemeStr)==0){
+                    (*isOutAssigned)[k]=1;
                 }
             }
             checkIdentifierScope(temp1,G,sTable,index);
@@ -382,6 +437,14 @@ void checkConditionalInIterative(astNode *root,symbolTable *sTable,int index,gra
                 for(int k = 0;k<*numberOfBoolExpVariables;k++){
                     if(strcmp(temp1->elem->lex.lexemeStr,(*boolExpVariables)[k])==0){
                         (*isChanged)[k] = true;
+                    }
+                }
+                int outId = sTable->tables[index]->function->outId;
+                int outNum = sTable->tables[index]->function->numOut;
+                for(int k=0;k<outNum;k++){
+                    int outFieldNumber = sTable->tables[index]->function->outOrder[k];
+                    if(strcmp(sTable->allTypes[outId]->fields[outFieldNumber]->varName,temp1->elem->lex.lexemeStr)==0){
+                        (*isOutAssigned)[k]=1;
                     }
                 }
                 temp1 = temp1->next;
@@ -433,6 +496,14 @@ void checkNestedIterative(astNode *root,symbolTable *sTable,int index,grammar G,
                     (*isChanged)[k]=true;
                 }
             }
+            int outId = sTable->tables[index]->function->outId;
+            int outNum = sTable->tables[index]->function->numOut;
+            for(int k=0;k<outNum;k++){
+                int outFieldNumber = sTable->tables[index]->function->outOrder[k];
+                if(strcmp(sTable->allTypes[outId]->fields[outFieldNumber]->varName,temp1->elem->lex.lexemeStr)==0){
+                    (*isOutAssigned)[k]=1;
+                }
+            }
         }
     }
     if(strcmp(G.nonTerminals[temp->elem->curr],"assignmentStmt")==0){
@@ -442,6 +513,14 @@ void checkNestedIterative(astNode *root,symbolTable *sTable,int index,grammar G,
         for(int k = 0;k<end;k++){
             if(strcmp(*name,(*boolExpVariablesComplete)[k])==0){
                 (*isChanged)[k]=true;
+            }
+        }
+        int outId = sTable->tables[index]->function->outId;
+        int outNum = sTable->tables[index]->function->numOut;
+        for(int k=0;k<outNum;k++){
+            int outFieldNumber = sTable->tables[index]->function->outOrder[k];
+            if(strcmp(sTable->allTypes[outId]->fields[outFieldNumber]->varName,temp1->elem->lex.lexemeStr)==0){
+                (*isOutAssigned)[k]=1;
             }
         }
     }
@@ -455,6 +534,14 @@ void checkNestedIterative(astNode *root,symbolTable *sTable,int index,grammar G,
             for(int k = 0;k<end;k++){
                 if(strcmp(temp1->elem->lex.lexemeStr,(*boolExpVariablesComplete)[k])==0){
                     (*isChanged)[k] = true;
+                }
+            }
+            int outId = sTable->tables[index]->function->outId;
+            int outNum = sTable->tables[index]->function->numOut;
+            for(int k=0;k<outNum;k++){
+                int outFieldNumber = sTable->tables[index]->function->outOrder[k];
+                if(strcmp(sTable->allTypes[outId]->fields[outFieldNumber]->varName,temp1->elem->lex.lexemeStr)==0){
+                    (*isOutAssigned)[k]=1;
                 }
             }
             temp1 = temp1->next;
@@ -472,6 +559,7 @@ void checkNestedIterative(astNode *root,symbolTable *sTable,int index,grammar G,
         printf("ERROR: while loop at line %d will not terminate.\n",root->child->child->elem->lineNo);
     }
 }
+/*Checks if str is an output of sTable->tables[index]->function*/
 bool isOutputParams(char *str, symbolTable *sTable, int index, grammar G){
     bool isOutput = false;
     for(int i = 0;i<sTable->tables[index]->function->numOut;i++){
@@ -488,37 +576,47 @@ bool isOutputParams(char *str, symbolTable *sTable, int index, grammar G){
 */
 void checkDeclarationsSemantics(astNode *root, symbolTable *sTable, int index, grammar G){
     astNode *temp = findChild(root,1,false,0);  // finds child corresponding to TK_ID
+    astNode *temp2 = findChild(root,0,false,0); // datatype
+    if(temp2->elem->isLeaf && (strcmp(G.terminals[temp2->elem->curr],"TK_RECORD")==0 || strcmp(G.terminals[temp2->elem->curr],"TK_UNION")==0 || strcmp(G.terminals[temp2->elem->curr],"TK_RUID")==0)){
+        if(strcmp(G.terminals[temp2->elem->curr],"TK_RUID")!=0)temp2 = temp2->next;
+        int i = searchTypes(temp2->elem->lex.lexemeStr,sTable);
+        if(i==-1){
+            printf("ERROR: The type of identifier %s at line %d is not defined\n",temp2->next->elem->lex.lexemeStr,temp2->next->elem->lineNo);
+        }
+        return;
+    }
     astNode *temp1 = findChild(root,2,false,0); // child corresponding to global    
-    bool isGlobal = strcmp(G.terminals[temp1->elem->curr],"eps")==0? false: true;
-    if(isGlobal)
-    printf(" Is global\n");
+    bool isGlobal = (temp1->elem->isLeaf && strcmp(G.terminals[temp1->elem->curr],"eps")==0)? false: true;
+    // if(isGlobal)
+    // printf(" Is global\n");
     if(!isGlobal){
         int i = -1;
+        /*check if declaration is in corresponding symbolTable*/
         if(sTable->tables[index]->numEntries!=0)
         i = searchS(temp->elem->lex.lexemeStr,sTable->tables[index]->entries);
         int j = -1;
         if(sTable->numEntries!=0)
         j = searchS(temp->elem->lex.lexemeStr,sTable->entries); /* Check if identifier is global*/
         /* Checks if variable is declared multiple times*/
-        if(i==-1){
+        if(i==-1 && j==-1){
             printf("ERROR: Identifier %s at line number %d is not present in symbolTable\n",temp->elem->lex.lexemeStr,temp->elem->lineNo);
         }
-        else if(sTable->tables[index]->entries[i]->count > 1){
+        else if(i!=-1 && sTable->tables[index]->entries[i]->count > 1){
             printf("ERROR: Identifier %s at line %d has been declared previously at line %d.\n",sTable->tables[index]->entries[i]->varName,sTable->tables[index]->entries[i]->lineNo,sTable->tables[index]->entries[i]->lineNo);
             (sTable->tables[index]->entries[i]->count)--;
         }
-        else if(sTable->tables[index]->entries[i]->lineNo != temp->elem->lineNo){
+        else if(i!=-1 && sTable->tables[index]->entries[i]->lineNo != temp->elem->lineNo){
             printf("ERROR: Identifier %s at line %d has been declared previously at line %d.\n",temp->elem->lex.lexemeStr,temp->elem->lineNo,sTable->tables[index]->entries[i]->lineNo);    
         }
         if (j!=-1){
-            printf("ERROR: Global identifier %s at line %d is redeclared at line number %d.\n",sTable->entries[j]->varName,sTable->entries[j]->lineNo,sTable->tables[index]->entries[i]->lineNo);
+            printf("ERROR: Global identifier %s at line %d is redeclared at line number %d.\n",sTable->entries[j]->varName,sTable->entries[j]->lineNo,temp->elem->lineNo);
         }
     }
     else{
         /* Search for the index in global entries */
         if(sTable->numEntries!=0){
             int i = searchS(temp->elem->lex.lexemeStr,sTable->entries);
-
+            // printf("Global %s\n",temp->elem->lex.lexemeStr);
             /* Search for the index in the corresponding symbol table of functions */
             int j = -1;
             if(sTable->tables[index]->numEntries!=0)
@@ -537,73 +635,6 @@ void checkDeclarationsSemantics(astNode *root, symbolTable *sTable, int index, g
     }
     /* Checks if global variable has been declared previously anywhere in the program */
 }
-
-
-
-// void checkFuncCallParameters(astNode *root, symbolTable *sTable, grammar G){
-//     /*
-//         traverse the AST and find whereever the function is being called and then check if:
-//         1. type of input parameter is Union 
-//     */
-
-//     // astNode* child = root->child;
-//     // astNode* grandchild, *params;
-//     // while (child != NULL) {
-//     //     if(child->elem->isLeaf == 0 && strcmp(G.nonTerminals[child->elem->curr], "function") == 0){
-//     //         grandchild = child->child;
-//     //         while (grandchild!=NULL){
-//     //             if(grandchild->elem->isLeaf == 0 && strcmp(G.nonTerminals[grandchild->elem->curr], "input_par") == 0){
-//     //                 params = grandchild->child; 
-//     //                 while(params != NULL) { 
-//     //                     if(params->elem->isLeaf == 1 && strcmp(G.terminals[params->elem->curr], "TK_UNION") == 0){
-//     //                         printf("ERROR: function expects UNION to function at line %d\n",params->elem->lineNo);
-//     //                     }
-//     //                     params = params->next;
-//     //                 }
-//     //             }
-//     //             grandchild = grandchild->next;
-//     //         }
-//     //     }
-//     //     child = child->next; 
-//     // } 
- 
-//     astNode* child = root->child;
-//     astNode* grandchild, *inParamList;
-//     int numInputParams =0;
-//     while (child != NULL) {
-//         if(child->elem->isLeaf == 0 && strcmp(G.nonTerminals[child->elem->curr], "function") == 0){
-//             grandchild = child->child;
-//             while (grandchild!=NULL){
-//                 if(grandchild->elem->isLeaf == 0 && strcmp(G.nonTerminals[grandchild->elem->curr], "funCallStmt") == 0){
-//                     inParamList = grandchild->child->next->next->child; // go to inputParameters list
-//                     while(inParamList != NULL) {    //traverse TK_IDs (inputParameters) 
-//                         if( (inParamList->elem->isLeaf == 1)  // redundant, should always be true
-//                             && (inParamList->elem->curr != 0 )  //non epsilon
-//                             ){
-//                             if((searchTypes(inParamList->elem->lex.lexemeStr, sTable)!=-1 )  // existence of param being passed in symbolTable
-//                             && (sTable->allTypes[searchTypes(inParamList->elem->lex.lexemeStr, sTable)]->typeId == 4) // is of type union
-//                                 ) {
-//                                     printf("ERROR: cannot pass UNION to function at line %d\n",inParamList->elem->lineNo);
-//                                 }
-//                             numInputParams+=1;
-//                         }                    
-//                         inParamList = inParamList->next;
-//                         if(inParamList==NULL){
-//                             int tableNum = 0;
-//                             for(int i=0;i<sTable->numEntries;i++){
-//                                 if(strcmp(sTable->tables[i]->function->fId, grandchild->elem->lex.lexemeStr)==0)
-//                             }
-//                             if(numInputParams==)
-//                         }
-//                     }
-//                 }
-//                 grandchild = grandchild->next;
-//             }
-//         }
-//         child = child->next; 
-//     } 
-
-// }
 
 
 /* 
@@ -647,16 +678,16 @@ void checkFunctionCall(astNode *root, symbolTable *sTable, int index, grammar G,
             temp2 = findChild(root,2,false,0);
             temp2 = temp2->child;
             while(j<sTable->tables[i]->function->numIn){
+                isMatch = true;
                 int typeIndex = findIDtype(temp2,G,sTable,index);
                 int paramPosition = sTable->tables[i]->function->inOrder[j];
                 int paramType = sTable->allTypes[sTable->tables[i]->function->inId]->fields[paramPosition]->type;
-                if(paramType!=typeIndex){
-                    isMatch = false;
-                    break;
-                }
                 if(sTable->allTypes[typeIndex]->typeId == 4){
                     /*Checks if input parameter is of type union*/
                     printf("ERROR: The parameter %s at function call statement in line %d is of type union.\n",sTable->allTypes[typeIndex]->name,temp->elem->lineNo);
+                }
+                if(paramType!=typeIndex){
+                    isMatch = false;
                 }
                 // if(sTable->allTypes[typeIndex]->typeId == 3){
                 //     /* Check if record is of variant record type */
@@ -677,13 +708,15 @@ void checkFunctionCall(astNode *root, symbolTable *sTable, int index, grammar G,
                 //         }
                 //     }
                 // }
+                if(!isMatch){
+                    int id = sTable->tables[i]->function->inId;
+                    int inpFieldNumber = sTable->tables[i]->function->inOrder[j];
+                    printf("ERROR: The type of input parameter %s at line %d does not match with type of %s in function definition at line %d.\n",temp2->elem->lex.lexemeStr,temp2->elem->lineNo,sTable->allTypes[id]->fields[inpFieldNumber]->varName,sTable->tables[i]->function->line);
+                }
                 j++;
                 temp2=temp2->next;
             }
-            if(!isMatch){
-                int id = sTable->tables[i]->function->inId;
-                printf("ERROR: The type of input parameter %s at line %d does not match with type of %s in function definition at line %d.\n",temp2->elem->lex.lexemeStr,temp2->elem->lineNo,sTable->allTypes[id]->fields[j]->varName,sTable->tables[i]->function->line);
-            }
+
         }
         /*Check if output parameters and their types match*/
         astNode *temp1 = findChild(root,0,false,0);
@@ -703,12 +736,11 @@ void checkFunctionCall(astNode *root, symbolTable *sTable, int index, grammar G,
             temp1 = temp1->child;
             int outId = sTable->tables[i]->function->outId;
             while(j<sTable->tables[i]->function->numOut){
+                isMatch = true;
                 int outFieldNumber = sTable->tables[i]->function->outOrder[j];
                 int outFieldType = sTable->allTypes[outId]->fields[outFieldNumber]->type;
                 if(outFieldType!=findIDtype(temp1,G,sTable,index)){
                     isMatch = false;
-                    j = outFieldNumber;
-                    break;
                 }
                 /*Check if the outparameter will be returned by the function*/
                 if(isOutputParams(temp1->elem->lex.lexemeStr,sTable,index,G)){
@@ -716,10 +748,11 @@ void checkFunctionCall(astNode *root, symbolTable *sTable, int index, grammar G,
                 }
                 j++;
                 temp1=temp1->next;
-            }
-            if(!isMatch){
-                int id = sTable->tables[i]->function->outId;
-                printf("ERROR: The type of output parameter %s at line %d does not match with type of %s in function definition at line %d.\n",temp1->elem->lex.lexemeStr,temp1->elem->lineNo,sTable->allTypes[id]->fields[j]->varName,sTable->tables[i]->function->line);
+                if(!isMatch){
+                    int id = sTable->tables[i]->function->outId;
+                    int outFieldNumber = sTable->tables[i]->function->outOrder[j];
+                    printf("ERROR: The type of output parameter %s at line %d does not match with type of %s in function definition at line %d.\n",temp1->elem->lex.lexemeStr,temp1->elem->lineNo,sTable->allTypes[id]->fields[outFieldNumber]->varName,sTable->tables[i]->function->line);
+                }
             }
         }
     }
@@ -728,7 +761,7 @@ void checkFunction(astNode *root, symbolTable *sTable, grammar G, int index){
     checkOverloading(root,sTable,G,index);
     // bool isMain = index == sTable->numF? true: false;
     int **isOutAssigned = (int **)malloc(sizeof(int *));
-    printf("%d outputParams %d\n",index,sTable->tables[index]->function->numOut);
+    // printf("%d outputParams %d\n",index,sTable->tables[index]->function->numOut);
     *isOutAssigned = (int *)calloc(sTable->tables[index]->function->numOut,sizeof(int));
     astNode *temp=NULL;
     /*Reach first child which is stmts when root is <function>*/
@@ -740,14 +773,14 @@ void checkFunction(astNode *root, symbolTable *sTable, grammar G, int index){
     /* Traverse till return statement is reached */
     while(!(!temp->elem->isLeaf && strcmp(G.nonTerminals[temp->elem->curr],"returnStmt")==0)){
         if(!temp->elem->isLeaf && strcmp(G.nonTerminals[temp->elem->curr],"declaration")==0){
-            printf("In %s of function\n",G.nonTerminals[temp->elem->curr]);
+            // printf("In %s of function\n",G.nonTerminals[temp->elem->curr]);
             checkDeclarationsSemantics(temp,sTable,index,G);
         }
         if(!temp->elem->isLeaf && strcmp(G.nonTerminals[temp->elem->curr],"funCallStmt")==0){
             checkFunctionCall(temp,sTable,index,G,isOutAssigned);
         }
         if(!temp->elem->isLeaf && strcmp(G.nonTerminals[temp->elem->curr],"iterativeStmt")==0){
-            printf("Entered iterative\n");
+            // printf("Entered iterative\n");
             checkIterativeStmt(temp,sTable,index,G,isOutAssigned);
         }   
         if(!temp->elem->isLeaf && strcmp(G.nonTerminals[temp->elem->curr],"assignmentStmt")==0){
@@ -790,7 +823,7 @@ void checkFunction(astNode *root, symbolTable *sTable, grammar G, int index){
             checkIdentifierScope(temp1,G,sTable,index);
         }               
         if(!temp->elem->isLeaf && strcmp(G.nonTerminals[temp->elem->curr],"conditionalStmt")==0){
-            printf("In %s of function\n",G.nonTerminals[temp->elem->curr]);
+            // printf("In %s of function\n",G.nonTerminals[temp->elem->curr]);
             checkConditionalStmt(temp,sTable,index,G,isOutAssigned);
         }
         temp = temp->next;
@@ -807,7 +840,7 @@ void checkFunction(astNode *root, symbolTable *sTable, grammar G, int index){
 }
 void checkConditionalStmt(astNode *root, symbolTable *sTable,int index,grammar G, int **isOutAssigned){
     astNode *temp = findChild(root,1,false,0);
-    printf("terminal printing %s\n",G.terminals[temp->next->next->elem->curr]);
+    // printf("terminal printing %s\n",G.terminals[temp->next->next->elem->curr]);
     checkBoolExprScope(temp,sTable,index,G);
     /*temp corresponds to first stmt in IF part*/
     temp = findChild(root,3,false,0);
@@ -920,17 +953,18 @@ void checkConditionalStmt(astNode *root, symbolTable *sTable,int index,grammar G
 void checkIterativeStmt(astNode *root, symbolTable *sTable,int index,grammar G, int **isOutAssigned){
     astNode *temp = findChild(root,0,false,0);
     char ***boolExpVariables=(char ***)malloc(sizeof(char **));
-    printf("boolExp initialized\n");
+    // printf("boolExp initialized\n");
     int *numberOfBoolExpVariables=(int *)malloc(sizeof(int));
     *numberOfBoolExpVariables = 0;
     bool relopEncountered = false;
+    // printf("temp iter %s\n",G.nonTerminals[temp->elem->curr]);
     loadBooleanExpressionVariables(temp,G,boolExpVariables,numberOfBoolExpVariables);
-    printf("boolExp loaded\n");
+    // printf("boolExp loaded\n");
     int start = 0;
     int end = *numberOfBoolExpVariables;
     bool **isChanged = (bool **)malloc(sizeof(bool *));
     *isChanged = (bool *)calloc(end,sizeof(bool));
-    printf("variables initialized\n");
+    // printf("variables initialized\n");
     /*node corresponding to first stmt*/
     temp = findChild(root,1,false,0);
     while(!(temp->elem->isLeaf && strcmp(G.terminals[temp->elem->curr],"eps")==0)){
@@ -945,23 +979,39 @@ void checkIterativeStmt(astNode *root, symbolTable *sTable,int index,grammar G, 
                         (*isChanged)[k]=true;
                     }
                 }
+                int outId = sTable->tables[index]->function->outId;
+                int outNum = sTable->tables[index]->function->numOut;
+                for(int k=0;k<outNum;k++){
+                    int outFieldNumber = sTable->tables[index]->function->outOrder[k];
+                    if(strcmp(sTable->allTypes[outId]->fields[outFieldNumber]->varName,temp1->elem->lex.lexemeStr)==0){
+                        (*isOutAssigned)[k]=1;
+                    }
+                }
             }
         }
         if(strcmp(G.nonTerminals[temp->elem->curr],"assignmentStmt")==0){
             astNode *temp1 = findChild(temp,0,false,0);
-            printf("output %s\n",temp1->elem->lex.lexemeStr);
+            // printf("output %s\n",temp1->elem->lex.lexemeStr);
             char **name = (char **)malloc(sizeof(char *));
             getVarName(name,temp1,G,sTable,index);
-            printf("before assignment checking loop %s\n",(*name));
+            // printf("before assignment checking loop %s\n",(*name));
             for(int k = 0;k<(*numberOfBoolExpVariables);k++){
-                printf("checking assignment in iterative %s boolExpVar %s\n",*name,(*boolExpVariables)[k]);
+                // printf("checking assignment in iterative %s boolExpVar %s\n",*name,(*boolExpVariables)[k]);
                 if(strcmp(*name,(*boolExpVariables)[k])==0){
                     (*isChanged)[k]=true;
                 }
             }
+            int outId = sTable->tables[index]->function->outId;
+            int outNum = sTable->tables[index]->function->numOut;
+            for(int k=0;k<outNum;k++){
+                int outFieldNumber = sTable->tables[index]->function->outOrder[k];
+                if(strcmp(sTable->allTypes[outId]->fields[outFieldNumber]->varName,temp1->elem->lex.lexemeStr)==0){
+                    (*isOutAssigned)[k]=1;
+                }
+            }
         }
         if(strcmp(G.nonTerminals[temp->elem->curr],"conditionalStmt")==0){
-            printf("Entered conditional in iterative\n");
+            // printf("Entered conditional in iterative\n");
             checkConditionalInIterative(temp,sTable,index,G,isOutAssigned,boolExpVariables,numberOfBoolExpVariables,isChanged);
         }
         if(strcmp(G.nonTerminals[temp->elem->curr],"funCallStmt")==0){
@@ -974,6 +1024,14 @@ void checkIterativeStmt(astNode *root, symbolTable *sTable,int index,grammar G, 
                 for(int k = 0;k<*numberOfBoolExpVariables;k++){
                     if(strcmp(temp1->elem->lex.lexemeStr,(*boolExpVariables)[k])==0){
                         (*isChanged)[k] = true;
+                    }
+                }
+                int outId = sTable->tables[index]->function->outId;
+                int outNum = sTable->tables[index]->function->numOut;
+                for(int k=0;k<outNum;k++){
+                    int outFieldNumber = sTable->tables[index]->function->outOrder[k];
+                    if(strcmp(sTable->allTypes[outId]->fields[outFieldNumber]->varName,temp1->elem->lex.lexemeStr)==0){
+                        (*isOutAssigned)[k]=1;
                     }
                 }
                 temp1 = temp1->next;
@@ -1046,7 +1104,7 @@ void main() {
     // printParseTable(C,T);
     printf("Parse Table created \n"); 
 
-    char* testCaseFile = "./testcases/s5.txt"; 
+    char* testCaseFile = "./testcases/c6.txt"; 
 
     treeN rootNode; 
     rootNode = parseInputSourceCode(testCaseFile, C, T); 
@@ -1054,16 +1112,20 @@ void main() {
     int *insertPrev = (int *)malloc(sizeof(int));
     *insertPrev = 0;
     int *count = (int *)malloc(sizeof(int));
+    *count = 0;
     astNode *astroot = mknode(rootNode.elem,C);
     constructAst(astroot, &rootNode,C,insertPrev,astroot);
     printf("*************************************************************************************************\n\n");
     printf("Printing Abstract Syntax Tree\n");
     printAST(astroot,C,count);
+    printf("Number of nodes in AST %d\n",*count);
     printf("*************************************************************************************************\n\n");
 
     printf("Constructing symbol table and performing type checking \n"); 
     symbolTable* sTable = constructST(astroot, C); 
     printf("%s\n",C.nonTerminals[astroot->elem->curr]);
     typeCheck(astroot,C,sTable,-1);
+    printf("*************************************************************************************************\n\n");
+    printf("Semantic Analysis\n");
     semanticCheck(astroot,sTable,C);
 } 
