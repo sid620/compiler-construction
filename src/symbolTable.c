@@ -151,7 +151,7 @@ void printType(char* typeName, symbolTable* sTable) {
     } 
     printf(">"); 
     return; 
-} 
+}
 
 /*
     Prints all variables in the symbol table    
@@ -160,9 +160,9 @@ void printType(char* typeName, symbolTable* sTable) {
 /*
     Prints Symbol Table
 */
-// void printSymbolTable(astNode* root, grammar G, symbolTable* sTable){
-//  printAllVars(astNode* root, grammar G, symbolTable* sTable);
-// }
+void printSymbolTable( symbolTable* sTable){
+    printAllVars(sTable);
+}
 
 /*
 //     Returns function name at given line number
@@ -180,20 +180,25 @@ char* getGlobalFName(int lineNo, symbolTable* sTable) {
     return "Not found"; 
 }
 
-void printGlobals(symbolTable* sTable) { 
+
+void printGlobalVars(symbolTable* sTable) { 
 
     if (sTable->numEntries == 0) { 
+        printf("No global variables found");
         return; 
     }
     for (int i = 0; i < size; i++) { 
         if (sTable->entries[i]->present == 1) { 
             int vInd = i; 
             char* fName = getGlobalFName(sTable->entries[i]->lineNo, sTable); 
-            printf("Variable Name: %s; Module: %s; ", sTable->entries[vInd]->varName, fName); 
+            printf("Variable Name: %s; ", sTable->entries[vInd]->varName); 
             int tInd = sTable->entries[vInd]->type; 
             char* tName = sTable->allTypes[tInd]->name; 
             printf("Type Name(s): %s", tName); 
             tInd = searchTypes(tName, sTable); 
+            if (strcmp(tName, sTable->allTypes[tInd]->name) != 0) { 
+                printf(" %s", sTable->allTypes[tInd]->name); 
+            }
             if (sTable->allTypes[tInd]->numAl != 0) { 
                 printf(" "); 
                 for (int j = 0; j < sTable->allTypes[tInd]->numAl; j++) { 
@@ -210,7 +215,46 @@ void printGlobals(symbolTable* sTable) {
             printf("; Type Expression: "); 
             printType(tName, sTable); 
             printf("; "); 
-            printf("Width: %d; Offset: %d \n", sTable->allTypes[tInd]->width, sTable->entries[vInd]->offset); 
+            printf("Offset: %d; \n", sTable->entries[vInd]->offset); 
+        }
+    }
+} 
+
+void printGlobals(symbolTable* sTable) { 
+    printf("Global Variables\n");
+    if (sTable->numEntries == 0) { 
+        printf("No global variables found");
+        return; 
+    }
+    for (int i = 0; i < size; i++) { 
+        if (sTable->entries[i]->present == 1) { 
+            int vInd = i; 
+            char* fName = getGlobalFName(sTable->entries[i]->lineNo, sTable); 
+            printf("Variable Name: %s; Module (Scope): %s; ", sTable->entries[vInd]->varName, fName); 
+            int tInd = sTable->entries[vInd]->type; 
+            char* tName = sTable->allTypes[tInd]->name; 
+            printf("Type Name(s): %s", tName); 
+            tInd = searchTypes(tName, sTable); 
+            if (strcmp(tName, sTable->allTypes[tInd]->name) != 0) { 
+                printf(" %s", sTable->allTypes[tInd]->name); 
+            }
+            if (sTable->allTypes[tInd]->numAl != 0) { 
+                printf(" "); 
+                for (int j = 0; j < sTable->allTypes[tInd]->numAl; j++) { 
+                    if (strcmp(sTable->allTypes[tInd]->aliases[j], tName) != 0) { 
+                        if (j != sTable->allTypes[tInd]->numAl - 1) { 
+                            printf("%s ", sTable->allTypes[tInd]->aliases[j]); 
+                        } 
+                        else { 
+                            printf("%s", sTable->allTypes[tInd]->aliases[j]); 
+                        }
+                    }
+                }
+            } 
+            printf("; Type Expression: "); 
+            printType(tName, sTable); 
+            printf("; "); 
+            printf("Width: %d; isGlobal: global; Offset: %d; Variable Usage: --- \n", sTable->allTypes[tInd]->width, sTable->entries[vInd]->offset); 
         }
     }
 } 
@@ -227,11 +271,14 @@ void printAllVars(symbolTable* sTable) {
         if (inId != -1) { 
             for (int j = 0; j < sTable->tables[i]->function->numIn; j++) { 
                 int vInd = sTable->tables[i]->function->inOrder[j]; 
-                printf("Variable Name: %s; Module: %s; ", sTable->allTypes[inId]->fields[vInd]->varName, fName); 
+                printf("Variable Name: %s; Module (Scope): %s; ", sTable->allTypes[inId]->fields[vInd]->varName, fName); 
                 int tInd = sTable->allTypes[inId]->fields[vInd]->type; 
                 char* tName = sTable->allTypes[tInd]->name; 
                 printf("Type Name(s): %s", tName); 
                 tInd = searchTypes(tName, sTable); 
+                if (strcmp(tName, sTable->allTypes[tInd]->name) != 0) { 
+                    printf(" %s", sTable->allTypes[tInd]->name); 
+                }
                 if (sTable->allTypes[tInd]->numAl != 0) { 
                     printf(" "); 
                     for (int k = 0; k < sTable->allTypes[tInd]->numAl; k++) { 
@@ -255,11 +302,14 @@ void printAllVars(symbolTable* sTable) {
         if (outId != -1) { 
             for (int j = 0; j < sTable->tables[i]->function->numOut; j++) { 
                 int vInd = sTable->tables[i]->function->outOrder[j]; 
-                printf("Variable Name: %s; Module: %s; ", sTable->allTypes[outId]->fields[vInd]->varName, fName); 
+                printf("Variable Name: %s; Module (Scope): %s; ", sTable->allTypes[outId]->fields[vInd]->varName, fName); 
                 int tInd = sTable->allTypes[outId]->fields[vInd]->type; 
                 char* tName = sTable->allTypes[tInd]->name; 
                 printf("Type Name(s): %s", tName); 
                 tInd = searchTypes(tName, sTable); 
+                if (strcmp(tName, sTable->allTypes[tInd]->name) != 0) { 
+                    printf(" %s", sTable->allTypes[tInd]->name); 
+                }
                 if (sTable->allTypes[tInd]->numAl != 0) { 
                     printf(" "); 
                     for (int k = 0; k < sTable->allTypes[tInd]->numAl; k++) { 
@@ -284,11 +334,14 @@ void printAllVars(symbolTable* sTable) {
             for (int j = 0; j < size; j++) { 
                 if (sTable->tables[i]->entries[j]->present == 1) { 
                     int vInd = j; 
-                    printf("Variable Name: %s; Module: %s; ", sTable->tables[i]->entries[vInd]->varName, fName); 
+                    printf("Variable Name: %s; Module (Scope): %s; ", sTable->tables[i]->entries[vInd]->varName, fName); 
                     int tInd = sTable->tables[i]->entries[vInd]->type; 
                     char* tName = sTable->allTypes[tInd]->name; 
                     printf("Type Name(s): %s", tName); 
                     tInd = searchTypes(tName, sTable); 
+                    if (strcmp(tName, sTable->allTypes[tInd]->name) != 0) { 
+                        printf(" %s", sTable->allTypes[tInd]->name); 
+                    }
                     if (sTable->allTypes[tInd]->numAl != 0) { 
                         printf(" "); 
                         for (int k = 0; k < sTable->allTypes[tInd]->numAl; k++) { 
@@ -1600,6 +1653,107 @@ void handleNT(astNode* root, grammar G, symbolTable* sTable, int index, int recI
             } 
             child = child->next; 
         }
+    } 
+    else if (strcmp(G.nonTerminals[root->elem->curr], "definetypestmt") == 0) { 
+        
+        // printf("In definetypestmt \n"); 
+        astNode* child = root->child; 
+        int typeId; 
+        int typeInd; 
+        int flag = 0; 
+        // printf("done \n"); 
+        while (child != NULL) { 
+            if (child->elem->isLeaf == 1 && strcmp(G.terminals[child->elem->curr], "TK_DEFINETYPE") == 0) { 
+                // skip 
+            } 
+            else if (child->elem->isLeaf == 1 && strcmp(G.terminals[child->elem->curr], "TK_RECORD") == 0) { 
+                typeId = 3; 
+            } 
+            else if (child->elem->isLeaf == 1 && strcmp(G.terminals[child->elem->curr], "TK_UNION") == 0) { 
+                typeId = 4; 
+            } 
+            else if (child->elem->isLeaf == 1 && strcmp(G.terminals[child->elem->curr], "TK_AS") == 0) { 
+                flag = 1; 
+                // skip
+            } 
+            else if (child->elem->isLeaf == 1 && strcmp(G.terminals[child->elem->curr], "TK_RUID") == 0) { 
+                if (flag == 0) { 
+                    // printf("%s \n", child->elem->lex.lexemeStr); 
+                    typeInd = searchTypes(child->elem->lex.lexemeStr, sTable); 
+                    // printf("done %d \n", typeInd); 
+                    if (typeInd == -1) { 
+                        
+                        typeInfo* newT = (typeInfo*) malloc(sizeof(typeInfo)); 
+                        int l = strlen(child->elem->lex.lexemeStr); 
+                        newT->name = (char*) malloc(sizeof(char) * (l + 1)); 
+                        for(int i = 0; i < l; i++){
+                            newT->name[i] = child->elem->lex.lexemeStr[i];
+                        } 
+                        newT->name[l] = '\0'; 
+                        newT->ref = -1; 
+                        newT->numFields = 0; 
+                        newT->numAl = 0; 
+                        // newT->fInd = -1; 
+                        // newT->typeId; // TypeId not known, could be union or record 
+                        insertType(newT, sTable); 
+                        typeInd = sTable->numTypes - 1; 
+                        
+                        
+                        // printf("This record has not been defined %s at line %d ERROR \n", child->elem->lex.lexemeStr, child->elem->lineNo); 
+                        // break; 
+                    } 
+                    else { 
+                        if (sTable->allTypes[typeInd]->ref != -1) { 
+                            typeInd = sTable->allTypes[typeInd]->ref; 
+                        }
+                    }
+                } 
+                else { 
+                    if (sTable->allTypes[typeInd]->numAl == 0) { 
+                        sTable->allTypes[typeInd]->aliases = (char**) malloc(sizeof(char*)); 
+                    } 
+                    
+                    int oldInd = searchTypes(child->elem->lex.lexemeStr, sTable); 
+                    if (oldInd != -1) { // An entry in allTypes has already been made for this 
+                        // printf("In definetypestmt: %s %d %d \n", sTable->allTypes[oldInd]->name, oldInd, sTable->allTypes[typeInd]->width); 
+                        sTable->allTypes[oldInd]->ref = typeInd; 
+                        sTable->allTypes[oldInd]->typeId = sTable->allTypes[typeInd]->typeId; 
+                        sTable->allTypes[oldInd]->width = sTable->allTypes[typeInd]->width; 
+                        updateWidth(oldInd, sTable, sTable->allTypes[typeInd]->width); 
+                    } 
+                    else { 
+                        typeInfo* newT = (typeInfo*) malloc(sizeof(typeInfo)); 
+                        int l = strlen(child->elem->lex.lexemeStr); 
+                        newT->name = (char*) malloc(sizeof(char) * (l + 1)); 
+                        for(int i = 0; i < l; i++){
+                            newT->name[i] = child->elem->lex.lexemeStr[i];
+                        } 
+                        newT->name[l] = '\0'; 
+                        newT->ref = -1; 
+                        newT->numFields = 0; 
+                        newT->numAl = 0; 
+                        // newT->fInd = -1; 
+                        // newT->typeId; // TypeId not known, could be union or record 
+                        insertType(newT, sTable); 
+                        oldInd = sTable->numTypes - 1; 
+                        sTable->allTypes[oldInd]->ref = typeInd; 
+                        sTable->allTypes[oldInd]->typeId = sTable->allTypes[typeInd]->typeId; 
+                        sTable->allTypes[oldInd]->width = sTable->allTypes[typeInd]->width; 
+                        updateWidth(oldInd, sTable, sTable->allTypes[typeInd]->width); 
+                    }
+                    
+                    // printf("done \n"); 
+                    sTable->allTypes[typeInd]->numAl += 1; 
+                    int l = strlen(child->elem->lex.lexemeStr); 
+                    sTable->allTypes[typeInd]->aliases[0] = (char*) malloc(sizeof(char) * (l + 1)); 
+                    for(int i = 0; i < l; i++){
+                        sTable->allTypes[typeInd]->aliases[0][i] = child->elem->lex.lexemeStr[i];
+                    } 
+                    sTable->allTypes[typeInd]->aliases[0][l] = '\0'; 
+                }
+            } 
+            child = child->next; 
+        }
     }
 }
 
@@ -2160,7 +2314,9 @@ symbolTable* constructST(astNode* root, grammar G) {
 //     // tokenInfo currToken = getNextToken(fp); 
 //     // printf("%d '%s' \n", findIndex(C.terminals, C.numTerminals, enumToStringP[currToken.tkn_name]), enumToStringP[currToken.tkn_name]); 
 //     treeN rootNode; 
-//     rootNode = parseInputSourceCode(testCaseFile, C, T); 
+//     int* errorFlag (int*) malloc(sizeof(int)); 
+//     *errorFlag = 0; 
+//     rootNode = parseInputSourceCode(testCaseFile, C, T, errorFlag); 
 //     // printf("%u %d %d %d %d %d \n", &rootNode, rootNode.elem.curr, rootNode.numChild, rootNode.elem.lineNo, rootNode.elem.isLeaf, rootNode.elem.parentNodeSymbolID); 
 //     // printf("%u %u \n", rootNode.children[0], rootNode.children[1]); 
 //     // printf("%u %u \n", rootNode.children[1]->children[1], rootNode.children[1]->children[1]->children[5]); 

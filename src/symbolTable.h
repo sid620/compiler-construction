@@ -22,3 +22,5 @@ void printGlobals(symbolTable* sTable);
 void printAllVars(symbolTable* sTable); 
 void printARSizes(symbolTable* sTable); 
 void printRUInfo(symbolTable* sTable); 
+void printSymbolTable(symbolTable* sTable);
+void printGlobalVars(symbolTable* sTable);
