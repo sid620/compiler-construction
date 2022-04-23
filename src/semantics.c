@@ -1,3 +1,11 @@
+/*
+ID  2019A7PS0064P					Name Siddharth Sharma
+ID  2019A7PS0062P					Name Atharva Chandak
+ID  2019A7PS0133P					Name Archit Bhatnagar 
+ID  2019A7PS0554P					Name Suchismita Tripathy
+ID  2019A7PS1139P 					Name Srujan Deolasee
+*/
+
 #include "semantics.h"
 /*root corresponds to idList*/
 void checkIdListScope(astNode *root,symbolTable *sTable, int index, grammar G){
@@ -480,15 +488,37 @@ void checkNestedIterative(astNode *root,symbolTable *sTable,int index,grammar G,
     
     *boolExpVariablesComplete = (char **)realloc(*boolExpVariablesComplete,sizeof(char **)*((*numberOfBoolExpVariablesTotal)+(*numberOfBoolExpVariablesCurrent)));
     *isChanged = (bool *)realloc(*isChanged,sizeof(bool *)*((*numberOfBoolExpVariablesTotal)+(*numberOfBoolExpVariablesCurrent)));
+    // update total number of boolean expression variables
+    (*numberOfBoolExpVariablesTotal)+=(*numberOfBoolExpVariablesCurrent);
     for(int i = start;i < end;i++){
         (*boolExpVariablesComplete)[i]=(*boolExpVariablesCurrent)[i-start];
     }
     /*node corresponding to first stmt*/
     temp = findChild(root,1,false,0);
-    if(strcmp(G.nonTerminals[temp->elem->curr],"ioStmt")==0){
-        if(strcmp(G.nonTerminals[temp->child->elem->curr],"TK_WRITE")==0){
-            /* get var name */
-            astNode *temp1 = findChild(temp,1,false,0);
+    while(!(temp->elem->isLeaf && strcmp(G.terminals[temp->elem->curr],"eps")==0)){
+        if(strcmp(G.nonTerminals[temp->elem->curr],"ioStmt")==0){
+            if(strcmp(G.nonTerminals[temp->child->elem->curr],"TK_WRITE")==0){
+                /* get var name */
+                astNode *temp1 = findChild(temp,1,false,0);
+                char **name = (char **)malloc(sizeof(char *));
+                getVarName(name,temp1,G,sTable,index);
+                for(int k = 0;k<end;k++){
+                    if(strcmp(*name,(*boolExpVariablesComplete)[k])==0){
+                        (*isChanged)[k]=true;
+                    }
+                }
+                int outId = sTable->tables[index]->function->outId;
+                int outNum = sTable->tables[index]->function->numOut;
+                for(int k=0;k<outNum;k++){
+                    int outFieldNumber = sTable->tables[index]->function->outOrder[k];
+                    if(strcmp(sTable->allTypes[outId]->fields[outFieldNumber]->varName,temp1->elem->lex.lexemeStr)==0){
+                        (*isOutAssigned)[k]=1;
+                    }
+                }
+            }
+        }
+        if(strcmp(G.nonTerminals[temp->elem->curr],"assignmentStmt")==0){
+            astNode *temp1 = findChild(temp,0,false,0);
             char **name = (char **)malloc(sizeof(char *));
             getVarName(name,temp1,G,sTable,index);
             for(int k = 0;k<end;k++){
@@ -505,58 +535,46 @@ void checkNestedIterative(astNode *root,symbolTable *sTable,int index,grammar G,
                 }
             }
         }
-    }
-    if(strcmp(G.nonTerminals[temp->elem->curr],"assignmentStmt")==0){
-        astNode *temp1 = findChild(temp,0,false,0);
-        char **name = (char **)malloc(sizeof(char *));
-        getVarName(name,temp1,G,sTable,index);
-        for(int k = 0;k<end;k++){
-            if(strcmp(*name,(*boolExpVariablesComplete)[k])==0){
-                (*isChanged)[k]=true;
-            }
+        if(strcmp(G.nonTerminals[temp->elem->curr],"conditionalStmt")==0){
+            checkConditionalInIterative(temp,sTable,index,G,isOutAssigned,boolExpVariablesComplete,numberOfBoolExpVariablesTotal,isChanged);
         }
-        int outId = sTable->tables[index]->function->outId;
-        int outNum = sTable->tables[index]->function->numOut;
-        for(int k=0;k<outNum;k++){
-            int outFieldNumber = sTable->tables[index]->function->outOrder[k];
-            if(strcmp(sTable->allTypes[outId]->fields[outFieldNumber]->varName,temp1->elem->lex.lexemeStr)==0){
-                (*isOutAssigned)[k]=1;
-            }
-        }
-    }
-    if(strcmp(G.nonTerminals[temp->elem->curr],"conditionalStmt")==0){
-        checkConditionalInIterative(temp,sTable,index,G,isOutAssigned,boolExpVariablesCurrent,numberOfBoolExpVariablesCurrent,isChanged);
-    }
-    if(strcmp(G.nonTerminals[temp->elem->curr],"funCallStmt")==0){
-        /* Take output parameters */
-        astNode *temp1 = findChild(temp,0,false,0);
-        while(!(temp1->elem->isLeaf && strcmp(G.terminals[temp1->elem->curr],"eps")==0)){
-            for(int k = 0;k<end;k++){
-                if(strcmp(temp1->elem->lex.lexemeStr,(*boolExpVariablesComplete)[k])==0){
-                    (*isChanged)[k] = true;
+        if(strcmp(G.nonTerminals[temp->elem->curr],"funCallStmt")==0){
+            /* Take output parameters */
+            astNode *temp1 = findChild(temp,0,false,0);
+            while(!(temp1->elem->isLeaf && strcmp(G.terminals[temp1->elem->curr],"eps")==0)){
+                for(int k = 0;k<end;k++){
+                    if(strcmp(temp1->elem->lex.lexemeStr,(*boolExpVariablesComplete)[k])==0){
+                        (*isChanged)[k] = true;
+                    }
                 }
-            }
-            int outId = sTable->tables[index]->function->outId;
-            int outNum = sTable->tables[index]->function->numOut;
-            for(int k=0;k<outNum;k++){
-                int outFieldNumber = sTable->tables[index]->function->outOrder[k];
-                if(strcmp(sTable->allTypes[outId]->fields[outFieldNumber]->varName,temp1->elem->lex.lexemeStr)==0){
-                    (*isOutAssigned)[k]=1;
+                int outId = sTable->tables[index]->function->outId;
+                int outNum = sTable->tables[index]->function->numOut;
+                for(int k=0;k<outNum;k++){
+                    int outFieldNumber = sTable->tables[index]->function->outOrder[k];
+                    if(strcmp(sTable->allTypes[outId]->fields[outFieldNumber]->varName,temp1->elem->lex.lexemeStr)==0){
+                        (*isOutAssigned)[k]=1;
+                    }
                 }
+                temp1 = temp1->next;
             }
-            temp1 = temp1->next;
         }
+        if(strcmp(G.nonTerminals[temp->elem->curr],"iterativeStmt")==0){
+            checkNestedIterative(temp,sTable,index,G,isOutAssigned,boolExpVariablesComplete,numberOfBoolExpVariablesTotal,isChanged);
+        }
+        temp = temp->next;
     }
-    if(strcmp(G.nonTerminals[temp->elem->curr],"iterativeStmt")==0){
-        checkNestedIterative(temp,sTable,index,G,isOutAssigned,boolExpVariablesCurrent,numberOfBoolExpVariablesCurrent,isChanged);
-    }
+    // temp = root;
+    // while(temp->child!=NULL)temp = temp->child;
+    // printf("Nested done for loop at line %d start index:%d end index: %d\n",temp->elem->lineNo,start,end);
     bool isLoopChange = false;
     for(int i = start; i<end;i++){
         isLoopChange |= (*isChanged)[i];
     }
     if(!isLoopChange){
         /*Line number corresponds to first Leaf of boolean expression*/
-        printf("ERROR: while loop at line %d will not terminate.\n",root->child->child->elem->lineNo);
+        temp = root;
+        while(temp->child!=NULL)temp = temp->child;
+        printf("ERROR: while loop at line yaha %d will not terminate.\n",temp->elem->lineNo);
     }
 }
 /*Checks if str is an output of sTable->tables[index]->function*/
@@ -746,13 +764,14 @@ void checkFunctionCall(astNode *root, symbolTable *sTable, int index, grammar G,
                 if(isOutputParams(temp1->elem->lex.lexemeStr,sTable,index,G)){
                     (*isOutAssigned)[j] = 1;
                 }
-                j++;
-                temp1=temp1->next;
+
                 if(!isMatch){
                     int id = sTable->tables[i]->function->outId;
                     int outFieldNumber = sTable->tables[i]->function->outOrder[j];
                     printf("ERROR: The type of output parameter %s at line %d does not match with type of %s in function definition at line %d.\n",temp1->elem->lex.lexemeStr,temp1->elem->lineNo,sTable->allTypes[id]->fields[outFieldNumber]->varName,sTable->tables[i]->function->line);
                 }
+                j++;
+                temp1=temp1->next;
             }
         }
     }
@@ -1048,15 +1067,17 @@ void checkIterativeStmt(astNode *root, symbolTable *sTable,int index,grammar G, 
     }
     if(!isLoopChange){
         /*Line number corresponds to first Leaf of boolean expression*/
-        printf("ERROR: while loop at line %d will not terminate.\n",root->child->child->elem->lineNo);
+        temp = root;
+        while(temp->child!=NULL)temp = temp->child;
+        printf("ERROR: while loop at line %d will not terminate.\n",temp->elem->lineNo);
     }
     
 }
 void checkOverloading(astNode *root, symbolTable *sTable, grammar G, int index){
     astNode *temp = findChild(root,0,false,0);
     for(int i = 0; i<index; i++){
-        if(strcmp(temp->elem->lex.lexemeStr,sTable->tables[index]->function->fId)==0){
-            printf("ERROR: Function at line %d has been previously declared at line %d.\n",sTable->tables[index]->function->line,sTable->tables[i]->function->line);
+        if(strcmp(temp->elem->lex.lexemeStr,sTable->tables[i]->function->fId)==0){
+            printf("ERROR: Function at line %d has been previously declared at line %d.\n",temp->elem->lineNo,sTable->tables[i]->function->line);
             break;
         }
     }
@@ -1081,51 +1102,51 @@ void semanticCheck(astNode *root, symbolTable *sTable, grammar G){
         temp = temp->next;
     }
 }
-void main() { 
+// void main() { 
     
-    char* file; 
-    file = "grammar.txt"; 
-    grammar C; 
-    C = readGrammar(file); 
-    printf("Grammar read and saved \n"); 
-    printf("%d %d %d %d \n", C.totalNumRules, C.allRules[36].numOrs, C.allRules[31].epsilon, C.allRules[28].epsilon); 
-
-    
-    C.ff = ComputeFirstAndFollowSets(C); 
-    printf("First and Follow computed \n"); 
-    printf("\n***** \n"); 
+//     char* file; 
+//     file = "grammar.txt"; 
+//     grammar C; 
+//     C = readGrammar(file); 
+//     printf("Grammar read and saved \n"); 
+//     printf("%d %d %d %d \n", C.totalNumRules, C.allRules[36].numOrs, C.allRules[31].epsilon, C.allRules[28].epsilon); 
 
     
-    printf("\n***** \n"); 
+//     C.ff = ComputeFirstAndFollowSets(C); 
+//     printf("First and Follow computed \n"); 
+//     printf("\n***** \n"); 
 
     
-    parseTable* T = intializeParseTable(C.numNonTerminals,C.numTerminals);
-    createParseTable(C,C.ff,T);
-    // printParseTable(C,T);
-    printf("Parse Table created \n"); 
+//     printf("\n***** \n"); 
 
-    char* testCaseFile = "./testcases/c6.txt"; 
+    
+//     parseTable* T = intializeParseTable(C.numNonTerminals,C.numTerminals);
+//     createParseTable(C,C.ff,T);
+//     // printParseTable(C,T);
+//     printf("Parse Table created \n"); 
 
-    treeN rootNode; 
-    rootNode = parseInputSourceCode(testCaseFile, C, T); 
+//     char* testCaseFile = "./testcases/c6.txt"; 
 
-    int *insertPrev = (int *)malloc(sizeof(int));
-    *insertPrev = 0;
-    int *count = (int *)malloc(sizeof(int));
-    *count = 0;
-    astNode *astroot = mknode(rootNode.elem,C);
-    constructAst(astroot, &rootNode,C,insertPrev,astroot);
-    printf("*************************************************************************************************\n\n");
-    printf("Printing Abstract Syntax Tree\n");
-    printAST(astroot,C,count);
-    printf("Number of nodes in AST %d\n",*count);
-    printf("*************************************************************************************************\n\n");
+//     treeN rootNode; 
+//     rootNode = parseInputSourceCode(testCaseFile, C, T); 
 
-    printf("Constructing symbol table and performing type checking \n"); 
-    symbolTable* sTable = constructST(astroot, C); 
-    printf("%s\n",C.nonTerminals[astroot->elem->curr]);
-    typeCheck(astroot,C,sTable,-1);
-    printf("*************************************************************************************************\n\n");
-    printf("Semantic Analysis\n");
-    semanticCheck(astroot,sTable,C);
-} 
+//     int *insertPrev = (int *)malloc(sizeof(int));
+//     *insertPrev = 0;
+//     int *count = (int *)malloc(sizeof(int));
+//     *count = 0;
+//     astNode *astroot = mknode(rootNode.elem,C);
+//     constructAst(astroot, &rootNode,C,insertPrev,astroot);
+//     printf("*************************************************************************************************\n\n");
+//     printf("Printing Abstract Syntax Tree\n");
+//     printAST(astroot,C,count);
+//     printf("Number of nodes in AST %d\n",*count);
+//     printf("*************************************************************************************************\n\n");
+
+//     printf("Constructing symbol table and performing type checking \n"); 
+//     symbolTable* sTable = constructST(astroot, C); 
+//     printf("%s\n",C.nonTerminals[astroot->elem->curr]);
+//     typeCheck(astroot,C,sTable,-1);
+//     printf("*************************************************************************************************\n\n");
+//     printf("Semantic Analysis\n");
+//     semanticCheck(astroot,sTable,C);
+// } 

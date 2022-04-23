@@ -1,3 +1,11 @@
+/*
+ID  2019A7PS0064P					Name Siddharth Sharma
+ID  2019A7PS0062P					Name Atharva Chandak
+ID  2019A7PS0133P					Name Archit Bhatnagar 
+ID  2019A7PS0554P					Name Suchismita Tripathy
+ID  2019A7PS1139P 					Name Srujan Deolasee
+*/
+
 #include "lexer.h"
 #include "lexerDef.h"
 #include <fcntl.h>
@@ -202,13 +210,17 @@ char next_char(FILE *fp, bool isComment, bool isLengthExceeded){
 FILE *getStream(FILE *fp, int bufferNumber){
     if(twin_buffer==NULL){
         // printf("working\n");
+        int x;
         initializeTwinBuffer();
-        if(!bufferNumber) fread(&twin_buffer->buffer[0],1,BUFFER_SIZE-1,fp);
+        if(!bufferNumber)x = fread(&twin_buffer->buffer[0],1,BUFFER_SIZE-1,fp);
         // printf("done read\n");
+        if(x!=BUFFER_SIZE-1)twin_buffer->buffer[x]=EOF;
     }
     else{
-        if(!bufferNumber) fread(&twin_buffer->buffer[0],1,BUFFER_SIZE-1,fp);
-        else fread(&twin_buffer->buffer[BUFFER_SIZE],1,BUFFER_SIZE-1,fp);
+        int x;
+        if(!bufferNumber)x = fread(&twin_buffer->buffer[0],1,BUFFER_SIZE-1,fp);
+        else x = fread(&twin_buffer->buffer[BUFFER_SIZE],1,BUFFER_SIZE-1,fp);
+        if(x!=BUFFER_SIZE-1)twin_buffer->buffer[bufferNumber*BUFFER_SIZE+x] = EOF;
     }
     return fp;
 }
