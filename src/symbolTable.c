@@ -1,3 +1,11 @@
+/*
+ID  2019A7PS0064P					Name Siddharth Sharma
+ID  2019A7PS0062P					Name Atharva Chandak
+ID  2019A7PS0133P					Name Archit Bhatnagar 
+ID  2019A7PS0554P					Name Suchismita Tripathy
+ID  2019A7PS1139P 					Name Srujan Deolasee
+*/
+
 // #pragma once
 #include <stdio.h> 
 #include <stdbool.h> 
@@ -370,8 +378,12 @@ void printAllVars(symbolTable* sTable) {
     Prints the Action Record sizes
 */
 void printARSizes(symbolTable* sTable) { 
-    for (int i = 0; i < sTable->numF; i++) { 
-        printf("%s %d \n", sTable->tables[i]->function->fId, sTable->tables[i]->currWidth); 
+    if(sTable->numF!=0){
+        for (int i = 0; i < sTable->numF; i++) { 
+            printf("%s %d \n", sTable->tables[i]->function->fId, sTable->tables[i]->currWidth); 
+        }
+    }else{
+        printf("No activation records found");
     }
 } 
 

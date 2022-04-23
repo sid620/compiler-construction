@@ -1,3 +1,11 @@
+/*
+ID  2019A7PS0064P					Name Siddharth Sharma
+ID  2019A7PS0062P					Name Atharva Chandak
+ID  2019A7PS0133P					Name Archit Bhatnagar 
+ID  2019A7PS0554P					Name Suchismita Tripathy
+ID  2019A7PS1139P 					Name Srujan Deolasee
+*/
+
 #include "parser.h"
 #include <time.h>
 #include "ast.h"
@@ -141,7 +149,7 @@ int main(int argc, char *argv[]){
 					printf("Compression percentage = ((%f - %f)/%f)*100 = %f\n", p1, p2, p1, compressionPercentage);
 				}
 				else{
-					printf("Error occured in parsing. Cant print AST.");
+					printf("Error occured in parsing. Cant print AST.\n");
 				}
             }
             break;
@@ -182,7 +190,7 @@ int main(int argc, char *argv[]){
 					printSymbolTable(sTable);
 				}
 				else{
-					printf("Error occured in parsing. Cant print AST.");
+					printf("Error occured in parsing. Cant print symbol Table.\n");
 				}
 			}
 			break;
@@ -220,7 +228,7 @@ int main(int argc, char *argv[]){
 					printGlobalVars(sTable);
 				}
 				else{
-					printf("Error occured in parsing. Cant print AST.");
+					printf("Error occured in parsing. Cant print Global Variables.\n");
 				}
 
 			}
@@ -261,7 +269,7 @@ int main(int argc, char *argv[]){
 					printARSizes(sTable);
 				}
 				else{
-					printf("Error occured in parsing. Cant print AST.");
+					printf("Error occured in parsing. Cant print activation records.\n");
 				}	
 			}
 			break;
@@ -301,7 +309,7 @@ int main(int argc, char *argv[]){
 					printRUInfo(sTable);
 				}
 				else{
-					printf("Error occured in parsing. Cant print AST.");
+					printf("Error occured in parsing. Cant print record types and sizes.\n");
 				}
 
 			}
@@ -346,7 +354,7 @@ int main(int argc, char *argv[]){
 					semanticCheck(astroot,sTable,C);
 				}
 				else{
-					printf("Error occured in parsing. Cant print AST.");
+					printf("Error occured in parsing. Cant perform semantic analysis and typechecking.\n");
 				}
 				end_time = clock();
                 total_CPU_time = (double) (end_time - start_time);
