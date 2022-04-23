@@ -451,6 +451,27 @@ int searchTypes(char* name, symbolTable* sTable) {
 void updateWidth(int ind, symbolTable* sTable, int width) { 
 
     // printf("In updateWidth: %s %d \n", sTable->allTypes[ind]->name, width); 
+    
+    if (sTable->allTypes[ind]->typeId == 4){ 
+        for (int i = 0; i < sTable->numTypes; i++) { 
+            if (sTable->allTypes[i]->numFields != 0 && sTable->allTypes[i]->typeId != 4) { 
+                for (int j = 0; j < size; j++) { 
+                    if (sTable->allTypes[i]->fields[j]->present == 1 && (sTable->allTypes[i]->fields[j]->type == ind || sTable->allTypes[sTable->allTypes[i]->fields[j]->type]->ref == ind)) { 
+                        sTable->allTypes[i]->width = 0; 
+                        for (int k = 0; k < size; k++) { 
+                            if (sTable->allTypes[i]->fields[k]->present == 1 && sTable->allTypes[sTable->allTypes[i]->fields[k]->type]->typeId != 4) { 
+                                sTable->allTypes[i]->width += sTable->allTypes[sTable->allTypes[i]->fields[k]->type]->width; 
+                            } 
+                        } 
+                        sTable->allTypes[i]->width += width; 
+                        updateWidth(i, sTable, sTable->allTypes[i]->width); 
+                        return; 
+                    }
+                }
+            }
+        }
+    }
+    
     for (int i = 0; i < sTable->numTypes; i++) { 
         if (sTable->allTypes[i]->numFields != 0) { 
             if (sTable->allTypes[i]->typeId == 3) { 
@@ -458,15 +479,21 @@ void updateWidth(int ind, symbolTable* sTable, int width) {
                     if (sTable->allTypes[i]->fields[j]->present == 1 && (sTable->allTypes[i]->fields[j]->type == ind || sTable->allTypes[sTable->allTypes[i]->fields[j]->type]->ref == ind)) { 
                         // printf("Updating width of record: %s \n", sTable->allTypes[i]->name); 
                         sTable->allTypes[i]->width += width; 
+                        // printf("Updated width of record: %s %d \n", sTable->allTypes[i]->name, sTable->allTypes[i]->width); 
+                        updateWidth(i, sTable, sTable->allTypes[i]->width); 
                     }
                 }
             } 
             else if (sTable->allTypes[i]->typeId == 4) { 
+                // printf("checking for union %s and field %s %d \n", sTable->allTypes[i]->name, sTable->allTypes[ind]->name, sTable->allTypes[i]->width); 
                 for (int j = 0; j < size; j++) { 
                     if (sTable->allTypes[i]->fields[j]->present == 1 && (sTable->allTypes[i]->fields[j]->type == ind || sTable->allTypes[sTable->allTypes[i]->fields[j]->type]->ref == ind)) { 
                         if (width > sTable->allTypes[i]->width) { 
                             // printf("Updating width of union: %s \n", sTable->allTypes[i]->name); 
                             sTable->allTypes[i]->width = width; 
+                            // printf("%d \n", sTable->allTypes[i]->width); 
+                            // printf("Updated width of union: %s %d \n", sTable->allTypes[i]->name, sTable->allTypes[i]->width); 
+                            updateWidth(i, sTable, sTable->allTypes[i]->width); 
                             break; 
                         }
                     }
